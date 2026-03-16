@@ -40,6 +40,8 @@ import type { Category } from "@/types/category";
 import type { Brand } from "@/types/brand";
 import type { ApiError } from "@/types/api";
 import { product as productLabels, common, PRODUCT_STATUS_LABEL } from "@/data/labels";
+import NumberInput from "@/components/common/NumberInput";
+import { formatKoreanUnit } from "@/lib/utils";
 
 interface ImageFile {
   file?: File;
@@ -364,13 +366,16 @@ export default function ProductForm({
             <div className="space-y-2">
               <Label htmlFor="product-price">
                 {productLabels.priceLabel} <span className="text-destructive">*</span>
+                {price && (
+                  <span className="ml-1 font-normal text-muted-foreground">
+                    {formatKoreanUnit(price)}
+                  </span>
+                )}
               </Label>
-              <Input
+              <NumberInput
                 id="product-price"
-                type="number"
-                min="0"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                onValueChange={setPrice}
                 placeholder="0"
                 aria-required="true"
                 aria-describedby={errors.price ? "product-price-error" : undefined}
@@ -387,12 +392,10 @@ export default function ProductForm({
               <Label htmlFor="product-stock">
                 {productLabels.stockLabel} <span className="text-destructive">*</span>
               </Label>
-              <Input
+              <NumberInput
                 id="product-stock"
-                type="number"
-                min="0"
                 value={hasOptions ? "" : stock}
-                onChange={(e) => setStock(e.target.value)}
+                onValueChange={setStock}
                 placeholder={hasOptions ? "" : productLabels.stockPlaceholder}
                 aria-required={!hasOptions}
                 aria-describedby={
@@ -499,12 +502,10 @@ export default function ProductForm({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="product-margin-price1">{productLabels.marginPrice1Label}</Label>
-              <Input
+              <NumberInput
                 id="product-margin-price1"
-                type="number"
-                min="0"
                 value={marginPrice1}
-                onChange={(e) => setMarginPrice1(e.target.value)}
+                onValueChange={setMarginPrice1}
                 placeholder={productLabels.marginPrice1Placeholder}
                 disabled={loading}
               />
@@ -512,12 +513,10 @@ export default function ProductForm({
 
             <div className="space-y-2">
               <Label htmlFor="product-margin-price2">{productLabels.marginPrice2Label}</Label>
-              <Input
+              <NumberInput
                 id="product-margin-price2"
-                type="number"
-                min="0"
                 value={marginPrice2}
-                onChange={(e) => setMarginPrice2(e.target.value)}
+                onValueChange={setMarginPrice2}
                 placeholder={productLabels.marginPrice2Placeholder}
                 disabled={loading}
               />

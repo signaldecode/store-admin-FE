@@ -9,9 +9,16 @@ import {
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/types/category";
 import { category as categoryLabels } from "@/data/labels";
+
+const LEVEL_BADGE: Record<number, { label: string; className: string }> = {
+  1: { label: categoryLabels.levelMain, className: "bg-primary/10 text-primary border-primary/20" },
+  2: { label: categoryLabels.levelSub, className: "bg-blue-500/10 text-blue-600 border-blue-500/20 dark:text-blue-400" },
+  3: { label: categoryLabels.levelDetail, className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400" },
+};
 
 interface CategoryTreeProps {
   categories: Category[];
@@ -23,6 +30,9 @@ interface CategoryTreeProps {
 interface TreeNodeProps {
   category: Category;
   depth: number;
+  isLast: boolean;
+  /** 각 ancestor depth에서 해당 조상이 마지막인지 (세로선 여부 결정) */
+  ancestorIsLast: boolean[];
   onEdit: (category: Category) => void;
   onDelete: (category: Category) => void;
   onReorder: (parentId: number | null, orderedIds: number[]) => void;
@@ -35,6 +45,8 @@ interface TreeNodeProps {
 function TreeNode({
   category,
   depth,
+  isLast,
+  ancestorIsLast,
   onEdit,
   onDelete,
   onReorder,
@@ -43,17 +55,17 @@ function TreeNode({
   onDragOver,
   onDrop,
 }: TreeNodeProps) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const hasChildren = category.children && category.children.length > 0;
+  const badge = LEVEL_BADGE[category.level];
 
   return (
     <div>
       <div
         className={cn(
-          "group flex items-center gap-1 rounded-md px-2 py-1.5 hover:bg-accent",
+          "group flex items-center gap-1.5 rounded-md py-1.5 pr-2 hover:bg-accent",
           "transition-colors focus-within:ring-1 focus-within:ring-ring"
         )}
-        style={{ paddingLeft: `${depth * 24 + 8}px` }}
         draggable
         tabIndex={0}
         role="listitem"
@@ -84,6 +96,30 @@ function TreeNode({
         onDragOver={onDragOver}
         onDrop={(e) => onDrop(e, category.id, category.parentId)}
       >
+        {/* 트리 연결선 영역 */}
+        {depth > 0 && (
+          <div className="flex shrink-0 items-stretch" aria-hidden="true">
+            {/* ancestor 세로선: 마지막 항목이 아닌 조상에만 세로선 표시 */}
+            {ancestorIsLast.map((aIsLast, i) => (
+              <span
+                key={i}
+                className={cn(
+                  "inline-block w-5 border-border",
+                  !aIsLast && "border-l"
+                )}
+              />
+            ))}
+            {/* 현재 노드 가지: └─ 또는 ├─ */}
+            <span className={cn(
+              "inline-block w-5 border-border border-b",
+              isLast ? "border-l rounded-bl-sm h-1/2" : "border-l h-full"
+            )} />
+          </div>
+        )}
+
+        {/* 대분류는 좌측 패딩 */}
+        {depth === 0 && <span className="w-2 shrink-0" />}
+
         <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-muted-foreground opacity-0 group-hover:opacity-100" aria-hidden="true" />
 
         {hasChildren ? (
@@ -100,10 +136,22 @@ function TreeNode({
             )}
           </button>
         ) : (
-          <span className="w-5" />
+          <span className="w-5 shrink-0" />
         )}
 
-        <span className="flex-1 text-sm">{category.name}</span>
+        <span className={cn("flex-1 text-sm", depth === 0 && "font-semibold")}>
+          {category.name}
+        </span>
+
+        {/* 레벨 뱃지 */}
+        {badge && (
+          <Badge
+            variant="outline"
+            className={cn("shrink-0 text-[10px] px-1.5 py-0 h-5 font-normal", badge.className)}
+          >
+            {badge.label}
+          </Badge>
+        )}
 
         <div className="flex gap-0.5 opacity-0 group-hover:opacity-100">
           <Button
@@ -129,11 +177,13 @@ function TreeNode({
 
       {hasChildren && expanded && (
         <div>
-          {category.children!.map((child) => (
+          {category.children!.map((child, i) => (
             <TreeNode
               key={child.id}
               category={child}
               depth={depth + 1}
+              isLast={i === category.children!.length - 1}
+              ancestorIsLast={[...ancestorIsLast, isLast]}
               onEdit={onEdit}
               onDelete={onDelete}
               onReorder={onReorder}
@@ -181,7 +231,6 @@ export default function CategoryTree({
     e.preventDefault();
 
     if (dragId === null || dragId === targetId) return;
-    // 같은 부모 내에서만 순서 변경
     if (dragParentId !== targetParentId) return;
 
     const findSiblings = (
@@ -199,8 +248,8 @@ export default function CategoryTree({
       return [];
     };
 
-    const siblings = findSiblings(categories, targetParentId);
-    const ids = siblings.map((s) => s.id);
+    const sibs = findSiblings(categories, targetParentId);
+    const ids = sibs.map((s) => s.id);
     const fromIndex = ids.indexOf(dragId);
     const toIndex = ids.indexOf(targetId);
 
@@ -220,11 +269,13 @@ export default function CategoryTree({
 
   return (
     <div className="rounded-md border p-2">
-      {categories.map((category) => (
+      {categories.map((cat, i) => (
         <TreeNode
-          key={category.id}
-          category={category}
+          key={cat.id}
+          category={cat}
           depth={0}
+          isLast={i === categories.length - 1}
+          ancestorIsLast={[]}
           onEdit={onEdit}
           onDelete={onDelete}
           onReorder={onReorder}

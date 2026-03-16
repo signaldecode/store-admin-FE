@@ -30,8 +30,13 @@ interface CategoryFormDialogProps {
   onSubmit: (data: CategoryFormData) => Promise<void>;
 }
 
-/** 최상위 카테고리(부모 없음)를 선택했을 때의 sentinel 값 */
-const NO_PARENT = "__no_parent__";
+type Level = "1" | "2" | "3";
+
+const LEVEL_LABELS: Record<Level, string> = {
+  "1": categoryLabels.levelMain,
+  "2": categoryLabels.levelSub,
+  "3": categoryLabels.levelDetail,
+};
 
 export default function CategoryFormDialog({
   open,
@@ -43,45 +48,103 @@ export default function CategoryFormDialog({
   const isEdit = !!category;
 
   const [name, setName] = useState("");
-  const [parentId, setParentId] = useState<string>(NO_PARENT);
+  const [level, setLevel] = useState<Level>("1");
+  const [mainCategoryId, setMainCategoryId] = useState("");
+  const [subCategoryId, setSubCategoryId] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 부모 카테고리 후보: 자기 자신과 자식은 제외
-  const parentOptions = categories.filter((c) => {
-    if (!category) return true;
-    return c.id !== category.id;
-  });
+  // 대분류 목록
+  const mainCategories = useMemo(
+    () => categories.filter((c) => c.level === 1 && c.id !== category?.id),
+    [categories, category]
+  );
 
-  const parentItems = useMemo(
-    () => ({
-      [NO_PARENT]: categoryLabels.parentNone,
-      ...Object.fromEntries(parentOptions.map((c) => [c.id.toString(), c.name])),
-    }),
-    [parentOptions]
+  // 중분류 목록 (선택된 대분류 하위)
+  const subCategories = useMemo(
+    () =>
+      categories.filter(
+        (c) =>
+          c.level === 2 &&
+          c.parentId === (mainCategoryId ? Number(mainCategoryId) : null) &&
+          c.id !== category?.id
+      ),
+    [categories, mainCategoryId, category]
+  );
+
+  const mainCategoryItems = useMemo(
+    () => Object.fromEntries(mainCategories.map((c) => [c.id.toString(), c.name])),
+    [mainCategories]
+  );
+  const subCategoryItems = useMemo(
+    () => Object.fromEntries(subCategories.map((c) => [c.id.toString(), c.name])),
+    [subCategories]
   );
 
   useEffect(() => {
     if (open) {
-      setName(category?.name || "");
-      setParentId(category?.parentId?.toString() || NO_PARENT);
       setError("");
+      if (category) {
+        setName(category.name);
+        setLevel(category.level.toString() as Level);
+        if (category.level === 2) {
+          setMainCategoryId(category.parentId?.toString() || "");
+          setSubCategoryId("");
+        } else if (category.level === 3) {
+          // 소분류: 부모(중분류)의 부모(대분류)를 찾아야 함
+          const parentSub = categories.find((c) => c.id === category.parentId);
+          setMainCategoryId(parentSub?.parentId?.toString() || "");
+          setSubCategoryId(category.parentId?.toString() || "");
+        } else {
+          setMainCategoryId("");
+          setSubCategoryId("");
+        }
+      } else {
+        setName("");
+        setLevel("1");
+        setMainCategoryId("");
+        setSubCategoryId("");
+      }
     }
-  }, [open, category]);
+  }, [open, category, categories]);
+
+  /** 레벨에 따라 parentId 결정 */
+  function resolveParentId(): number | null {
+    if (level === "1") return null;
+    if (level === "2") return mainCategoryId ? Number(mainCategoryId) : null;
+    if (level === "3") return subCategoryId ? Number(subCategoryId) : null;
+    return null;
+  }
+
+  const validate = (): boolean => {
+    if (!name.trim()) {
+      setError(categoryLabels.nameRequired);
+      return false;
+    }
+    if (level === "2" && !mainCategoryId) {
+      setError(categoryLabels.parentMainRequired);
+      return false;
+    }
+    if (level === "3" && !mainCategoryId) {
+      setError(categoryLabels.parentMainRequired);
+      return false;
+    }
+    if (level === "3" && !subCategoryId) {
+      setError(categoryLabels.parentSubRequired);
+      return false;
+    }
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    if (!name.trim()) {
-      setError(categoryLabels.nameRequired);
-      return;
-    }
+    if (!validate()) return;
 
     setLoading(true);
     try {
       await onSubmit({
         name: name.trim(),
-        parentId: parentId === NO_PARENT ? null : Number(parentId),
+        parentId: resolveParentId(),
       });
       onOpenChange(false);
     } catch (err) {
@@ -102,6 +165,103 @@ export default function CategoryFormDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* 분류 단계 */}
+          <div className="space-y-2">
+            <Label htmlFor="category-level">{categoryLabels.levelLabel}</Label>
+            <Select
+              value={level}
+              onValueChange={(v) => {
+                if (v) {
+                  setLevel(v as Level);
+                  setMainCategoryId("");
+                  setSubCategoryId("");
+                  setError("");
+                }
+              }}
+              disabled={loading || isEdit}
+              items={LEVEL_LABELS}
+            >
+              <SelectTrigger id="category-level">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">{categoryLabels.levelMain}</SelectItem>
+                <SelectItem value="2">{categoryLabels.levelSub}</SelectItem>
+                <SelectItem value="3">{categoryLabels.levelDetail}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* 중분류일 때: 소속 대분류 선택 */}
+          {(level === "2" || level === "3") && (
+            <div className="space-y-2">
+              <Label htmlFor="category-parent-main">
+                {categoryLabels.parentMainLabel} <span className="text-destructive">*</span>
+              </Label>
+              <Select
+                value={mainCategoryId || null}
+                onValueChange={(v) => {
+                  setMainCategoryId(v ?? "");
+                  setSubCategoryId("");
+                  setError("");
+                }}
+                disabled={loading}
+                items={mainCategoryItems}
+              >
+                <SelectTrigger
+                  id="category-parent-main"
+                  aria-required="true"
+                >
+                  <SelectValue placeholder={categoryLabels.parentMainPlaceholder} />
+                </SelectTrigger>
+                <SelectContent>
+                  {mainCategories.map((c) => (
+                    <SelectItem key={c.id} value={c.id.toString()}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* 소분류일 때: 소속 중분류 선택 */}
+          {level === "3" && (
+            <div className="space-y-2">
+              <Label htmlFor="category-parent-sub">
+                {categoryLabels.parentSubLabel} <span className="text-destructive">*</span>
+              </Label>
+              <Select
+                value={subCategoryId || null}
+                onValueChange={(v) => {
+                  setSubCategoryId(v ?? "");
+                  setError("");
+                }}
+                disabled={loading || !mainCategoryId}
+                items={subCategoryItems}
+              >
+                <SelectTrigger
+                  id="category-parent-sub"
+                  aria-required="true"
+                >
+                  <SelectValue placeholder={
+                    !mainCategoryId
+                      ? categoryLabels.parentMainPlaceholder
+                      : categoryLabels.parentSubPlaceholder
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  {subCategories.map((c) => (
+                    <SelectItem key={c.id} value={c.id.toString()}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* 카테고리명 */}
           <div className="space-y-2">
             <Label htmlFor="category-name">
               {categoryLabels.nameLabel} <span className="text-destructive">*</span>
@@ -117,38 +277,17 @@ export default function CategoryFormDialog({
               disabled={loading}
               autoFocus
             />
-            {error && (
-              <p
-                id="category-name-error"
-                className="text-sm text-destructive"
-                role="alert"
-              >
-                {error}
-              </p>
-            )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="category-parent">{categoryLabels.parentLabel}</Label>
-            <Select
-              value={parentId}
-              onValueChange={(value) => { if (value !== null) setParentId(value); }}
-              disabled={loading}
-              items={parentItems}
+          {error && (
+            <p
+              id="category-name-error"
+              className="text-sm text-destructive"
+              role="alert"
             >
-              <SelectTrigger id="category-parent">
-                <SelectValue placeholder={categoryLabels.parentPlaceholder} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NO_PARENT}>{categoryLabels.parentNone}</SelectItem>
-                {parentOptions.map((c) => (
-                  <SelectItem key={c.id} value={c.id.toString()}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              {error}
+            </p>
+          )}
 
           <DialogFooter>
             <Button
