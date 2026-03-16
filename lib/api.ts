@@ -1,7 +1,9 @@
 import { API_BASE_URL } from "./constants";
 import type { ApiError } from "@/types/api";
 
-const IS_DEV = process.env.NODE_ENV === "development";
+const USE_MOCK =
+  process.env.NODE_ENV === "development" ||
+  process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
 
 type RequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
@@ -17,7 +19,7 @@ export async function api<T>(
   options: RequestOptions = {}
 ): Promise<T> {
   // 개발 모드: Mock API
-  if (IS_DEV) {
+  if (USE_MOCK) {
     const { mockHandler } = await import("./mock-api");
     const method = options.method || "GET";
     const result = await mockHandler(method, endpoint, options.body);
