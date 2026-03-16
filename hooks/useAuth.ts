@@ -6,7 +6,9 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { getMe } from "@/services/authService";
 import type { Admin } from "@/types/admin";
 
-const IS_DEV = process.env.NODE_ENV === "development";
+const SKIP_AUTH =
+  process.env.NODE_ENV === "development" ||
+  process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
 
 /** 개발용 더미 관리자 */
 const DEV_ADMIN: Admin = {
@@ -32,7 +34,7 @@ export function useAuth() {
     if (isAuthenticated) return;
 
     // 개발 모드: 더미 관리자로 즉시 인증
-    if (IS_DEV) {
+    if (SKIP_AUTH) {
       setAdmin(DEV_ADMIN);
       setIsLoading(false);
       return;
