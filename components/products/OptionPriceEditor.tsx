@@ -3,6 +3,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { OptionDraft } from "./OptionTypeSelector";
+import { productOption, common } from "@/data/labels";
 
 interface OptionPriceEditorProps {
   options: OptionDraft[];
@@ -44,9 +45,9 @@ export default function OptionPriceEditor({
 
   return (
     <div className="space-y-4">
-      <Label>옵션값별 추가금액 (빠른 설정)</Label>
+      <Label>{productOption.quickPriceLabel}</Label>
       <p className="text-xs text-muted-foreground">
-        여기서 설정한 추가금액은 조합 테이블에 자동 반영됩니다.
+        {productOption.quickPriceHint}
       </p>
 
       {fixedOptions.map((opt) => (
@@ -64,10 +65,10 @@ export default function OptionPriceEditor({
                     updatePrice(opt.name, val, Number(e.target.value))
                   }
                   disabled={disabled}
-                  aria-label={`${opt.name} ${val} 추가금액`}
+                  aria-label={productOption.additionalPriceLabel(opt.name, val)}
                   className="h-8"
                 />
-                <span className="shrink-0 text-xs text-muted-foreground">원</span>
+                <span className="shrink-0 text-xs text-muted-foreground">{common.currency}</span>
               </div>
             ))}
           </div>

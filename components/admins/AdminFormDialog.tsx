@@ -18,10 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ADMIN_ROLE, ADMIN_ROLE_LABEL } from "@/lib/constants";
+import { ADMIN_ROLE } from "@/lib/constants";
 import type { Admin, AdminFormData } from "@/types/admin";
 import type { AdminRole } from "@/lib/constants";
 import type { ApiError } from "@/types/api";
+import { admin as adminLabels, common, ADMIN_ROLE_LABEL } from "@/data/labels";
 
 interface AdminFormDialogProps {
   open: boolean;
@@ -71,10 +72,10 @@ export default function AdminFormDialog({
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.email) newErrors.email = "이메일을 입력해주세요.";
-    if (!formData.name) newErrors.name = "이름을 입력해주세요.";
+    if (!formData.email) newErrors.email = adminLabels.emailRequired;
+    if (!formData.name) newErrors.name = adminLabels.nameRequired;
     if (!isEdit && !formData.password)
-      newErrors.password = "비밀번호를 입력해주세요.";
+      newErrors.password = adminLabels.passwordRequired;
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -97,7 +98,7 @@ export default function AdminFormDialog({
       if (apiError.errors) {
         setErrors(apiError.errors);
       } else {
-        setErrors({ _form: apiError.message || "저장에 실패했습니다." });
+        setErrors({ _form: apiError.message || common.saveFailed });
       }
     } finally {
       setLoading(false);
@@ -109,14 +110,14 @@ export default function AdminFormDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? "관리자 수정" : "관리자 추가"}
+            {isEdit ? adminLabels.editTitle : adminLabels.createTitle}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="admin-email">
-              이메일 <span className="text-destructive">*</span>
+              {adminLabels.emailLabel} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="admin-email"
@@ -125,7 +126,7 @@ export default function AdminFormDialog({
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, email: e.target.value }))
               }
-              placeholder="admin@example.com"
+              placeholder={adminLabels.emailPlaceholder}
               aria-required="true"
               aria-describedby={errors.email ? "admin-email-error" : undefined}
               disabled={loading}
@@ -139,7 +140,7 @@ export default function AdminFormDialog({
 
           <div className="space-y-2">
             <Label htmlFor="admin-name">
-              이름 <span className="text-destructive">*</span>
+              {adminLabels.nameLabel} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="admin-name"
@@ -148,7 +149,7 @@ export default function AdminFormDialog({
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, name: e.target.value }))
               }
-              placeholder="관리자 이름"
+              placeholder={adminLabels.namePlaceholder}
               aria-required="true"
               aria-describedby={errors.name ? "admin-name-error" : undefined}
               disabled={loading}
@@ -162,7 +163,7 @@ export default function AdminFormDialog({
 
           <div className="space-y-2">
             <Label htmlFor="admin-password">
-              비밀번호{" "}
+              {adminLabels.passwordLabel}{" "}
               {!isEdit && <span className="text-destructive">*</span>}
             </Label>
             <Input
@@ -173,7 +174,7 @@ export default function AdminFormDialog({
                 setFormData((prev) => ({ ...prev, password: e.target.value }))
               }
               placeholder={
-                isEdit ? "변경 시에만 입력" : "비밀번호를 입력하세요"
+                isEdit ? adminLabels.passwordPlaceholderEdit : adminLabels.passwordPlaceholder
               }
               aria-required={!isEdit ? "true" : undefined}
               aria-describedby={
@@ -193,7 +194,7 @@ export default function AdminFormDialog({
 
           <div className="space-y-2">
             <Label htmlFor="admin-role">
-              역할 <span className="text-destructive">*</span>
+              {adminLabels.roleLabel} <span className="text-destructive">*</span>
             </Label>
             <Select
               value={formData.role}
@@ -203,7 +204,7 @@ export default function AdminFormDialog({
               disabled={loading}
             >
               <SelectTrigger id="admin-role" aria-required="true">
-                <SelectValue placeholder="역할 선택" />
+                <SelectValue placeholder={adminLabels.rolePlaceholder} />
               </SelectTrigger>
               <SelectContent>
                 {Object.entries(ADMIN_ROLE_LABEL).map(([value, label]) => (
@@ -228,10 +229,10 @@ export default function AdminFormDialog({
               onClick={() => onOpenChange(false)}
               disabled={loading}
             >
-              취소
+              {common.cancel}
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "저장 중..." : isEdit ? "수정" : "추가"}
+              {loading ? common.saving : isEdit ? common.edit : common.add}
             </Button>
           </DialogFooter>
         </form>

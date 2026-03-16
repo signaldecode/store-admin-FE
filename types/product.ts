@@ -7,9 +7,17 @@ export interface Product {
   description: string;
   price: number;
   status: ProductStatus;
-  categoryId: number;
-  categoryName?: string;
-  brandId: number;
+  /** 필수: 대분류 */
+  mainCategoryId: number;
+  mainCategoryName?: string;
+  /** 필수: 중분류 */
+  subCategoryId: number;
+  subCategoryName?: string;
+  /** 옵션: 소분류 */
+  detailCategoryId: number | null;
+  detailCategoryName?: string;
+  /** 옵션: 브랜드 */
+  brandId: number | null;
   brandName?: string;
   images: ProductImage[];
   options: ProductOption[];
@@ -44,7 +52,9 @@ export interface ProductFormData {
   description: string;
   price: number;
   status: ProductStatus;
-  categoryId: number | null;
+  mainCategoryId: number | null;
+  subCategoryId: number | null;
+  detailCategoryId: number | null;
   brandId: number | null;
   images: File[];
   options: Omit<ProductOption, "id">[];
@@ -53,7 +63,9 @@ export interface ProductFormData {
 
 export interface ProductListParams extends PaginationParams {
   keyword?: string;
-  categoryId?: number;
+  mainCategoryId?: number;
+  subCategoryId?: number;
+  detailCategoryId?: number;
   brandId?: number;
   status?: ProductStatus;
 }

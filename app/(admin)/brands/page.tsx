@@ -13,6 +13,7 @@ import {
   deleteBrand,
 } from "@/services/brandService";
 import type { Brand, BrandFormData } from "@/types/brand";
+import { brand as brandLabels, common } from "@/data/labels";
 
 export default function BrandsPage() {
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -74,10 +75,10 @@ export default function BrandsPage() {
   };
 
   const columns: Column<Brand>[] = [
-    { key: "name", label: "브랜드명", sortable: true },
+    { key: "name", label: brandLabels.colName, sortable: true },
     {
       key: "createdAt",
-      label: "등록일",
+      label: brandLabels.colCreatedAt,
       render: (brand) => new Date(brand.createdAt).toLocaleDateString("ko-KR"),
     },
     {
@@ -94,7 +95,7 @@ export default function BrandsPage() {
               handleEdit(brand);
             }}
           >
-            수정
+            {common.edit}
           </Button>
           <Button
             variant="ghost"
@@ -105,7 +106,7 @@ export default function BrandsPage() {
               setDeleteTarget(brand);
             }}
           >
-            삭제
+            {common.delete}
           </Button>
         </div>
       ),
@@ -115,23 +116,23 @@ export default function BrandsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">브랜드 관리</h1>
+        <h1 className="text-2xl font-semibold">{brandLabels.pageTitle}</h1>
         <Button onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" />
-          브랜드 추가
+          {brandLabels.addButton}
         </Button>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <p className="text-sm text-muted-foreground">불러오는 중...</p>
+          <p className="text-sm text-muted-foreground">{common.loading}</p>
         </div>
       ) : (
         <DataTable
           columns={columns}
           data={brands}
           keyExtractor={(brand) => brand.id}
-          emptyMessage="등록된 브랜드가 없습니다."
+          emptyMessage={brandLabels.emptyMessage}
         />
       )}
 
@@ -147,9 +148,9 @@ export default function BrandsPage() {
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null);
         }}
-        title="브랜드 삭제"
-        description={`"${deleteTarget?.name}" 브랜드를 삭제하시겠습니까? 해당 브랜드를 사용 중인 상품이 있을 수 있습니다.`}
-        confirmLabel="삭제"
+        title={brandLabels.deleteTitle}
+        description={deleteTarget ? brandLabels.deleteDescription(deleteTarget.name) : ""}
+        confirmLabel={common.delete}
         onConfirm={handleDelete}
         loading={deleteLoading}
         destructive

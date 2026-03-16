@@ -10,6 +10,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { layout } from "@/data/labels";
 
 interface MobileDrawerProps {
   open: boolean;
@@ -26,10 +27,10 @@ export default function MobileDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-64 p-0">
         <SheetHeader className="border-b border-border px-4 py-4">
-          <SheetTitle className="text-lg font-semibold">Shop Admin</SheetTitle>
+          <SheetTitle className="text-lg font-semibold">{layout.appName}</SheetTitle>
         </SheetHeader>
 
-        <nav className="space-y-1 p-2" aria-label="모바일 메뉴">
+        <nav className="space-y-1 p-2" aria-label={layout.mobileMenu}>
           {menuItems.map((item) => {
             const isActive =
               item.href === "/"

@@ -24,7 +24,6 @@ import OptionPriceEditor from "@/components/products/OptionPriceEditor";
 import { Separator } from "@/components/ui/separator";
 import {
   PRODUCT_STATUS,
-  PRODUCT_STATUS_LABEL,
   OPTION_TYPE,
 } from "@/lib/constants";
 import type { Product } from "@/types/product";
@@ -32,6 +31,7 @@ import type { ProductStatus } from "@/lib/constants";
 import type { Category } from "@/types/category";
 import type { Brand } from "@/types/brand";
 import type { ApiError } from "@/types/api";
+import { product as productLabels, common, PRODUCT_STATUS_LABEL } from "@/data/labels";
 
 interface ImageFile {
   file?: File;
@@ -60,8 +60,19 @@ export default function ProductForm({
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [status, setStatus] = useState<ProductStatus>(PRODUCT_STATUS.SALE);
-  const [categoryId, setCategoryId] = useState<string>(NO_SELECT);
+  const [mainCategoryId, setMainCategoryId] = useState<string>(NO_SELECT);
+  const [subCategoryId, setSubCategoryId] = useState<string>(NO_SELECT);
+  const [detailCategoryId, setDetailCategoryId] = useState<string>(NO_SELECT);
   const [brandId, setBrandId] = useState<string>(NO_SELECT);
+
+  // 카테고리 레벨별 필터링
+  const mainCategories = categories.filter((c) => c.level === 1);
+  const subCategories = categories.filter(
+    (c) => c.level === 2 && c.parentId === (mainCategoryId !== NO_SELECT ? Number(mainCategoryId) : null)
+  );
+  const detailCategories = categories.filter(
+    (c) => c.level === 3 && c.parentId === (subCategoryId !== NO_SELECT ? Number(subCategoryId) : null)
+  );
   const [images, setImages] = useState<ImageFile[]>([]);
   const [options, setOptions] = useState<OptionDraft[]>([]);
   const [variants, setVariants] = useState<VariantDraft[]>([]);
@@ -77,7 +88,9 @@ export default function ProductForm({
       setDescription(product.description);
       setPrice(product.price.toString());
       setStatus(product.status);
-      setCategoryId(product.categoryId?.toString() || NO_SELECT);
+      setMainCategoryId(product.mainCategoryId?.toString() || NO_SELECT);
+      setSubCategoryId(product.subCategoryId?.toString() || NO_SELECT);
+      setDetailCategoryId(product.detailCategoryId?.toString() || NO_SELECT);
       setBrandId(product.brandId?.toString() || NO_SELECT);
       setImages(
         product.images.map((img) => ({ url: img.url }))
@@ -107,10 +120,10 @@ export default function ProductForm({
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!name.trim()) newErrors.name = "상품명을 입력해주세요.";
-    if (!price || Number(price) < 0) newErrors.price = "올바른 가격을 입력해주세요.";
-    if (categoryId === NO_SELECT) newErrors.categoryId = "카테고리를 선택해주세요.";
-    if (brandId === NO_SELECT) newErrors.brandId = "브랜드를 선택해주세요.";
+    if (!name.trim()) newErrors.name = productLabels.nameRequired;
+    if (!price || Number(price) < 0) newErrors.price = productLabels.priceRequired;
+    if (mainCategoryId === NO_SELECT) newErrors.mainCategoryId = productLabels.mainCategoryRequired;
+    if (subCategoryId === NO_SELECT) newErrors.subCategoryId = productLabels.subCategoryRequired;
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -127,8 +140,14 @@ export default function ProductForm({
       formData.append("description", description.trim());
       formData.append("price", price);
       formData.append("status", status);
-      formData.append("categoryId", categoryId);
-      formData.append("brandId", brandId);
+      formData.append("mainCategoryId", mainCategoryId);
+      formData.append("subCategoryId", subCategoryId);
+      if (detailCategoryId !== NO_SELECT) {
+        formData.append("detailCategoryId", detailCategoryId);
+      }
+      if (brandId !== NO_SELECT) {
+        formData.append("brandId", brandId);
+      }
 
       for (const img of images) {
         if (img.file) {
@@ -155,7 +174,7 @@ export default function ProductForm({
       if (apiError.errors) {
         setErrors(apiError.errors);
       } else {
-        setErrors({ _form: apiError.message || "저장에 실패했습니다." });
+        setErrors({ _form: apiError.message || common.saveFailed });
       }
     } finally {
       setLoading(false);
@@ -167,13 +186,13 @@ export default function ProductForm({
       {/* 상품명 */}
       <div className="space-y-2">
         <Label htmlFor="product-name">
-          상품명 <span className="text-destructive">*</span>
+          {productLabels.nameLabel} <span className="text-destructive">*</span>
         </Label>
         <Input
           id="product-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="상품명을 입력하세요"
+          placeholder={productLabels.namePlaceholder}
           aria-required="true"
           aria-describedby={errors.name ? "product-name-error" : undefined}
           disabled={loading}
@@ -187,12 +206,12 @@ export default function ProductForm({
 
       {/* 설명 */}
       <div className="space-y-2">
-        <Label htmlFor="product-description">상품 설명</Label>
+        <Label htmlFor="product-description">{productLabels.descriptionLabel}</Label>
         <Textarea
           id="product-description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="상품 설명을 입력하세요"
+          placeholder={productLabels.descriptionPlaceholder}
           rows={5}
           disabled={loading}
         />
@@ -202,7 +221,7 @@ export default function ProductForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="product-price">
-            가격 (원) <span className="text-destructive">*</span>
+            {productLabels.priceLabel} <span className="text-destructive">*</span>
           </Label>
           <Input
             id="product-price"
@@ -223,7 +242,7 @@ export default function ProductForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="product-status">상태</Label>
+          <Label htmlFor="product-status">{productLabels.statusLabel}</Label>
           <Select
             value={status}
             onValueChange={(v) => {
@@ -245,54 +264,127 @@ export default function ProductForm({
         </div>
       </div>
 
-      {/* 카테고리 / 브랜드 */}
+      {/* 대분류 / 중분류 (필수) */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="product-category">
-            카테고리 <span className="text-destructive">*</span>
+          <Label htmlFor="product-main-category">
+            {productLabels.mainCategoryLabel} <span className="text-destructive">*</span>
           </Label>
           <Select
-            value={categoryId}
+            value={mainCategoryId}
             onValueChange={(v) => {
-              if (v) setCategoryId(v);
+              if (v) {
+                setMainCategoryId(v);
+                setSubCategoryId(NO_SELECT);
+                setDetailCategoryId(NO_SELECT);
+              }
             }}
             disabled={loading}
           >
             <SelectTrigger
-              id="product-category"
+              id="product-main-category"
               aria-required="true"
-              aria-invalid={!!errors.categoryId}
+              aria-invalid={!!errors.mainCategoryId}
               aria-describedby={
-                errors.categoryId ? "product-category-error" : undefined
+                errors.mainCategoryId ? "product-main-category-error" : undefined
               }
             >
-              <SelectValue placeholder="카테고리 선택" />
+              <SelectValue placeholder={productLabels.mainCategoryPlaceholder} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={NO_SELECT} disabled>
-                카테고리 선택
+                {productLabels.mainCategoryPlaceholder}
               </SelectItem>
-              {categories.map((c) => (
+              {mainCategories.map((c) => (
                 <SelectItem key={c.id} value={c.id.toString()}>
                   {c.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {errors.categoryId && (
-            <p
-              id="product-category-error"
-              className="text-sm text-destructive"
-            >
-              {errors.categoryId}
+          {errors.mainCategoryId && (
+            <p id="product-main-category-error" className="text-sm text-destructive">
+              {errors.mainCategoryId}
             </p>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="product-brand">
-            브랜드 <span className="text-destructive">*</span>
+          <Label htmlFor="product-sub-category">
+            {productLabels.subCategoryLabel} <span className="text-destructive">*</span>
           </Label>
+          <Select
+            value={subCategoryId}
+            onValueChange={(v) => {
+              if (v) {
+                setSubCategoryId(v);
+                setDetailCategoryId(NO_SELECT);
+              }
+            }}
+            disabled={loading || mainCategoryId === NO_SELECT}
+          >
+            <SelectTrigger
+              id="product-sub-category"
+              aria-required="true"
+              aria-invalid={!!errors.subCategoryId}
+              aria-describedby={
+                errors.subCategoryId ? "product-sub-category-error" : undefined
+              }
+            >
+              <SelectValue placeholder={mainCategoryId === NO_SELECT ? productLabels.subCategoryDisabled : productLabels.subCategoryPlaceholder} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_SELECT} disabled>
+                {productLabels.subCategoryPlaceholder}
+              </SelectItem>
+              {subCategories.map((c) => (
+                <SelectItem key={c.id} value={c.id.toString()}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.subCategoryId && (
+            <p id="product-sub-category-error" className="text-sm text-destructive">
+              {errors.subCategoryId}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* 소분류 / 브랜드 (옵션) */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="product-detail-category">{productLabels.detailCategoryLabel}</Label>
+          <Select
+            value={detailCategoryId}
+            onValueChange={(v) => {
+              if (v) setDetailCategoryId(v);
+            }}
+            disabled={loading || subCategoryId === NO_SELECT || detailCategories.length === 0}
+          >
+            <SelectTrigger id="product-detail-category">
+              <SelectValue placeholder={
+                subCategoryId === NO_SELECT
+                  ? productLabels.detailCategoryDisabled
+                  : detailCategories.length === 0
+                    ? productLabels.detailCategoryEmpty
+                    : productLabels.detailCategoryPlaceholder
+              } />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_SELECT}>{productLabels.noSelection}</SelectItem>
+              {detailCategories.map((c) => (
+                <SelectItem key={c.id} value={c.id.toString()}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="product-brand">{productLabels.brandLabel}</Label>
           <Select
             value={brandId}
             onValueChange={(v) => {
@@ -300,20 +392,11 @@ export default function ProductForm({
             }}
             disabled={loading}
           >
-            <SelectTrigger
-              id="product-brand"
-              aria-required="true"
-              aria-invalid={!!errors.brandId}
-              aria-describedby={
-                errors.brandId ? "product-brand-error" : undefined
-              }
-            >
-              <SelectValue placeholder="브랜드 선택" />
+            <SelectTrigger id="product-brand">
+              <SelectValue placeholder={productLabels.brandPlaceholder} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={NO_SELECT} disabled>
-                브랜드 선택
-              </SelectItem>
+              <SelectItem value={NO_SELECT}>{productLabels.noSelection}</SelectItem>
               {brands.map((b) => (
                 <SelectItem key={b.id} value={b.id.toString()}>
                   {b.name}
@@ -321,17 +404,12 @@ export default function ProductForm({
               ))}
             </SelectContent>
           </Select>
-          {errors.brandId && (
-            <p id="product-brand-error" className="text-sm text-destructive">
-              {errors.brandId}
-            </p>
-          )}
         </div>
       </div>
 
       {/* 이미지 */}
       <div className="space-y-2">
-        <Label>상품 이미지</Label>
+        <Label>{productLabels.imageLabel}</Label>
         <ImageUploader images={images} onChange={setImages} />
       </div>
 
@@ -390,7 +468,7 @@ export default function ProductForm({
       {/* 버튼 */}
       <div className="flex gap-3">
         <Button type="submit" disabled={loading}>
-          {loading ? "저장 중..." : isEdit ? "수정" : "등록"}
+          {loading ? common.saving : isEdit ? common.edit : common.create}
         </Button>
         <Button
           type="button"
@@ -398,7 +476,7 @@ export default function ProductForm({
           onClick={() => router.push("/products")}
           disabled={loading}
         >
-          취소
+          {common.cancel}
         </Button>
       </div>
     </form>

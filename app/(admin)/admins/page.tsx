@@ -13,8 +13,8 @@ import {
   updateAdmin,
   deleteAdmin,
 } from "@/services/adminService";
-import { ADMIN_ROLE_LABEL } from "@/lib/constants";
 import type { Admin, AdminFormData } from "@/types/admin";
+import { admin as adminLabels, common, ADMIN_ROLE_LABEL } from "@/data/labels";
 
 export default function AdminsPage() {
   const [admins, setAdmins] = useState<Admin[]>([]);
@@ -78,11 +78,11 @@ export default function AdminsPage() {
   };
 
   const columns: Column<Admin>[] = [
-    { key: "email", label: "이메일", sortable: true },
-    { key: "name", label: "이름", sortable: true },
+    { key: "email", label: adminLabels.colEmail, sortable: true },
+    { key: "name", label: adminLabels.colName, sortable: true },
     {
       key: "role",
-      label: "역할",
+      label: adminLabels.colRole,
       render: (admin) => (
         <StatusBadge
           label={ADMIN_ROLE_LABEL[admin.role]}
@@ -92,7 +92,7 @@ export default function AdminsPage() {
     },
     {
       key: "createdAt",
-      label: "등록일",
+      label: adminLabels.colCreatedAt,
       render: (admin) => new Date(admin.createdAt).toLocaleDateString("ko-KR"),
     },
     {
@@ -109,7 +109,7 @@ export default function AdminsPage() {
               handleEdit(admin);
             }}
           >
-            수정
+            {common.edit}
           </Button>
           <Button
             variant="ghost"
@@ -120,7 +120,7 @@ export default function AdminsPage() {
               setDeleteTarget(admin);
             }}
           >
-            삭제
+            {common.delete}
           </Button>
         </div>
       ),
@@ -130,23 +130,23 @@ export default function AdminsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">관리자 계정</h1>
+        <h1 className="text-2xl font-semibold">{adminLabels.pageTitle}</h1>
         <Button onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" />
-          관리자 추가
+          {adminLabels.addButton}
         </Button>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <p className="text-sm text-muted-foreground">불러오는 중...</p>
+          <p className="text-sm text-muted-foreground">{common.loading}</p>
         </div>
       ) : (
         <DataTable
           columns={columns}
           data={admins}
           keyExtractor={(admin) => admin.id}
-          emptyMessage="등록된 관리자가 없습니다."
+          emptyMessage={adminLabels.emptyMessage}
         />
       )}
 
@@ -162,9 +162,9 @@ export default function AdminsPage() {
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null);
         }}
-        title="관리자 삭제"
-        description={`${deleteTarget?.name}(${deleteTarget?.email}) 계정을 삭제하시겠습니까?`}
-        confirmLabel="삭제"
+        title={adminLabels.deleteTitle}
+        description={deleteTarget ? adminLabels.deleteDescription(deleteTarget.name, deleteTarget.email) : ""}
+        confirmLabel={common.delete}
         onConfirm={handleDelete}
         loading={deleteLoading}
         destructive

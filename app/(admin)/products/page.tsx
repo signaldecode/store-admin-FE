@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, LayoutGrid, List, SlidersHorizontal, X, Search, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -11,6 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import DataTable, { type Column } from "@/components/common/DataTable";
 import SearchFilter from "@/components/common/SearchFilter";
 import Pagination from "@/components/common/Pagination";
@@ -22,16 +30,12 @@ import { getCategories } from "@/services/categoryService";
 import { getBrands } from "@/services/brandService";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePagination } from "@/hooks/usePagination";
-import {
-  PRODUCT_STATUS,
-  PRODUCT_STATUS_LABEL,
-} from "@/lib/constants";
+import { PAGE_SIZE_OPTIONS } from "@/lib/constants";
 import type { Product, ProductListParams } from "@/types/product";
 import type { ProductStatus } from "@/lib/constants";
 import type { Category } from "@/types/category";
 import type { Brand } from "@/types/brand";
-
-const ALL_VALUE = "__all__";
+import { product, common, pagination as paginationLabels, PRODUCT_STATUS_LABEL } from "@/data/labels";
 
 const statusVariant: Record<ProductStatus, "success" | "warning" | "destructive"> = {
   SALE: "success",
@@ -47,12 +51,49 @@ export default function ProductsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
 
+  // 뷰 모드
+  const [viewMode, setViewMode] = useState<"list" | "card">("list");
+
   // 필터
   const [keyword, setKeyword] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>(ALL_VALUE);
-  const [categoryFilter, setCategoryFilter] = useState<string>(ALL_VALUE);
-  const [brandFilter, setBrandFilter] = useState<string>(ALL_VALUE);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("");
+  const [mainCategoryFilter, setMainCategoryFilter] = useState("");
+  const [subCategoryFilter, setSubCategoryFilter] = useState("");
+  const [detailCategoryFilter, setDetailCategoryFilter] = useState("");
+  const [brandFilter, setBrandFilter] = useState("");
+  const [brandDialogOpen, setBrandDialogOpen] = useState(false);
+  const [brandSearch, setBrandSearch] = useState("");
+
+  const mainCategories = categories.filter((c) => c.level === 1);
+  const selectedMainCat = mainCategories.find((c) => c.name === mainCategoryFilter);
+  const subCategoriesForFilter = categories.filter(
+    (c) => c.level === 2 && (!mainCategoryFilter || c.parentId === selectedMainCat?.id)
+  );
+  const selectedSubCat = subCategoriesForFilter.find((c) => c.name === subCategoryFilter);
+  const detailCategoriesForFilter = categories.filter(
+    (c) => c.level === 3 && (!subCategoryFilter || c.parentId === selectedSubCat?.id)
+  );
+  const selectedDetailCat = detailCategoriesForFilter.find((c) => c.name === detailCategoryFilter);
+  const selectedBrand = brands.find((b) => b.name === brandFilter);
+  const sortedBrands = [...brands].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  const previewBrands = sortedBrands.slice(0, 10);
+  const hasMoreBrands = sortedBrands.length > 10;
+  const brandFilterInPreview = !brandFilter || previewBrands.some((b) => b.name === brandFilter);
+  const filteredBrandsForDialog = sortedBrands.filter((b) =>
+    b.name.toLowerCase().includes(brandSearch.toLowerCase())
+  );
   const debouncedKeyword = useDebounce(keyword);
+
+  const activeFilterCount = [statusFilter, mainCategoryFilter, subCategoryFilter, detailCategoryFilter, brandFilter].filter(Boolean).length;
+
+  const resetFilters = () => {
+    setStatusFilter("");
+    setMainCategoryFilter("");
+    setSubCategoryFilter("");
+    setDetailCategoryFilter("");
+    setBrandFilter("");
+  };
 
   // 정렬
   const [sort, setSort] = useState("createdAt");
@@ -91,14 +132,11 @@ export default function ProductsPage() {
         sort,
         order,
         keyword: debouncedKeyword || undefined,
-        status:
-          statusFilter !== ALL_VALUE
-            ? (statusFilter as ProductStatus)
-            : undefined,
-        categoryId:
-          categoryFilter !== ALL_VALUE ? Number(categoryFilter) : undefined,
-        brandId:
-          brandFilter !== ALL_VALUE ? Number(brandFilter) : undefined,
+        status: statusFilter ? (statusFilter as ProductStatus) : undefined,
+        mainCategoryId: selectedMainCat?.id,
+        subCategoryId: selectedSubCat?.id,
+        detailCategoryId: selectedDetailCat?.id,
+        brandId: selectedBrand?.id,
       };
       const res = await getProducts(params);
       setProducts(res.data);
@@ -115,7 +153,9 @@ export default function ProductsPage() {
     order,
     debouncedKeyword,
     statusFilter,
-    categoryFilter,
+    mainCategoryFilter,
+    subCategoryFilter,
+    detailCategoryFilter,
     brandFilter,
   ]);
 
@@ -126,7 +166,7 @@ export default function ProductsPage() {
   // 필터 변경 시 1페이지로
   useEffect(() => {
     pagination.resetPage();
-  }, [debouncedKeyword, statusFilter, categoryFilter, brandFilter]);
+  }, [debouncedKeyword, statusFilter, mainCategoryFilter, subCategoryFilter, detailCategoryFilter, brandFilter]);
 
   const handleSort = (key: string) => {
     if (sort === key) {
@@ -158,8 +198,25 @@ export default function ProductsPage() {
 
   const columns: Column<Product>[] = [
     {
+      key: "image",
+      label: product.colImage,
+      className: "w-12",
+      render: (p) =>
+        p.images[0] ? (
+          <img
+            src={p.images[0].url}
+            alt={p.name}
+            className="h-10 w-10 object-contain"
+          />
+        ) : (
+          <div className="flex h-10 w-10 items-center justify-center bg-muted text-[10px] text-muted-foreground">
+            {product.noImage}
+          </div>
+        ),
+    },
+    {
       key: "name",
-      label: "상품명",
+      label: product.colName,
       sortable: true,
       render: (p) => (
         <span className="font-medium">{p.name}</span>
@@ -167,21 +224,28 @@ export default function ProductsPage() {
     },
     {
       key: "price",
-      label: "가격",
+      label: product.colPrice,
       sortable: true,
-      render: (p) => `${p.price.toLocaleString("ko-KR")}원`,
+      render: (p) => `${p.price.toLocaleString("ko-KR")}${common.currency}`,
     },
     {
-      key: "categoryName",
-      label: "카테고리",
+      key: "category",
+      label: product.colCategory,
+      render: (p) => (
+        <span className="text-sm">
+          {p.mainCategoryName} &gt; {p.subCategoryName}
+          {p.detailCategoryName && ` > ${p.detailCategoryName}`}
+        </span>
+      ),
     },
     {
       key: "brandName",
-      label: "브랜드",
+      label: product.colBrand,
+      render: (p) => <span>{p.brandName || "-"}</span>,
     },
     {
       key: "status",
-      label: "상태",
+      label: product.colStatus,
       sortable: true,
       render: (p) => (
         <StatusBadge
@@ -192,7 +256,7 @@ export default function ProductsPage() {
     },
     {
       key: "createdAt",
-      label: "등록일",
+      label: product.colCreatedAt,
       sortable: true,
       render: (p) => new Date(p.createdAt).toLocaleDateString("ko-KR"),
     },
@@ -203,7 +267,7 @@ export default function ProductsPage() {
       render: (p) => (
         <div className="flex gap-1">
           <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleEdit(p); }}>
-            수정
+            {common.edit}
           </Button>
           <Button
             variant="ghost"
@@ -211,7 +275,7 @@ export default function ProductsPage() {
             className="text-destructive hover:text-destructive"
             onClick={(e) => { e.stopPropagation(); setDeleteTarget(p); }}
           >
-            삭제
+            {common.delete}
           </Button>
         </div>
       ),
@@ -221,123 +285,357 @@ export default function ProductsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">상품 관리</h1>
-        <Button onClick={() => router.push("/products/new")}>
-          <Plus className="mr-2 h-4 w-4" />
-          상품 등록
-        </Button>
+        <h1 className="text-2xl font-semibold">{product.pageTitle}</h1>
+        <div className="flex items-center gap-2">
+          <div className="hidden items-center rounded-md border md:flex">
+            <Button
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="icon"
+              className="h-8 w-8 rounded-none rounded-l-md"
+              onClick={() => setViewMode("list")}
+              aria-label={product.listView}
+              aria-pressed={viewMode === "list"}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "card" ? "secondary" : "ghost"}
+              size="icon"
+              className="h-8 w-8 rounded-none rounded-r-md"
+              onClick={() => setViewMode("card")}
+              aria-label={product.cardView}
+              aria-pressed={viewMode === "card"}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button onClick={() => router.push("/products/new")}>
+            <Plus className="mr-2 h-4 w-4" />
+            {product.addButton}
+          </Button>
+        </div>
       </div>
 
-      {/* 검색 & 필터 */}
+      {/* 검색 & 필터 토글 */}
       <SearchFilter
         value={keyword}
         onChange={setKeyword}
-        placeholder="상품명으로 검색"
+        placeholder={product.searchPlaceholder}
       >
-        <Select value={statusFilter} onValueChange={(v) => { if (v) setStatusFilter(v); }}>
-          <SelectTrigger className="w-32" aria-label="상태 필터">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_VALUE}>전체 상태</SelectItem>
-            {Object.entries(PRODUCT_STATUS_LABEL).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={categoryFilter} onValueChange={(v) => { if (v) setCategoryFilter(v); }}>
-          <SelectTrigger className="w-36" aria-label="카테고리 필터">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_VALUE}>전체 카테고리</SelectItem>
-            {categories.map((c) => (
-              <SelectItem key={c.id} value={c.id.toString()}>
-                {c.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={brandFilter} onValueChange={(v) => { if (v) setBrandFilter(v); }}>
-          <SelectTrigger className="w-32" aria-label="브랜드 필터">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_VALUE}>전체 브랜드</SelectItem>
-            {brands.map((b) => (
-              <SelectItem key={b.id} value={b.id.toString()}>
-                {b.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Button
+          variant={filterOpen ? "secondary" : "outline"}
+          size="sm"
+          onClick={() => setFilterOpen((prev) => !prev)}
+          aria-expanded={filterOpen}
+          aria-label={filterOpen ? product.filterClose : product.filterOpen}
+        >
+          <SlidersHorizontal className="mr-1.5 h-4 w-4" />
+          {product.filterToggle}
+          {activeFilterCount > 0 && (
+            <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-xs">
+              {activeFilterCount}
+            </Badge>
+          )}
+        </Button>
       </SearchFilter>
 
-      {/* 데스크톱: 테이블 */}
-      <div className="hidden md:block">
-        {loading ? (
-          <div className="flex justify-center py-16">
-            <p className="text-sm text-muted-foreground">불러오는 중...</p>
+      {/* 필터 패널 */}
+      {filterOpen && (
+        <div className="space-y-3 rounded-md border p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">{product.filterToggle}</span>
+            {activeFilterCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={resetFilters}>
+                <X className="mr-1 h-3 w-3" />
+                {product.filterReset}
+              </Button>
+            )}
           </div>
-        ) : (
-          <DataTable
-            columns={columns}
-            data={products}
-            keyExtractor={(p) => p.id}
-            sort={sort}
-            order={order}
-            onSort={handleSort}
-            onRowClick={handleView}
-            emptyMessage="등록된 상품이 없습니다."
-          />
-        )}
-      </div>
 
-      {/* 모바일: 카드 리스트 */}
-      <div className="space-y-2 md:hidden">
-        {loading ? (
-          <div className="flex justify-center py-16">
-            <p className="text-sm text-muted-foreground">불러오는 중...</p>
+          {/* 상태 */}
+          <div className="space-y-1.5">
+            <span className="text-xs text-muted-foreground">{product.filterStatusGroup}</span>
+            <div className="flex flex-wrap gap-1.5">
+              {Object.entries(PRODUCT_STATUS_LABEL).map(([value, label]) => (
+                <Button
+                  key={value}
+                  variant={statusFilter === value ? "default" : "outline"}
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => setStatusFilter(statusFilter === value ? "" : value)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
           </div>
-        ) : products.length === 0 ? (
-          <p className="py-16 text-center text-sm text-muted-foreground">
-            등록된 상품이 없습니다.
-          </p>
-        ) : (
-          products.map((p) => (
-            <ProductListItem
-              key={p.id}
-              product={p}
-              onView={handleView}
-              onEdit={handleEdit}
-              onDelete={setDeleteTarget}
-            />
-          ))
-        )}
-      </div>
 
-      <Pagination
-        page={pagination.page}
-        totalPages={pagination.totalPages}
-        onPageChange={pagination.goToPage}
-      />
+          {/* 대분류 */}
+          <div className="space-y-1.5">
+            <span className="text-xs text-muted-foreground">{product.filterMainCategoryGroup}</span>
+            <div className="flex flex-wrap gap-1.5">
+              {mainCategories.map((c) => (
+                <Button
+                  key={c.id}
+                  variant={mainCategoryFilter === c.name ? "default" : "outline"}
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => {
+                    setMainCategoryFilter(mainCategoryFilter === c.name ? "" : c.name);
+                    setSubCategoryFilter("");
+                    setDetailCategoryFilter("");
+                  }}
+                >
+                  {c.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* 중분류 (대분류 선택 시) */}
+          {mainCategoryFilter && subCategoriesForFilter.length > 0 && (
+            <div className="space-y-1.5">
+              <span className="text-xs text-muted-foreground">{product.filterSubCategoryGroup}</span>
+              <div className="flex flex-wrap gap-1.5">
+                {subCategoriesForFilter.map((c) => (
+                  <Button
+                    key={c.id}
+                    variant={subCategoryFilter === c.name ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => {
+                      setSubCategoryFilter(subCategoryFilter === c.name ? "" : c.name);
+                      setDetailCategoryFilter("");
+                    }}
+                  >
+                    {c.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 소분류 (중분류 선택 시) */}
+          {subCategoryFilter && detailCategoriesForFilter.length > 0 && (
+            <div className="space-y-1.5">
+              <span className="text-xs text-muted-foreground">{product.filterDetailCategoryGroup}</span>
+              <div className="flex flex-wrap gap-1.5">
+                {detailCategoriesForFilter.map((c) => (
+                  <Button
+                    key={c.id}
+                    variant={detailCategoryFilter === c.name ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => setDetailCategoryFilter(detailCategoryFilter === c.name ? "" : c.name)}
+                  >
+                    {c.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 브랜드 */}
+          {brands.length > 0 && (
+            <div className="space-y-1.5">
+              <span className="text-xs text-muted-foreground">{product.filterBrandGroup}</span>
+              <div className="flex flex-wrap gap-1.5">
+                {!brandFilterInPreview && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => setBrandFilter("")}
+                  >
+                    {brandFilter}
+                    <X className="ml-1 h-3 w-3" />
+                  </Button>
+                )}
+                {previewBrands.map((b) => (
+                  <Button
+                    key={b.id}
+                    variant={brandFilter === b.name ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => setBrandFilter(brandFilter === b.name ? "" : b.name)}
+                  >
+                    {b.name}
+                  </Button>
+                ))}
+                {hasMoreBrands && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => {
+                      setBrandSearch("");
+                      setBrandDialogOpen(true);
+                    }}
+                  >
+                    <Plus className="mr-1 h-3 w-3" />
+                    {product.filterBrandMore}
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <p className="text-sm text-muted-foreground">{common.loading}</p>
+        </div>
+      ) : (
+        <>
+          {/* 데스크톱: 리스트형 */}
+          {viewMode === "list" && (
+            <div className="hidden md:block">
+              <DataTable
+                columns={columns}
+                data={products}
+                keyExtractor={(p) => p.id}
+                sort={sort}
+                order={order}
+                onSort={handleSort}
+                onRowClick={handleView}
+                emptyMessage={product.emptyMessage}
+              />
+            </div>
+          )}
+
+          {/* 데스크톱: 카드형 */}
+          {viewMode === "card" && (
+            <div className="hidden md:block">
+              {products.length === 0 ? (
+                <p className="py-16 text-center text-sm text-muted-foreground">
+                  {product.emptyMessage}
+                </p>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {products.map((p) => (
+                    <ProductListItem
+                      key={p.id}
+                      product={p}
+                      onView={handleView}
+                      onEdit={handleEdit}
+                      onDelete={setDeleteTarget}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 모바일: 항상 카드형 */}
+          <div className="space-y-2 md:hidden">
+            {products.length === 0 ? (
+              <p className="py-16 text-center text-sm text-muted-foreground">
+                {product.emptyMessage}
+              </p>
+            ) : (
+              products.map((p) => (
+                <ProductListItem
+                  key={p.id}
+                  product={p}
+                  onView={handleView}
+                  onEdit={handleEdit}
+                  onDelete={setDeleteTarget}
+                />
+              ))
+            )}
+          </div>
+        </>
+      )}
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>{common.perPage}</span>
+          <Select
+            value={pagination.size.toString()}
+            onValueChange={(v) => {
+              if (v) {
+                pagination.setSize(Number(v));
+                pagination.resetPage();
+              }
+            }}
+          >
+            <SelectTrigger className="h-8 w-20" aria-label={paginationLabels.pageSizeLabel}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PAGE_SIZE_OPTIONS.map((size) => (
+                <SelectItem key={size} value={size.toString()}>
+                  {common.itemUnit(size)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {pagination.totalCount > 0 && (
+            <span>{common.totalCount(pagination.totalCount)}</span>
+          )}
+        </div>
+        <Pagination
+          page={pagination.page}
+          totalPages={pagination.totalPages}
+          onPageChange={pagination.goToPage}
+        />
+      </div>
 
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null);
         }}
-        title="상품 삭제"
-        description={`"${deleteTarget?.name}" 상품을 삭제하시겠습니까?`}
-        confirmLabel="삭제"
+        title={product.deleteTitle}
+        description={deleteTarget ? product.deleteDescription(deleteTarget.name) : ""}
+        confirmLabel={common.delete}
         onConfirm={handleDelete}
         loading={deleteLoading}
         destructive
       />
+
+      {/* 브랜드 선택 Dialog */}
+      <Dialog open={brandDialogOpen} onOpenChange={setBrandDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{product.filterBrandDialogTitle}</DialogTitle>
+          </DialogHeader>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              value={brandSearch}
+              onChange={(e) => setBrandSearch(e.target.value)}
+              placeholder={product.filterBrandSearchPlaceholder}
+              className="pl-9"
+              autoFocus
+            />
+          </div>
+          <ul className="max-h-64 space-y-0.5 overflow-y-auto" role="listbox" aria-label={product.filterBrandDialogTitle}>
+            {filteredBrandsForDialog.length === 0 ? (
+              <li className="py-6 text-center text-sm text-muted-foreground">
+                {product.filterBrandEmpty}
+              </li>
+            ) : (
+              filteredBrandsForDialog.map((b) => (
+                <li key={b.id} role="option" aria-selected={brandFilter === b.name}>
+                  <button
+                    className="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-accent"
+                    onClick={() => {
+                      setBrandFilter(brandFilter === b.name ? "" : b.name);
+                      setBrandDialogOpen(false);
+                    }}
+                  >
+                    <span>{b.name}</span>
+                    {brandFilter === b.name && <Check className="h-4 w-4 text-primary" />}
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

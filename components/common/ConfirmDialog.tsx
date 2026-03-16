@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { common } from "@/data/labels";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -27,8 +28,8 @@ export default function ConfirmDialog({
   onOpenChange,
   title,
   description,
-  confirmLabel = "확인",
-  cancelLabel = "취소",
+  confirmLabel = common.confirm,
+  cancelLabel = common.cancel,
   onConfirm,
   loading = false,
   destructive = false,
@@ -53,7 +54,7 @@ export default function ConfirmDialog({
             onClick={onConfirm}
             disabled={loading}
           >
-            {loading ? "처리 중..." : confirmLabel}
+            {loading ? common.processing : confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

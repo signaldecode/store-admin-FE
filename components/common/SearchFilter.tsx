@@ -2,6 +2,7 @@
 
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { searchFilter } from "@/data/labels";
 
 interface SearchFilterProps {
   value: string;
@@ -13,7 +14,7 @@ interface SearchFilterProps {
 export default function SearchFilter({
   value,
   onChange,
-  placeholder = "검색어를 입력하세요",
+  placeholder = searchFilter.defaultPlaceholder,
   children,
 }: SearchFilterProps) {
   return (

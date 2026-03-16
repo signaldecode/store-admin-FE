@@ -2,6 +2,7 @@
 
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { common } from "@/data/labels";
 
 export default function AdminError({
   error,
@@ -13,11 +14,11 @@ export default function AdminError({
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4">
       <AlertTriangle className="h-12 w-12 text-destructive" />
-      <h2 className="text-lg font-semibold">오류가 발생했습니다</h2>
+      <h2 className="text-lg font-semibold">{common.errorOccurred}</h2>
       <p className="max-w-md text-center text-sm text-muted-foreground">
-        {error.message || "페이지를 불러오는 중 문제가 발생했습니다."}
+        {error.message || common.errorFallback}
       </p>
-      <Button onClick={reset}>다시 시도</Button>
+      <Button onClick={reset}>{common.retry}</Button>
     </div>
   );
 }

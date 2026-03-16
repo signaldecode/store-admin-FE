@@ -9,9 +9,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import StatusBadge from "@/components/common/StatusBadge";
-import { PRODUCT_STATUS_LABEL } from "@/lib/constants";
+import { PRODUCT_STATUS_LABEL } from "@/data/labels";
 import type { Product } from "@/types/product";
 import type { ProductStatus } from "@/lib/constants";
+import { product as productLabels, common } from "@/data/labels";
 
 interface ProductListItemProps {
   product: Product;
@@ -42,7 +43,7 @@ export default function ProductListItem({
         />
       ) : (
         <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md bg-muted text-xs text-muted-foreground">
-          No IMG
+          {productLabels.noImage}
         </div>
       )}
 
@@ -54,8 +55,8 @@ export default function ProductListItem({
           {product.name}
         </button>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span>{product.price.toLocaleString("ko-KR")}원</span>
-          {product.categoryName && <span>{product.categoryName}</span>}
+          <span>{product.price.toLocaleString("ko-KR")}{common.currency}</span>
+          <span>{product.mainCategoryName} &gt; {product.subCategoryName}</span>
           {product.brandName && <span>{product.brandName}</span>}
         </div>
       </div>
@@ -67,22 +68,22 @@ export default function ProductListItem({
 
       <DropdownMenu>
         <DropdownMenuTrigger
-          render={<Button variant="ghost" size="icon" className="h-8 w-8" aria-label="상품 메뉴" />}
+          render={<Button variant="ghost" size="icon" className="h-8 w-8" aria-label={productLabels.productMenu} />}
         >
           <MoreVertical className="h-4 w-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => onView(product)}>
-            상세 보기
+            {productLabels.menuView}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onEdit(product)}>
-            수정
+            {productLabels.menuEdit}
           </DropdownMenuItem>
           <DropdownMenuItem
             className="text-destructive focus:text-destructive"
             onClick={() => onDelete(product)}
           >
-            삭제
+            {productLabels.menuDelete}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

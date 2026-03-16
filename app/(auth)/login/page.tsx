@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { login } from "@/services/authService";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { auth, common } from "@/data/labels";
 import type { ApiError } from "@/types/api";
 
 export default function LoginPage() {
@@ -29,7 +30,7 @@ export default function LoginPage() {
     setError("");
 
     if (!email || !password) {
-      setError("이메일과 비밀번호를 입력해주세요.");
+      setError(auth.validationRequired);
       return;
     }
 
@@ -40,7 +41,7 @@ export default function LoginPage() {
       router.push("/");
     } catch (err) {
       const apiError = err as ApiError;
-      setError(apiError.message || "로그인에 실패했습니다.");
+      setError(apiError.message || common.loginFailed);
     } finally {
       setLoading(false);
     }
@@ -49,18 +50,18 @@ export default function LoginPage() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">관리자 로그인</CardTitle>
+        <CardTitle className="text-2xl">{auth.pageTitle}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">이메일</Label>
+            <Label htmlFor="email">{auth.emailLabel}</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@example.com"
+              placeholder={auth.emailPlaceholder}
               autoComplete="email"
               aria-required="true"
               aria-describedby={error ? "login-error" : undefined}
@@ -69,13 +70,13 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">비밀번호</Label>
+            <Label htmlFor="password">{auth.passwordLabel}</Label>
             <Input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="비밀번호를 입력하세요"
+              placeholder={auth.passwordPlaceholder}
               autoComplete="current-password"
               aria-required="true"
               disabled={loading}
@@ -89,7 +90,7 @@ export default function LoginPage() {
           )}
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "로그인 중..." : "로그인"}
+            {loading ? auth.loggingIn : auth.loginButton}
           </Button>
         </form>
       </CardContent>

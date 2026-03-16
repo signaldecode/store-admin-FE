@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import MobileDrawer from "./MobileDrawer";
+import { common } from "@/data/labels";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -18,7 +19,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" aria-label="로딩 중" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" aria-label={common.loading} />
       </div>
     );
   }

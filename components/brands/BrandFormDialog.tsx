@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Brand, BrandFormData } from "@/types/brand";
 import type { ApiError } from "@/types/api";
+import { brand as brandLabels, common } from "@/data/labels";
 
 interface BrandFormDialogProps {
   open: boolean;
@@ -44,7 +45,7 @@ export default function BrandFormDialog({
     e.preventDefault();
 
     if (!name.trim()) {
-      setError("브랜드명을 입력해주세요.");
+      setError(brandLabels.nameRequired);
       return;
     }
 
@@ -54,7 +55,7 @@ export default function BrandFormDialog({
       onOpenChange(false);
     } catch (err) {
       const apiError = err as ApiError;
-      setError(apiError.message || "저장에 실패했습니다.");
+      setError(apiError.message || common.saveFailed);
     } finally {
       setLoading(false);
     }
@@ -64,20 +65,20 @@ export default function BrandFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isEdit ? "브랜드 수정" : "브랜드 추가"}</DialogTitle>
+          <DialogTitle>{isEdit ? brandLabels.editTitle : brandLabels.createTitle}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="brand-name">
-              브랜드명 <span className="text-destructive">*</span>
+              {brandLabels.nameLabel} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="brand-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="브랜드명을 입력하세요"
+              placeholder={brandLabels.namePlaceholder}
               aria-required="true"
               aria-describedby={error ? "brand-name-error" : undefined}
               disabled={loading}
@@ -97,10 +98,10 @@ export default function BrandFormDialog({
               onClick={() => onOpenChange(false)}
               disabled={loading}
             >
-              취소
+              {common.cancel}
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "저장 중..." : isEdit ? "수정" : "추가"}
+              {loading ? common.saving : isEdit ? common.edit : common.add}
             </Button>
           </DialogFooter>
         </form>

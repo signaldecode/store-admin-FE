@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import EmptyState from "./EmptyState";
+import { common } from "@/data/labels";
 
 export interface Column<T> {
   key: string;
@@ -37,7 +38,7 @@ export default function DataTable<T>({
   sort,
   order,
   onSort,
-  emptyMessage = "데이터가 없습니다.",
+  emptyMessage = common.noData,
   onRowClick,
 }: DataTableProps<T>) {
   const renderSortIcon = (column: Column<T>) => {
@@ -75,7 +76,7 @@ export default function DataTable<T>({
                   <button
                     className="flex items-center font-medium"
                     onClick={() => onSort?.(col.key)}
-                    aria-label={`${col.label} 정렬`}
+                    aria-label={common.sortLabel(col.label)}
                   >
                     {col.label}
                     {renderSortIcon(col)}

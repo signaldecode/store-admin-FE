@@ -6,6 +6,7 @@ import { useSidebarStore } from "@/stores/useSidebarStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { logout } from "@/services/authService";
 import { useRouter } from "next/navigation";
+import { layout } from "@/data/labels";
 
 interface HeaderProps {
   onMobileMenuToggle: () => void;
@@ -35,7 +36,7 @@ export default function Header({ onMobileMenuToggle }: HeaderProps) {
           size="icon"
           className="md:hidden"
           onClick={onMobileMenuToggle}
-          aria-label="메뉴 열기"
+          aria-label={layout.menuOpen}
         >
           <Menu className="h-5 w-5" />
         </Button>
@@ -46,7 +47,7 @@ export default function Header({ onMobileMenuToggle }: HeaderProps) {
           size="icon"
           className="hidden md:flex"
           onClick={toggle}
-          aria-label={isOpen ? "사이드바 접기" : "사이드바 펼치기"}
+          aria-label={isOpen ? layout.sidebarCollapse : layout.sidebarExpand}
         >
           {isOpen ? (
             <PanelLeftClose className="h-5 w-5" />
@@ -64,7 +65,7 @@ export default function Header({ onMobileMenuToggle }: HeaderProps) {
           variant="ghost"
           size="icon"
           onClick={handleLogout}
-          aria-label="로그아웃"
+          aria-label={layout.logout}
         >
           <LogOut className="h-5 w-5" />
         </Button>

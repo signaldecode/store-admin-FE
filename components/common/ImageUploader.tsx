@@ -3,6 +3,7 @@
 import { useCallback, useRef } from "react";
 import { ImagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { imageUploader } from "@/data/labels";
 
 interface ImageFile {
   file?: File;
@@ -64,7 +65,7 @@ export default function ImageUploader({
           >
             <img
               src={img.url}
-              alt={`상품 이미지 ${i + 1}`}
+              alt={imageUploader.altText("상품", i)}
               className="h-full w-full object-cover"
             />
             <Button
@@ -72,7 +73,7 @@ export default function ImageUploader({
               size="icon"
               className="absolute right-1 top-1 h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100"
               onClick={() => handleRemove(i)}
-              aria-label={`이미지 ${i + 1} 삭제`}
+              aria-label={imageUploader.deleteLabel(i)}
             >
               <X className="h-3 w-3" />
             </Button>
@@ -84,10 +85,10 @@ export default function ImageUploader({
             type="button"
             className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-md border border-dashed text-muted-foreground transition-colors hover:border-primary hover:text-primary"
             onClick={() => inputRef.current?.click()}
-            aria-label="이미지 추가"
+            aria-label={imageUploader.addLabel}
           >
             <ImagePlus className="h-6 w-6" />
-            <span className="text-xs">추가</span>
+            <span className="text-xs">{imageUploader.addButton}</span>
           </button>
         )}
       </div>
@@ -105,7 +106,7 @@ export default function ImageUploader({
       />
 
       <p className="text-xs text-muted-foreground">
-        최대 {maxCount}장, 장당 {maxSizeMB}MB 이하
+        {imageUploader.hint(maxCount, maxSizeMB)}
       </p>
     </div>
   );

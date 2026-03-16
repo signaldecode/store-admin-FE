@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/types/category";
+import { category as categoryLabels } from "@/data/labels";
 
 interface CategoryTreeProps {
   categories: Category[];
@@ -56,7 +57,7 @@ function TreeNode({
         draggable
         tabIndex={0}
         role="listitem"
-        aria-label={`${category.name} 카테고리`}
+        aria-label={categoryLabels.treeItemLabel(category.name)}
         onKeyDown={(e) => {
           if (e.altKey && e.key === "ArrowUp") {
             e.preventDefault();
@@ -90,7 +91,7 @@ function TreeNode({
             onClick={() => setExpanded(!expanded)}
             className="shrink-0 p-0.5"
             aria-expanded={expanded}
-            aria-label={expanded ? "접기" : "펼치기"}
+            aria-label={expanded ? categoryLabels.collapse : categoryLabels.expand}
           >
             {expanded ? (
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -110,7 +111,7 @@ function TreeNode({
             size="icon"
             className="h-7 w-7"
             onClick={() => onEdit(category)}
-            aria-label={`${category.name} 수정`}
+            aria-label={categoryLabels.editLabel(category.name)}
           >
             <Pencil className="h-3.5 w-3.5" />
           </Button>
@@ -119,7 +120,7 @@ function TreeNode({
             size="icon"
             className="h-7 w-7 text-destructive hover:text-destructive"
             onClick={() => onDelete(category)}
-            aria-label={`${category.name} 삭제`}
+            aria-label={categoryLabels.deleteLabel(category.name)}
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>

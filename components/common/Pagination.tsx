@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { pagination } from "@/data/labels";
 
 interface PaginationProps {
   page: number;
@@ -37,14 +38,14 @@ export default function Pagination({
   };
 
   return (
-    <nav className="flex items-center justify-center gap-1" aria-label="페이지 네비게이션">
+    <nav className="flex items-center justify-center gap-1" aria-label={pagination.navLabel}>
       <Button
         variant="outline"
         size="icon"
         className="h-8 w-8"
         onClick={() => onPageChange(page - 1)}
         disabled={page <= 1}
-        aria-label="이전 페이지"
+        aria-label={pagination.prevPage}
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -74,7 +75,7 @@ export default function Pagination({
         className="h-8 w-8"
         onClick={() => onPageChange(page + 1)}
         disabled={page >= totalPages}
-        aria-label="다음 페이지"
+        aria-label={pagination.nextPage}
       >
         <ChevronRight className="h-4 w-4" />
       </Button>

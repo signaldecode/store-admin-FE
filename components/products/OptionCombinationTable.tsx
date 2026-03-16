@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { OptionDraft } from "./OptionTypeSelector";
+import { productOption } from "@/data/labels";
 
 export interface VariantDraft {
   optionValues: Record<string, string>;
@@ -110,7 +111,7 @@ export default function OptionCombinationTable({
 
   return (
     <div className="space-y-2">
-      <Label>옵션 조합별 재고/가격</Label>
+      <Label>{productOption.combinationLabel}</Label>
       <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
@@ -118,9 +119,9 @@ export default function OptionCombinationTable({
               {fixedOptionNames.map((name) => (
                 <TableHead key={name}>{name}</TableHead>
               ))}
-              <TableHead className="w-32">SKU</TableHead>
-              <TableHead className="w-24">재고</TableHead>
-              <TableHead className="w-32">추가금액 (원)</TableHead>
+              <TableHead className="w-32">{productOption.colSku}</TableHead>
+              <TableHead className="w-24">{productOption.colStock}</TableHead>
+              <TableHead className="w-32">{productOption.colAdditionalPrice}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -137,9 +138,9 @@ export default function OptionCombinationTable({
                     onChange={(e) =>
                       updateVariant(idx, { sku: e.target.value })
                     }
-                    placeholder="SKU"
+                    placeholder={productOption.skuPlaceholder}
                     disabled={disabled}
-                    aria-label={`${Object.values(variant.optionValues).join(" ")} SKU`}
+                    aria-label={`${Object.values(variant.optionValues).join(" ")} ${productOption.colSku}`}
                     className="h-8"
                   />
                 </TableCell>
@@ -154,7 +155,7 @@ export default function OptionCombinationTable({
                       })
                     }
                     disabled={disabled}
-                    aria-label={`${Object.values(variant.optionValues).join(" ")} 재고`}
+                    aria-label={`${Object.values(variant.optionValues).join(" ")} ${productOption.colStock}`}
                     className="h-8"
                   />
                 </TableCell>
@@ -169,7 +170,7 @@ export default function OptionCombinationTable({
                       })
                     }
                     disabled={disabled}
-                    aria-label={`${Object.values(variant.optionValues).join(" ")} 추가금액`}
+                    aria-label={`${Object.values(variant.optionValues).join(" ")} ${productOption.variantColPrice}`}
                     className="h-8"
                   />
                 </TableCell>
@@ -179,7 +180,7 @@ export default function OptionCombinationTable({
         </Table>
       </div>
       <p className="text-xs text-muted-foreground">
-        총 {currentVariants.length}개 조합 | 추가금액은 기본 가격에 더해집니다.
+        {productOption.combinationCount(currentVariants.length)} | {productOption.combinationHint}
       </p>
     </div>
   );

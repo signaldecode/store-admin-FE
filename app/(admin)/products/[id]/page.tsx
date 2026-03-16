@@ -17,9 +17,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { getProduct, deleteProduct } from "@/services/productService";
-import { PRODUCT_STATUS_LABEL, OPTION_TYPE_LABEL } from "@/lib/constants";
+import { PRODUCT_STATUS_LABEL, OPTION_TYPE_LABEL } from "@/data/labels";
 import type { Product } from "@/types/product";
 import type { ProductStatus } from "@/lib/constants";
+import { product as productLabels, productOption, common, imageUploader } from "@/data/labels";
 
 const statusVariant: Record<ProductStatus, "success" | "warning" | "destructive"> = {
   SALE: "success",
@@ -66,7 +67,7 @@ export default function ProductDetailPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-16">
-        <p className="text-sm text-muted-foreground">불러오는 중...</p>
+        <p className="text-sm text-muted-foreground">{common.loading}</p>
       </div>
     );
   }
@@ -74,7 +75,7 @@ export default function ProductDetailPage() {
   if (!product) {
     return (
       <div className="flex justify-center py-16">
-        <p className="text-sm text-muted-foreground">상품을 찾을 수 없습니다.</p>
+        <p className="text-sm text-muted-foreground">{productLabels.notFound}</p>
       </div>
     );
   }
@@ -88,7 +89,7 @@ export default function ProductDetailPage() {
             variant="ghost"
             size="icon"
             onClick={() => router.push("/products")}
-            aria-label="목록으로"
+            aria-label={productLabels.backToList}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -105,7 +106,7 @@ export default function ProductDetailPage() {
             onClick={() => router.push(`/products/${id}/edit`)}
           >
             <Pencil className="mr-1 h-4 w-4" />
-            수정
+            {common.edit}
           </Button>
           <Button
             variant="outline"
@@ -114,7 +115,7 @@ export default function ProductDetailPage() {
             onClick={() => setDeleteOpen(true)}
           >
             <Trash2 className="mr-1 h-4 w-4" />
-            삭제
+            {common.delete}
           </Button>
         </div>
       </div>
@@ -126,7 +127,7 @@ export default function ProductDetailPage() {
             <img
               key={img.id}
               src={img.url}
-              alt={`${product.name} 이미지 ${i + 1}`}
+              alt={imageUploader.altText(product.name, i)}
               className="h-32 w-32 rounded-md border object-cover"
             />
           ))}
@@ -135,15 +136,22 @@ export default function ProductDetailPage() {
 
       {/* 상세 정보 */}
       <div className="space-y-4 rounded-md border p-4">
-        <InfoRow label="가격" value={`${product.price.toLocaleString("ko-KR")}원`} />
-        <InfoRow label="카테고리" value={product.categoryName || "-"} />
-        <InfoRow label="브랜드" value={product.brandName || "-"} />
+        <InfoRow label={productLabels.infoPrice} value={`${product.price.toLocaleString("ko-KR")}${common.currency}`} />
         <InfoRow
-          label="등록일"
+          label={productLabels.infoCategory}
+          value={
+            [product.mainCategoryName, product.subCategoryName, product.detailCategoryName]
+              .filter(Boolean)
+              .join(" > ")
+          }
+        />
+        <InfoRow label={productLabels.infoBrand} value={product.brandName || "-"} />
+        <InfoRow
+          label={productLabels.infoCreatedAt}
           value={new Date(product.createdAt).toLocaleDateString("ko-KR")}
         />
         <InfoRow
-          label="수정일"
+          label={productLabels.infoUpdatedAt}
           value={new Date(product.updatedAt).toLocaleDateString("ko-KR")}
         />
       </div>
@@ -151,7 +159,7 @@ export default function ProductDetailPage() {
       {/* 설명 */}
       {product.description && (
         <div className="space-y-2">
-          <h2 className="text-sm font-medium text-muted-foreground">상품 설명</h2>
+          <h2 className="text-sm font-medium text-muted-foreground">{productLabels.descriptionHeading}</h2>
           <p className="whitespace-pre-wrap text-sm">{product.description}</p>
         </div>
       )}
@@ -161,7 +169,7 @@ export default function ProductDetailPage() {
         <>
           <Separator />
           <div className="space-y-3">
-            <h2 className="text-sm font-medium text-muted-foreground">상품 옵션</h2>
+            <h2 className="text-sm font-medium text-muted-foreground">{productOption.detailHeading}</h2>
             {product.options.map((opt) => (
               <div key={opt.id} className="space-y-1">
                 <div className="flex items-center gap-2">
@@ -189,16 +197,16 @@ export default function ProductDetailPage() {
       {product.variants.length > 0 && (
         <div className="space-y-2">
           <h2 className="text-sm font-medium text-muted-foreground">
-            옵션 조합별 재고/가격
+            {productOption.variantHeading}
           </h2>
           <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>옵션 조합</TableHead>
-                  <TableHead className="w-28">SKU</TableHead>
-                  <TableHead className="w-20">재고</TableHead>
-                  <TableHead className="w-28">추가금액</TableHead>
+                  <TableHead>{productOption.variantColCombo}</TableHead>
+                  <TableHead className="w-28">{productOption.variantColSku}</TableHead>
+                  <TableHead className="w-20">{productOption.variantColStock}</TableHead>
+                  <TableHead className="w-28">{productOption.variantColPrice}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -213,7 +221,7 @@ export default function ProductDetailPage() {
                     <TableCell>{v.stock}</TableCell>
                     <TableCell>
                       {v.additionalPrice > 0
-                        ? `+${v.additionalPrice.toLocaleString("ko-KR")}원`
+                        ? `+${v.additionalPrice.toLocaleString("ko-KR")}${common.currency}`
                         : "-"}
                     </TableCell>
                   </TableRow>
@@ -227,9 +235,9 @@ export default function ProductDetailPage() {
       <ConfirmDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        title="상품 삭제"
-        description={`"${product.name}" 상품을 삭제하시겠습니까?`}
-        confirmLabel="삭제"
+        title={productLabels.deleteTitle}
+        description={productLabels.deleteDescription(product.name)}
+        confirmLabel={common.delete}
         onConfirm={handleDelete}
         loading={deleteLoading}
         destructive

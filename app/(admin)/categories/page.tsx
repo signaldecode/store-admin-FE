@@ -15,6 +15,7 @@ import {
   updateCategoryOrder,
 } from "@/services/categoryService";
 import type { Category, CategoryFormData } from "@/types/category";
+import { category as categoryLabels, common } from "@/data/labels";
 
 /** 플랫 배열 → 트리 구조 변환 */
 function buildTree(items: Category[]): Category[] {
@@ -133,26 +134,28 @@ export default function CategoriesPage() {
     }
   };
 
-  const deleteDescription = deleteTarget?.children?.length
-    ? `"${deleteTarget.name}" 카테고리를 삭제하시겠습니까? 하위 카테고리도 함께 삭제됩니다.`
-    : `"${deleteTarget?.name}" 카테고리를 삭제하시겠습니까?`;
+  const deleteDescription = deleteTarget
+    ? deleteTarget.children?.length
+      ? categoryLabels.deleteWithChildren(deleteTarget.name)
+      : categoryLabels.deleteDescription(deleteTarget.name)
+    : "";
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">카테고리 관리</h1>
+        <h1 className="text-2xl font-semibold">{categoryLabels.pageTitle}</h1>
         <Button onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" />
-          카테고리 추가
+          {categoryLabels.addButton}
         </Button>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <p className="text-sm text-muted-foreground">불러오는 중...</p>
+          <p className="text-sm text-muted-foreground">{common.loading}</p>
         </div>
       ) : tree.length === 0 ? (
-        <EmptyState message="등록된 카테고리가 없습니다." />
+        <EmptyState message={categoryLabels.emptyMessage} />
       ) : (
         <CategoryTree
           categories={tree}
@@ -175,9 +178,9 @@ export default function CategoriesPage() {
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null);
         }}
-        title="카테고리 삭제"
+        title={categoryLabels.deleteTitle}
         description={deleteDescription}
-        confirmLabel="삭제"
+        confirmLabel={common.delete}
         onConfirm={handleDelete}
         loading={deleteLoading}
         destructive

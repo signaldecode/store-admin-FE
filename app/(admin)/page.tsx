@@ -19,6 +19,7 @@ import { getProducts } from "@/services/productService";
 import { getCategories } from "@/services/categoryService";
 import { getBrands } from "@/services/brandService";
 import { PRODUCT_STATUS } from "@/lib/constants";
+import { dashboard } from "@/data/labels";
 
 interface DashboardStats {
   totalProducts: number;
@@ -63,26 +64,26 @@ export default function DashboardPage() {
 
   const cards = [
     {
-      title: "전체 상품",
+      title: dashboard.totalProducts,
       value: stats?.totalProducts ?? 0,
       icon: Package,
       href: "/products",
     },
     {
-      title: "품절 상품",
+      title: dashboard.soldoutProducts,
       value: stats?.soldoutProducts ?? 0,
       icon: AlertTriangle,
       href: "/products",
       alert: (stats?.soldoutProducts ?? 0) > 0,
     },
     {
-      title: "카테고리",
+      title: dashboard.categories,
       value: stats?.totalCategories ?? 0,
       icon: FolderTree,
       href: "/categories",
     },
     {
-      title: "브랜드",
+      title: dashboard.brands,
       value: stats?.totalBrands ?? 0,
       icon: Tag,
       href: "/brands",
@@ -91,7 +92,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">대시보드</h1>
+      <h1 className="text-2xl font-semibold">{dashboard.pageTitle}</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((card) => {

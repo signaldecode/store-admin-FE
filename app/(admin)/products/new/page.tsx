@@ -7,6 +7,7 @@ import { getCategories } from "@/services/categoryService";
 import { getBrands } from "@/services/brandService";
 import type { Category } from "@/types/category";
 import type { Brand } from "@/types/brand";
+import { common, product } from "@/data/labels";
 
 export default function ProductNewPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -38,14 +39,14 @@ export default function ProductNewPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-16">
-        <p className="text-sm text-muted-foreground">불러오는 중...</p>
+        <p className="text-sm text-muted-foreground">{common.loading}</p>
       </div>
     );
   }
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-semibold">상품 등록</h1>
+      <h1 className="text-2xl font-semibold">{product.createTitle}</h1>
       <ProductForm
         categories={categories}
         brands={brands}

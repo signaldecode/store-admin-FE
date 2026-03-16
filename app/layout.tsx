@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { meta } from "@/data/labels";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "Shop Admin",
-  description: "쇼핑몰 관리자 페이지",
+  title: meta.title,
+  description: meta.description,
 };
 
 export default function RootLayout({

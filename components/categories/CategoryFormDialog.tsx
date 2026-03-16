@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import type { Category, CategoryFormData } from "@/types/category";
 import type { ApiError } from "@/types/api";
+import { category as categoryLabels, common } from "@/data/labels";
 
 interface CategoryFormDialogProps {
   open: boolean;
@@ -63,7 +64,7 @@ export default function CategoryFormDialog({
     e.preventDefault();
 
     if (!name.trim()) {
-      setError("카테고리명을 입력해주세요.");
+      setError(categoryLabels.nameRequired);
       return;
     }
 
@@ -76,7 +77,7 @@ export default function CategoryFormDialog({
       onOpenChange(false);
     } catch (err) {
       const apiError = err as ApiError;
-      setError(apiError.message || "저장에 실패했습니다.");
+      setError(apiError.message || common.saveFailed);
     } finally {
       setLoading(false);
     }
@@ -87,21 +88,21 @@ export default function CategoryFormDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? "카테고리 수정" : "카테고리 추가"}
+            {isEdit ? categoryLabels.editTitle : categoryLabels.createTitle}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="category-name">
-              카테고리명 <span className="text-destructive">*</span>
+              {categoryLabels.nameLabel} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="category-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="카테고리명을 입력하세요"
+              placeholder={categoryLabels.namePlaceholder}
               aria-required="true"
               aria-describedby={error ? "category-name-error" : undefined}
               disabled={loading}
@@ -119,17 +120,17 @@ export default function CategoryFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="category-parent">상위 카테고리</Label>
+            <Label htmlFor="category-parent">{categoryLabels.parentLabel}</Label>
             <Select
               value={parentId}
               onValueChange={(value) => { if (value !== null) setParentId(value); }}
               disabled={loading}
             >
               <SelectTrigger id="category-parent">
-                <SelectValue placeholder="상위 카테고리 선택" />
+                <SelectValue placeholder={categoryLabels.parentPlaceholder} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={NO_PARENT}>없음 (최상위)</SelectItem>
+                <SelectItem value={NO_PARENT}>{categoryLabels.parentNone}</SelectItem>
                 {parentOptions.map((c) => (
                   <SelectItem key={c.id} value={c.id.toString()}>
                     {c.name}
@@ -146,10 +147,10 @@ export default function CategoryFormDialog({
               onClick={() => onOpenChange(false)}
               disabled={loading}
             >
-              취소
+              {common.cancel}
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "저장 중..." : isEdit ? "수정" : "추가"}
+              {loading ? common.saving : isEdit ? common.edit : common.add}
             </Button>
           </DialogFooter>
         </form>

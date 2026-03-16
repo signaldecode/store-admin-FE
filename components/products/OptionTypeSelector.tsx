@@ -13,8 +13,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { OPTION_TYPE, OPTION_TYPE_LABEL } from "@/lib/constants";
+import { OPTION_TYPE } from "@/lib/constants";
 import type { OptionType } from "@/lib/constants";
+import { OPTION_TYPE_LABEL, productOption } from "@/data/labels";
 
 export interface OptionDraft {
   name: string;
@@ -70,7 +71,7 @@ export default function OptionTypeSelector({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Label>상품 옵션</Label>
+        <Label>{productOption.sectionLabel}</Label>
         <Button
           type="button"
           variant="outline"
@@ -79,13 +80,13 @@ export default function OptionTypeSelector({
           disabled={disabled}
         >
           <Plus className="mr-1 h-4 w-4" />
-          옵션 추가
+          {productOption.addOption}
         </Button>
       </div>
 
       {options.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          옵션이 없습니다. 옵션을 추가하면 색상, 사이즈 등을 관리할 수 있습니다.
+          {productOption.emptyMessage}
         </p>
       )}
 
@@ -98,7 +99,7 @@ export default function OptionTypeSelector({
             {/* 옵션명 */}
             <div className="flex-1 space-y-1">
               <Label htmlFor={`option-name-${optIdx}`}>
-                옵션명 <span className="text-destructive">*</span>
+                {productOption.optionNameLabel} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id={`option-name-${optIdx}`}
@@ -106,14 +107,14 @@ export default function OptionTypeSelector({
                 onChange={(e) =>
                   updateOption(optIdx, { name: e.target.value })
                 }
-                placeholder="예: 색상, 사이즈"
+                placeholder={productOption.optionNamePlaceholder}
                 disabled={disabled}
               />
             </div>
 
             {/* 옵션 타입 */}
             <div className="w-36 space-y-1">
-              <Label htmlFor={`option-type-${optIdx}`}>타입</Label>
+              <Label htmlFor={`option-type-${optIdx}`}>{productOption.typeLabel}</Label>
               <Select
                 value={opt.type}
                 onValueChange={(v) => {
@@ -142,7 +143,7 @@ export default function OptionTypeSelector({
               className="mt-6 shrink-0 text-destructive hover:text-destructive"
               onClick={() => removeOption(optIdx)}
               disabled={disabled}
-              aria-label={`${opt.name || "옵션"} 삭제`}
+              aria-label={productOption.deleteOption(opt.name)}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -151,7 +152,7 @@ export default function OptionTypeSelector({
           {/* 고정 옵션: 옵션값 입력 */}
           {opt.type === OPTION_TYPE.FIXED && (
             <div className="space-y-2">
-              <Label>옵션값</Label>
+              <Label>{productOption.valuesLabel}</Label>
               <div className="flex flex-wrap gap-2">
                 {opt.values.map((val, valIdx) => (
                   <Badge key={valIdx} variant="secondary" className="gap-1">
@@ -160,7 +161,7 @@ export default function OptionTypeSelector({
                       type="button"
                       onClick={() => removeValue(optIdx, valIdx)}
                       disabled={disabled}
-                      aria-label={`${val} 삭제`}
+                      aria-label={productOption.deleteValue(val)}
                       className="ml-0.5 hover:text-destructive"
                     >
                       <X className="h-3 w-3" />
@@ -179,7 +180,7 @@ export default function OptionTypeSelector({
           {/* 자유 입력 옵션 안내 */}
           {opt.type === OPTION_TYPE.FREE && (
             <p className="text-sm text-muted-foreground">
-              고객이 주문 시 직접 입력하는 옵션입니다. (예: 각인 문구)
+              {productOption.freeOptionHint}
             </p>
           )}
         </div>
@@ -221,9 +222,9 @@ function OptionValueInput({
           setValue("");
         }
       }}
-      placeholder="옵션값 입력 후 Enter"
+      placeholder={productOption.valuePlaceholder}
       disabled={disabled}
-      aria-label={`옵션 ${optionIndex + 1} 값 추가`}
+      aria-label={productOption.addValueLabel(optionIndex)}
     />
   );
 }

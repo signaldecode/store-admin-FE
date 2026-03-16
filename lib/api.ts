@@ -1,20 +1,30 @@
 import { API_BASE_URL } from "./constants";
 import type { ApiError } from "@/types/api";
 
+const IS_DEV = process.env.NODE_ENV === "development";
+
 type RequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
 };
 
 /**
  * fetch 래퍼
- * - credentials: include (HttpOnly Cookie)
- * - Content-Type: application/json (기본)
- * - 공통 에러 처리 (401 → 로그인 리다이렉트)
+ * - 개발 모드: mock-api 핸들러 사용 (실제 서버 불필요)
+ * - 프로덕션: credentials: include, 공통 에러 처리 (401 → 로그인 리다이렉트)
  */
 export async function api<T>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
+  // 개발 모드: Mock API
+  if (IS_DEV) {
+    const { mockHandler } = await import("./mock-api");
+    const method = options.method || "GET";
+    const result = await mockHandler(method, endpoint, options.body);
+    return result as T;
+  }
+
+  // 프로덕션: 실제 API 호출
   const { body, headers, ...rest } = options;
 
   const isFormData = body instanceof FormData;

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { menuItems } from "@/data/menuData";
 import { useSidebarStore } from "@/stores/useSidebarStore";
+import { layout } from "@/data/labels";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -20,16 +21,16 @@ export default function Sidebar() {
       <div className="flex h-14 items-center border-b border-border px-4">
         {isOpen ? (
           <span className="text-lg font-semibold text-sidebar-foreground">
-            Shop Admin
+            {layout.appName}
           </span>
         ) : (
           <span className="mx-auto text-lg font-semibold text-sidebar-foreground">
-            S
+            {layout.appNameShort}
           </span>
         )}
       </div>
 
-      <nav className="flex-1 space-y-1 p-2" aria-label="메인 메뉴">
+      <nav className="flex-1 space-y-1 p-2" aria-label={layout.mainMenu}>
         {menuItems.map((item) => {
           const isActive =
             item.href === "/"
