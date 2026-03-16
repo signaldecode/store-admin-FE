@@ -99,6 +99,23 @@ export default function ProductsPage() {
   const [sort, setSort] = useState("createdAt");
   const [order, setOrder] = useState<"asc" | "desc">("desc");
 
+  const sortValue = `${sort}-${order}`;
+  const handleSortSelect = (value: string | null) => {
+    if (!value) return;
+    const [newSort, newOrder] = value.split("-") as [string, "asc" | "desc"];
+    setSort(newSort);
+    setOrder(newOrder);
+  };
+
+  const sortOptions = [
+    { value: "createdAt-desc", label: product.sortNewest },
+    { value: "createdAt-asc", label: product.sortOldest },
+    { value: "name-asc", label: product.sortNameAsc },
+    { value: "name-desc", label: product.sortNameDesc },
+    { value: "price-desc", label: product.sortPriceHigh },
+    { value: "price-asc", label: product.sortPriceLow },
+  ];
+
   // 페이지네이션
   const pagination = usePagination();
 
@@ -336,6 +353,43 @@ export default function ProductsPage() {
             </Badge>
           )}
         </Button>
+        <Select
+          value={sortValue}
+          onValueChange={handleSortSelect}
+          items={Object.fromEntries(sortOptions.map((o) => [o.value, o.label]))}
+        >
+          <SelectTrigger className="h-9 w-32" aria-label={product.sortLabel}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {sortOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={pagination.size.toString()}
+          onValueChange={(v) => {
+            if (v) {
+              pagination.setSize(Number(v));
+              pagination.resetPage();
+            }
+          }}
+          items={Object.fromEntries(PAGE_SIZE_OPTIONS.map((s) => [s.toString(), common.itemUnit(s)]))}
+        >
+          <SelectTrigger className="h-9 w-20" aria-label={paginationLabels.pageSizeLabel}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {PAGE_SIZE_OPTIONS.map((size) => (
+              <SelectItem key={size} value={size.toString()}>
+                {common.itemUnit(size)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </SearchFilter>
 
       {/* 필터 패널 */}
@@ -548,33 +602,11 @@ export default function ProductsPage() {
       )}
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>{common.perPage}</span>
-          <Select
-            value={pagination.size.toString()}
-            onValueChange={(v) => {
-              if (v) {
-                pagination.setSize(Number(v));
-                pagination.resetPage();
-              }
-            }}
-            items={Object.fromEntries(PAGE_SIZE_OPTIONS.map((s) => [s.toString(), common.itemUnit(s)]))}
-          >
-            <SelectTrigger className="h-8 w-20" aria-label={paginationLabels.pageSizeLabel}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PAGE_SIZE_OPTIONS.map((size) => (
-                <SelectItem key={size} value={size.toString()}>
-                  {common.itemUnit(size)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {pagination.totalCount > 0 && (
-            <span>{common.totalCount(pagination.totalCount)}</span>
-          )}
-        </div>
+        {pagination.totalCount > 0 && (
+          <span className="text-sm text-muted-foreground">
+            {common.totalCount(pagination.totalCount)}
+          </span>
+        )}
         <Pagination
           page={pagination.page}
           totalPages={pagination.totalPages}

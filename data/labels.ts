@@ -167,6 +167,15 @@ export const product = {
   filterBrandEmpty: "검색 결과가 없습니다.",
   searchPlaceholder: "상품명으로 검색",
 
+  // 정렬
+  sortLabel: "정렬",
+  sortNewest: "최신순",
+  sortOldest: "오래된순",
+  sortNameAsc: "이름순",
+  sortNameDesc: "이름 역순",
+  sortPriceHigh: "가격 높은순",
+  sortPriceLow: "가격 낮은순",
+
   // 유효성 검사
   nameRequired: "상품명을 입력해주세요.",
   priceRequired: "올바른 가격을 입력해주세요.",
