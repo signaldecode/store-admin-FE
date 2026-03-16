@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   reactCompiler: true,
   experimental: {
     /** Next.js 16 global-error prerender 버그 우회 */
