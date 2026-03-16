@@ -202,6 +202,7 @@ export default function AdminFormDialog({
                 if (value) setFormData((prev) => ({ ...prev, role: value as AdminRole }));
               }}
               disabled={loading}
+              items={ADMIN_ROLE_LABEL as Record<string, string>}
             >
               <SelectTrigger id="admin-role" aria-required="true">
                 <SelectValue placeholder={adminLabels.rolePlaceholder} />

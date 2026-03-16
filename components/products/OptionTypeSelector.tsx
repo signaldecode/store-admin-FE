@@ -121,6 +121,7 @@ export default function OptionTypeSelector({
                   if (v) updateOption(optIdx, { type: v as OptionType });
                 }}
                 disabled={disabled}
+                items={OPTION_TYPE_LABEL as Record<string, string>}
               >
                 <SelectTrigger id={`option-type-${optIdx}`}>
                   <SelectValue />

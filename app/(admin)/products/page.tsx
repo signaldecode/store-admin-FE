@@ -559,6 +559,7 @@ export default function ProductsPage() {
                 pagination.resetPage();
               }
             }}
+            items={Object.fromEntries(PAGE_SIZE_OPTIONS.map((s) => [s.toString(), common.itemUnit(s)]))}
           >
             <SelectTrigger className="h-8 w-20" aria-label={paginationLabels.pageSizeLabel}>
               <SelectValue />

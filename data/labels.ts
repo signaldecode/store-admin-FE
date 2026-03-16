@@ -106,11 +106,17 @@ export const product = {
   colImage: "",
   colName: "상품명",
   colPrice: "가격",
+  colStock: "재고",
   colCategory: "분류",
   colBrand: "브랜드",
   colStatus: "상태",
   colCreatedAt: "등록일",
   colUpdatedAt: "수정일",
+
+  // 섹션
+  sectionBasic: "기본 정보",
+  sectionAdditional: "추가 정보",
+  sectionOptions: "사용자 정의 옵션",
 
   // 폼 라벨
   nameLabel: "상품명",
@@ -118,6 +124,13 @@ export const product = {
   descriptionLabel: "상품 설명",
   descriptionPlaceholder: "상품 설명을 입력하세요",
   priceLabel: "가격 (원)",
+  stockLabel: "재고",
+  stockPlaceholder: "재고 수량을 입력하세요",
+  stockDisabledHint: "옵션이 있는 상품은 조합별 재고를 입력하세요",
+  marginPrice1Label: "마진 1 가격 (원)",
+  marginPrice1Placeholder: "마진 1 가격을 입력하세요",
+  marginPrice2Label: "마진 2 가격 (원)",
+  marginPrice2Placeholder: "마진 2 가격을 입력하세요",
   statusLabel: "상태",
   imageLabel: "상품 이미지",
 
@@ -133,6 +146,8 @@ export const product = {
   detailCategoryEmpty: "소분류 없음",
   brandLabel: "브랜드",
   brandPlaceholder: "브랜드 선택",
+  brandSearchPlaceholder: "브랜드 검색",
+  brandEmpty: "검색 결과가 없습니다.",
   noSelection: "선택 안 함",
 
   // 필터
@@ -155,11 +170,17 @@ export const product = {
   // 유효성 검사
   nameRequired: "상품명을 입력해주세요.",
   priceRequired: "올바른 가격을 입력해주세요.",
+  stockRequired: "재고를 입력해주세요.",
+  stockMin: "재고는 0 이상이어야 합니다.",
+  imageRequired: "상품 이미지를 1장 이상 등록하세요.",
   mainCategoryRequired: "대분류를 선택해주세요.",
   subCategoryRequired: "중분류를 선택해주세요.",
 
   // 상세 페이지
   infoPrice: "가격",
+  infoStock: "재고",
+  infoMarginPrice1: "마진 1 가격",
+  infoMarginPrice2: "마진 2 가격",
   infoCategory: "분류",
   infoBrand: "브랜드",
   infoCreatedAt: "등록일",

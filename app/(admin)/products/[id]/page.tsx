@@ -138,6 +138,20 @@ export default function ProductDetailPage() {
       <div className="space-y-4 rounded-md border p-4">
         <InfoRow label={productLabels.infoPrice} value={`${product.price.toLocaleString("ko-KR")}${common.currency}`} />
         <InfoRow
+          label={productLabels.infoStock}
+          value={
+            product.variants.length > 0
+              ? `${product.variants.reduce((sum, v) => sum + v.stock, 0).toLocaleString("ko-KR")} (${productLabels.stockDisabledHint})`
+              : product.stock.toLocaleString("ko-KR")
+          }
+        />
+        {product.marginPrice1 != null && (
+          <InfoRow label={productLabels.infoMarginPrice1} value={`${product.marginPrice1.toLocaleString("ko-KR")}${common.currency}`} />
+        )}
+        {product.marginPrice2 != null && (
+          <InfoRow label={productLabels.infoMarginPrice2} value={`${product.marginPrice2.toLocaleString("ko-KR")}${common.currency}`} />
+        )}
+        <InfoRow
           label={productLabels.infoCategory}
           value={
             [product.mainCategoryName, product.subCategoryName, product.detailCategoryName]

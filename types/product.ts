@@ -6,6 +6,12 @@ export interface Product {
   name: string;
   description: string;
   price: number;
+  /** 기본 재고 (옵션 없는 단품용) */
+  stock: number;
+  /** 마진 1 가격 */
+  marginPrice1: number | null;
+  /** 마진 2 가격 */
+  marginPrice2: number | null;
   status: ProductStatus;
   /** 필수: 대분류 */
   mainCategoryId: number;
@@ -51,6 +57,9 @@ export interface ProductFormData {
   name: string;
   description: string;
   price: number;
+  stock: number;
+  marginPrice1: number | null;
+  marginPrice2: number | null;
   status: ProductStatus;
   mainCategoryId: number | null;
   subCategoryId: number | null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -30,7 +30,8 @@ interface CategoryFormDialogProps {
   onSubmit: (data: CategoryFormData) => Promise<void>;
 }
 
-const NO_PARENT = "__none__";
+/** 최상위 카테고리(부모 없음)를 선택했을 때의 sentinel 값 */
+const NO_PARENT = "__no_parent__";
 
 export default function CategoryFormDialog({
   open,
@@ -51,6 +52,14 @@ export default function CategoryFormDialog({
     if (!category) return true;
     return c.id !== category.id;
   });
+
+  const parentItems = useMemo(
+    () => ({
+      [NO_PARENT]: categoryLabels.parentNone,
+      ...Object.fromEntries(parentOptions.map((c) => [c.id.toString(), c.name])),
+    }),
+    [parentOptions]
+  );
 
   useEffect(() => {
     if (open) {
@@ -125,6 +134,7 @@ export default function CategoryFormDialog({
               value={parentId}
               onValueChange={(value) => { if (value !== null) setParentId(value); }}
               disabled={loading}
+              items={parentItems}
             >
               <SelectTrigger id="category-parent">
                 <SelectValue placeholder={categoryLabels.parentPlaceholder} />
