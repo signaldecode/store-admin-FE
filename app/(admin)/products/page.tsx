@@ -246,7 +246,6 @@ export default function ProductsPage() {
     {
       key: "status",
       label: product.colStatus,
-      sortable: true,
       render: (p) => (
         <StatusBadge
           label={PRODUCT_STATUS_LABEL[p.status]}
