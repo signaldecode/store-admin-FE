@@ -73,7 +73,7 @@ export default function DashboardPage() {
       title: dashboard.soldoutProducts,
       value: stats?.soldoutProducts ?? 0,
       icon: AlertTriangle,
-      href: "/products",
+      href: "/products?status=SOLDOUT",
       alert: (stats?.soldoutProducts ?? 0) > 0,
     },
     {

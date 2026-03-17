@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, LayoutGrid, List, SlidersHorizontal, X, Search, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +45,7 @@ const statusVariant: Record<ProductStatus, "success" | "warning" | "destructive"
 
 export default function ProductsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +58,7 @@ export default function ProductsPage() {
   // 필터
   const [keyword, setKeyword] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") ?? "");
   const [mainCategoryFilter, setMainCategoryFilter] = useState("");
   const [subCategoryFilter, setSubCategoryFilter] = useState("");
   const [detailCategoryFilter, setDetailCategoryFilter] = useState("");
