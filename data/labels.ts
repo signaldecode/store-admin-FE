@@ -285,6 +285,13 @@ export const category = {
   expand: "펼치기",
   editLabel: (name: string) => `${name} 수정`,
   deleteLabel: (name: string) => `${name} 삭제`,
+  reorderButton: "순서 변경",
+  editModeButton: "수정",
+  editModeSave: "저장",
+  editModeCancel: "취소",
+  editModeSaving: "저장 중...",
+  editModeUnsaved: "변경사항이 있습니다",
+  renameLabel: (name: string) => `${name} 이름 변경`,
 };
 
 // ─── 브랜드 ───
