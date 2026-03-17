@@ -39,8 +39,8 @@ import { product, common, pagination as paginationLabels, PRODUCT_STATUS_LABEL }
 
 const statusVariant: Record<ProductStatus, "success" | "warning" | "destructive"> = {
   SALE: "success",
-  SOLDOUT: "warning",
-  HIDDEN: "destructive",
+  SOLDOUT: "destructive",
+  HIDDEN: "warning",
 };
 
 export default function ProductsPage() {
