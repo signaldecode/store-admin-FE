@@ -1,19 +1,17 @@
+import type { PaginationParams } from "./api";
+
 export interface Brand {
   id: number;
   name: string;
   description: string;
   logoUrl: string | null;
+  isActive: boolean;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface BrandFormData {
   name: string;
   description: string;
-  logoUrl: string | null;
 }
 
-export interface BrandListParams {
-  sort?: string;
-  order?: "asc" | "desc";
-}
+export interface BrandListParams extends PaginationParams {}

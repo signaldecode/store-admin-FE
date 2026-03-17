@@ -1,80 +1,117 @@
-import type { ProductStatus, OptionType } from "@/lib/constants";
+import type { ProductStatus } from "@/lib/constants";
 import type { PaginationParams } from "./api";
 
 export interface Product {
   id: number;
-  name: string;
-  description: string;
-  price: number;
-  /** 기본 재고 (옵션 없는 단품용) */
-  stock: number;
-  /** 마진 1 가격 */
-  marginPrice1: number | null;
-  /** 마진 2 가격 */
-  marginPrice2: number | null;
-  status: ProductStatus;
-  /** 필수: 대분류 */
-  mainCategoryId: number;
-  mainCategoryName?: string;
-  /** 필수: 중분류 */
-  subCategoryId: number;
-  subCategoryName?: string;
-  /** 옵션: 소분류 */
-  detailCategoryId: number | null;
-  detailCategoryName?: string;
-  /** 옵션: 브랜드 */
+  categoryId: number | null;
+  categoryName: string | null;
   brandId: number | null;
-  brandName?: string;
-  images: ProductImage[];
-  options: ProductOption[];
-  variants: ProductVariant[];
+  brandName: string | null;
+  name: string;
+  sku: string | null;
+  description: string | null;
+  price: number;
+  discountPrice: number | null;
+  discountStartAt: string | null;
+  discountEndAt: string | null;
+  marginPrice1: number | null;
+  marginPrice2: number | null;
+  origin: string | null;
+  material: string | null;
+  washingInfo: string | null;
+  hasOption: boolean;
+  status: ProductStatus;
+  isVisible: boolean;
+  stock: number;
   createdAt: string;
   updatedAt: string;
+  images: ProductImage[];
+  options: ProductOption[];
+  skus: ProductSku[];
 }
 
 export interface ProductImage {
   id: number;
   url: string;
+  isThumbnail: boolean;
+  sortOrder: number;
+}
+
+export interface ProductOptionValue {
+  id: number;
+  value: string;
+  extraPrice: number;
   sortOrder: number;
 }
 
 export interface ProductOption {
   id: number;
-  name: string;
-  type: OptionType;
-  values: string[];
+  optionName: string;
+  sortOrder: number;
+  values: ProductOptionValue[];
 }
 
-export interface ProductVariant {
+export interface ProductSku {
   id: number;
-  optionValues: Record<string, string>;
   sku: string;
   stock: number;
-  additionalPrice: number;
+  extraPrice: number;
+  optionValues: Record<string, string>;
 }
 
+/** 상품 등록/수정 API 요청 JSON (multipart의 data 필드) */
 export interface ProductFormData {
+  categoryId: number;
+  brandId?: number;
   name: string;
-  description: string;
+  sku?: string;
+  description?: string;
   price: number;
-  stock: number;
-  marginPrice1: number | null;
-  marginPrice2: number | null;
+  discountPrice?: number;
+  discountStartAt?: string;
+  discountEndAt?: string;
+  marginPrice1?: number;
+  marginPrice2?: number;
+  origin?: string;
+  material?: string;
+  washingInfo?: string;
+  stock?: number;
   status: ProductStatus;
-  mainCategoryId: number | null;
-  subCategoryId: number | null;
-  detailCategoryId: number | null;
-  brandId: number | null;
-  images: File[];
-  options: Omit<ProductOption, "id">[];
-  variants: Omit<ProductVariant, "id">[];
+  isVisible: boolean;
+  hasOption: boolean;
+  options?: ProductOptionInput[];
+  skus?: ProductSkuInput[];
+}
+
+export interface ProductOptionInput {
+  optionName: string;
+  sortOrder: number;
+  values: { value: string }[];
+}
+
+export interface ProductSkuInput {
+  skuCode: string;
+  stock: number;
+  optionValues: string[];
+}
+
+/** 상품 목록 조회용 (간소화된 응답) */
+export interface ProductSummary {
+  id: number;
+  thumbnailUrl: string | null;
+  name: string;
+  price: number;
+  discountPrice: number | null;
+  status: ProductStatus;
+  isVisible: boolean;
+  brandName: string | null;
+  categoryName: string | null;
+  createdAt: string;
 }
 
 export interface ProductListParams extends PaginationParams {
   keyword?: string;
-  mainCategoryId?: number;
-  subCategoryId?: number;
-  detailCategoryId?: number;
+  categoryId?: number;
   brandId?: number;
   status?: ProductStatus;
 }

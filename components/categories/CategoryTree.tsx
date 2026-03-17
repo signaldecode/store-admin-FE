@@ -33,16 +33,16 @@ import type { Category } from "@/types/category";
 import { category as categoryLabels } from "@/data/labels";
 
 const LEVEL_BADGE: Record<number, { label: string; className: string }> = {
-  1: {
+  0: {
     label: categoryLabels.levelMain,
     className: "bg-primary/10 text-primary border-primary/20",
   },
-  2: {
+  1: {
     label: categoryLabels.levelSub,
     className:
       "bg-blue-500/10 text-blue-600 border-blue-500/20 dark:text-blue-400",
   },
-  3: {
+  2: {
     label: categoryLabels.levelDetail,
     className:
       "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400",
@@ -59,7 +59,7 @@ interface CategoryTreeProps {
 
 /* ── 드래그 오버레이용 미리보기 ── */
 function DragPreview({ category }: { category: Category }) {
-  const badge = LEVEL_BADGE[category.level];
+  const badge = LEVEL_BADGE[category.depth];
   return (
     <div className="flex items-center gap-2 rounded-md border bg-background px-3 py-2 shadow-lg">
       <GripVertical className="h-4 w-4 text-muted-foreground" />
@@ -131,7 +131,7 @@ function TreeNodeContent({
   };
 
   const hasChildren = category.children && category.children.length > 0;
-  const badge = LEVEL_BADGE[category.level];
+  const badge = LEVEL_BADGE[category.depth];
   const isDragging = activeId === category.id;
 
   return (

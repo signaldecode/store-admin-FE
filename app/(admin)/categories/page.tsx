@@ -10,55 +10,58 @@ import CategoryTree from "@/components/categories/CategoryTree";
 import {
   getCategories,
   createCategory,
-  updateCategory,
-  deleteCategory,
-  updateCategoryOrder,
+  updateCategories,
+  deleteCategories,
 } from "@/services/categoryService";
-import type { Category, CategoryFormData } from "@/types/category";
+import type { Category, CategoryFormData, CategoryUpdateNode } from "@/types/category";
 import { category as categoryLabels, common } from "@/data/labels";
 
-/** 플랫 배열 → 트리 구조 변환 */
-function buildTree(items: Category[]): Category[] {
-  const map = new Map<number, Category>();
-  const roots: Category[] = [];
 
-  for (const item of items) {
-    map.set(item.id, { ...item, children: [] });
-  }
-
-  for (const item of map.values()) {
-    if (item.parentId === null) {
-      roots.push(item);
-    } else {
-      const parent = map.get(item.parentId);
-      if (parent) {
-        parent.children!.push(item);
-      }
-    }
-  }
-
-  const sortByOrder = (list: Category[]) => {
-    list.sort((a, b) => a.sortOrder - b.sortOrder);
-    for (const item of list) {
-      if (item.children?.length) sortByOrder(item.children);
-    }
-  };
-
-  sortByOrder(roots);
-  return roots;
+/** 트리에 parentId를 보강 (API 응답은 중첩 구조만 제공하므로) */
+function enrichParentIds(tree: Category[], parentId: number | null = null): Category[] {
+  return tree.map((item) => ({
+    ...item,
+    parentId,
+    children: item.children?.length
+      ? enrichParentIds(item.children, item.id)
+      : [],
+  }));
 }
 
 /** 트리에서 플랫 리스트 추출 (부모 선택용) */
 function flattenTree(tree: Category[]): Category[] {
   const result: Category[] = [];
-  const walk = (items: Category[]) => {
-    for (const item of items) {
-      result.push(item);
-      if (item.children?.length) walk(item.children);
+  for (const item of tree) {
+    result.push(item);
+    if (item.children?.length) {
+      result.push(...flattenTree(item.children));
     }
-  };
-  walk(tree);
+  }
   return result;
+}
+
+/** Category 트리 → API 요청용 CategoryUpdateNode 트리 변환 */
+function toUpdateNodes(tree: Category[], depth = 0): CategoryUpdateNode[] {
+  return tree.map((item, index) => ({
+    id: item.id,
+    name: item.name,
+    depth,
+    sortOrder: index,
+    children: item.children?.length
+      ? toUpdateNodes(item.children, depth + 1)
+      : [],
+  }));
+}
+
+/** 트리에서 특정 노드의 이름을 변경한 새 트리 반환 */
+function updateNodeInTree(tree: Category[], id: number, name: string): Category[] {
+  return tree.map((item) => {
+    if (item.id === id) return { ...item, name };
+    if (item.children?.length) {
+      return { ...item, children: updateNodeInTree(item.children, id, name) };
+    }
+    return item;
+  });
 }
 
 /** 트리 깊은 복사 */
@@ -123,7 +126,7 @@ export default function CategoriesPage() {
     setLoading(true);
     try {
       const res = await getCategories();
-      setTree(buildTree(res.data));
+      setTree(enrichParentIds(res.data));
     } catch {
       // api.ts에서 공통 에러 처리
     } finally {
@@ -158,9 +161,7 @@ export default function CategoriesPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const allOrderedIds = flattenTree(draftTree).map((c) => c.id);
-      await updateCategoryOrder(allOrderedIds);
-
+      await updateCategories(toUpdateNodes(draftTree));
       await fetchCategories();
       setEditing(false);
       setDraftTree([]);
@@ -184,7 +185,9 @@ export default function CategoriesPage() {
 
   const handleSubmit = async (data: CategoryFormData) => {
     if (editTarget) {
-      await updateCategory(editTarget.id, data);
+      // 수정: 현재 트리에서 해당 카테고리의 name을 변경 후 전체 저장
+      const updatedTree = updateNodeInTree(tree, editTarget.id, data.name);
+      await updateCategories(toUpdateNodes(updatedTree));
     } else {
       await createCategory(data);
     }
@@ -195,7 +198,7 @@ export default function CategoriesPage() {
     if (!deleteTarget) return;
     setDeleteLoading(true);
     try {
-      await deleteCategory(deleteTarget.id);
+      await deleteCategories([deleteTarget.id]);
       await fetchCategories();
       setDeleteTarget(null);
     } catch {

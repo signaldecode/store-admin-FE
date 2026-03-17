@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -19,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ADMIN_ROLE } from "@/lib/constants";
-import type { Admin, AdminFormData } from "@/types/admin";
+import type { Admin, AdminFormData, AdminUpdateData } from "@/types/admin";
 import type { AdminRole } from "@/lib/constants";
 import type { ApiError } from "@/types/api";
 import { admin as adminLabels, common, ADMIN_ROLE_LABEL } from "@/data/labels";
@@ -28,7 +29,7 @@ interface AdminFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   admin?: Admin | null;
-  onSubmit: (data: AdminFormData) => Promise<void>;
+  onSubmit: (data: AdminFormData | AdminUpdateData) => Promise<void>;
 }
 
 export default function AdminFormDialog({
@@ -39,31 +40,31 @@ export default function AdminFormDialog({
 }: AdminFormDialogProps) {
   const isEdit = !!admin;
 
-  const [formData, setFormData] = useState<AdminFormData>({
-    email: "",
-    name: "",
-    password: "",
-    role: ADMIN_ROLE.MANAGER,
-  });
+  // 생성용 필드
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  // 공용 필드
+  const [name, setName] = useState("");
+  const [role, setRole] = useState<AdminRole>(ADMIN_ROLE.ADMIN);
+
+  // 수정 전용 필드
+  const [isActive, setIsActive] = useState(true);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (open) {
       if (admin) {
-        setFormData({
-          email: admin.email,
-          name: admin.name,
-          password: "",
-          role: admin.role,
-        });
+        setName(admin.name);
+        setRole(admin.role);
+        setIsActive(admin.isActive);
       } else {
-        setFormData({
-          email: "",
-          name: "",
-          password: "",
-          role: ADMIN_ROLE.MANAGER,
-        });
+        setEmail("");
+        setPassword("");
+        setName("");
+        setRole(ADMIN_ROLE.ADMIN);
       }
       setErrors({});
     }
@@ -72,10 +73,11 @@ export default function AdminFormDialog({
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.email) newErrors.email = adminLabels.emailRequired;
-    if (!formData.name) newErrors.name = adminLabels.nameRequired;
-    if (!isEdit && !formData.password)
-      newErrors.password = adminLabels.passwordRequired;
+    if (!isEdit) {
+      if (!email) newErrors.email = adminLabels.emailRequired;
+      if (!password) newErrors.password = adminLabels.passwordRequired;
+    }
+    if (!name) newErrors.name = adminLabels.nameRequired;
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -87,11 +89,11 @@ export default function AdminFormDialog({
 
     setLoading(true);
     try {
-      const submitData = { ...formData };
-      if (isEdit && !submitData.password) {
-        delete submitData.password;
+      if (isEdit) {
+        await onSubmit({ name: name.trim(), role, isActive });
+      } else {
+        await onSubmit({ email: email.trim(), name: name.trim(), password, role });
       }
-      await onSubmit(submitData);
       onOpenChange(false);
     } catch (err) {
       const apiError = err as ApiError;
@@ -115,28 +117,51 @@ export default function AdminFormDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="admin-email">
-              {adminLabels.emailLabel} <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="admin-email"
-              type="email"
-              value={formData.email}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, email: e.target.value }))
-              }
-              placeholder={adminLabels.emailPlaceholder}
-              aria-required="true"
-              aria-describedby={errors.email ? "admin-email-error" : undefined}
-              disabled={loading}
-            />
-            {errors.email && (
-              <p id="admin-email-error" className="text-sm text-destructive">
-                {errors.email}
-              </p>
-            )}
-          </div>
+          {!isEdit && (
+            <div className="space-y-2">
+              <Label htmlFor="admin-email">
+                {adminLabels.emailLabel} <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="admin-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={adminLabels.emailPlaceholder}
+                aria-required="true"
+                aria-describedby={errors.email ? "admin-email-error" : undefined}
+                disabled={loading}
+              />
+              {errors.email && (
+                <p id="admin-email-error" className="text-sm text-destructive">
+                  {errors.email}
+                </p>
+              )}
+            </div>
+          )}
+
+          {!isEdit && (
+            <div className="space-y-2">
+              <Label htmlFor="admin-password">
+                {adminLabels.passwordLabel} <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="admin-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={adminLabels.passwordPlaceholder}
+                aria-required="true"
+                aria-describedby={errors.password ? "admin-password-error" : undefined}
+                disabled={loading}
+              />
+              {errors.password && (
+                <p id="admin-password-error" className="text-sm text-destructive">
+                  {errors.password}
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="admin-name">
@@ -145,10 +170,8 @@ export default function AdminFormDialog({
             <Input
               id="admin-name"
               type="text"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, name: e.target.value }))
-              }
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               placeholder={adminLabels.namePlaceholder}
               aria-required="true"
               aria-describedby={errors.name ? "admin-name-error" : undefined}
@@ -162,44 +185,13 @@ export default function AdminFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="admin-password">
-              {adminLabels.passwordLabel}{" "}
-              {!isEdit && <span className="text-destructive">*</span>}
-            </Label>
-            <Input
-              id="admin-password"
-              type="password"
-              value={formData.password || ""}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, password: e.target.value }))
-              }
-              placeholder={
-                isEdit ? adminLabels.passwordPlaceholderEdit : adminLabels.passwordPlaceholder
-              }
-              aria-required={!isEdit ? "true" : undefined}
-              aria-describedby={
-                errors.password ? "admin-password-error" : undefined
-              }
-              disabled={loading}
-            />
-            {errors.password && (
-              <p
-                id="admin-password-error"
-                className="text-sm text-destructive"
-              >
-                {errors.password}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="admin-role">
               {adminLabels.roleLabel} <span className="text-destructive">*</span>
             </Label>
             <Select
-              value={formData.role}
+              value={role}
               onValueChange={(value) => {
-                if (value) setFormData((prev) => ({ ...prev, role: value as AdminRole }));
+                if (value) setRole(value as AdminRole);
               }}
               disabled={loading}
               items={ADMIN_ROLE_LABEL as Record<string, string>}
@@ -216,6 +208,18 @@ export default function AdminFormDialog({
               </SelectContent>
             </Select>
           </div>
+
+          {isEdit && (
+            <div className="flex items-center justify-between">
+              <Label htmlFor="admin-isActive">{adminLabels.isActiveLabel}</Label>
+              <Switch
+                id="admin-isActive"
+                checked={isActive}
+                onCheckedChange={setIsActive}
+                disabled={loading}
+              />
+            </div>
+          )}
 
           {errors._form && (
             <p className="text-sm text-destructive" role="alert">

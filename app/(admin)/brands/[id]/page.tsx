@@ -131,10 +131,6 @@ export default function BrandDetailPage() {
           label={brandLabels.infoCreatedAt}
           value={new Date(brand.createdAt).toLocaleDateString("ko-KR")}
         />
-        <InfoRow
-          label={brandLabels.infoUpdatedAt}
-          value={new Date(brand.updatedAt).toLocaleDateString("ko-KR")}
-        />
       </div>
 
       {/* 설명 */}

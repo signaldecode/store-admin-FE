@@ -44,14 +44,14 @@ export default function DashboardPage() {
         const soldoutRes = await getProducts({
           page: 1,
           size: 1,
-          status: PRODUCT_STATUS.SOLDOUT,
+          status: PRODUCT_STATUS.SOLD_OUT,
         });
 
         setStats({
-          totalProducts: productRes.pagination.totalCount,
-          soldoutProducts: soldoutRes.pagination.totalCount,
+          totalProducts: productRes.data.total_elements,
+          soldoutProducts: soldoutRes.data.total_elements,
           totalCategories: categoryRes.data.length,
-          totalBrands: brandRes.data.length,
+          totalBrands: brandRes.data.total_elements,
         });
       } catch {
         // api.ts에서 공통 에러 처리
@@ -73,7 +73,7 @@ export default function DashboardPage() {
       title: dashboard.soldoutProducts,
       value: stats?.soldoutProducts ?? 0,
       icon: AlertTriangle,
-      href: "/products?status=SOLDOUT",
+      href: "/products?status=SOLD_OUT",
       alert: (stats?.soldoutProducts ?? 0) > 0,
     },
     {

@@ -10,6 +10,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { layout } from "@/data/labels";
 
 interface MobileDrawerProps {
@@ -22,6 +23,11 @@ export default function MobileDrawer({
   onOpenChange,
 }: MobileDrawerProps) {
   const pathname = usePathname();
+  const adminRole = useAuthStore((s) => s.admin?.role);
+
+  const visibleItems = menuItems.filter(
+    (item) => !item.requiredRole || item.requiredRole === adminRole
+  );
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -31,7 +37,7 @@ export default function MobileDrawer({
         </SheetHeader>
 
         <nav className="space-y-1 p-2" aria-label={layout.mobileMenu}>
-          {menuItems.map((item) => {
+          {visibleItems.map((item) => {
             const isActive =
               item.href === "/"
                 ? pathname === "/"

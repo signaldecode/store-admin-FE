@@ -22,7 +22,7 @@ export default function ProductNewPage() {
           getBrands(),
         ]);
         setCategories(catRes.data);
-        setBrands(brandRes.data);
+        setBrands(brandRes.data.content);
       } catch {
         // api.ts에서 공통 에러 처리
       } finally {
@@ -32,8 +32,8 @@ export default function ProductNewPage() {
     load();
   }, []);
 
-  const handleSubmit = async (data: FormData) => {
-    await createProduct(data);
+  const handleSubmit: React.ComponentProps<typeof ProductForm>["onSubmit"] = async (data, thumbnail, images) => {
+    await createProduct(data, thumbnail, images);
   };
 
   if (loading) {

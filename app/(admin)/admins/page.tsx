@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DataTable, { type Column } from "@/components/common/DataTable";
@@ -11,12 +12,21 @@ import {
   getAdmins,
   createAdmin,
   updateAdmin,
-  deleteAdmin,
+  deactivateAdmin,
 } from "@/services/adminService";
-import type { Admin, AdminFormData } from "@/types/admin";
+import { useAuthStore } from "@/stores/useAuthStore";
+import type { Admin, AdminFormData, AdminUpdateData } from "@/types/admin";
 import { admin as adminLabels, common, ADMIN_ROLE_LABEL } from "@/data/labels";
 
 export default function AdminsPage() {
+  const router = useRouter();
+  const adminRole = useAuthStore((s) => s.admin?.role);
+
+  useEffect(() => {
+    if (adminRole && adminRole !== "SUPER_ADMIN") {
+      router.replace("/");
+    }
+  }, [adminRole, router]);
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -54,11 +64,11 @@ export default function AdminsPage() {
     setFormOpen(true);
   };
 
-  const handleSubmit = async (data: AdminFormData) => {
+  const handleSubmit = async (data: AdminFormData | AdminUpdateData) => {
     if (editTarget) {
-      await updateAdmin(editTarget.id, data);
+      await updateAdmin(editTarget.id, data as AdminUpdateData);
     } else {
-      await createAdmin(data);
+      await createAdmin(data as AdminFormData);
     }
     await fetchAdmins();
   };
@@ -67,7 +77,7 @@ export default function AdminsPage() {
     if (!deleteTarget) return;
     setDeleteLoading(true);
     try {
-      await deleteAdmin(deleteTarget.id);
+      await deactivateAdmin(deleteTarget.id);
       await fetchAdmins();
       setDeleteTarget(null);
     } catch {
@@ -86,7 +96,7 @@ export default function AdminsPage() {
       render: (admin) => (
         <StatusBadge
           label={ADMIN_ROLE_LABEL[admin.role]}
-          variant={admin.role === "SUPER" ? "success" : "default"}
+          variant={admin.role === "SUPER_ADMIN" ? "success" : "default"}
         />
       ),
     },
