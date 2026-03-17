@@ -3,6 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import DataTable, { type Column } from "@/components/common/DataTable";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 import BrandFormDialog from "@/components/brands/BrandFormDialog";
@@ -25,17 +32,45 @@ export default function BrandsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Brand | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  // 정렬
+  const [sort, setSort] = useState("createdAt");
+  const [order, setOrder] = useState<"asc" | "desc">("desc");
+
+  const sortValue = `${sort}-${order}`;
+  const handleSortSelect = (value: string | null) => {
+    if (!value) return;
+    const [newSort, newOrder] = value.split("-") as [string, "asc" | "desc"];
+    setSort(newSort);
+    setOrder(newOrder);
+  };
+
+  const sortOptions = [
+    { value: "createdAt-desc", label: brandLabels.sortNewest },
+    { value: "createdAt-asc", label: brandLabels.sortOldest },
+    { value: "name-asc", label: brandLabels.sortNameAsc },
+    { value: "name-desc", label: brandLabels.sortNameDesc },
+  ];
+
+  const handleSort = (key: string) => {
+    if (sort === key) {
+      setOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSort(key);
+      setOrder("asc");
+    }
+  };
+
   const fetchBrands = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getBrands();
-      setBrands(res.data);
+      const res = await getBrands({ sort, order });
+      setBrands(res.data ?? []);
     } catch {
       // api.ts에서 공통 에러 처리
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [sort, order]);
 
   useEffect(() => {
     fetchBrands();
@@ -79,6 +114,7 @@ export default function BrandsPage() {
     {
       key: "createdAt",
       label: brandLabels.colCreatedAt,
+      sortable: true,
       render: (brand) => new Date(brand.createdAt).toLocaleDateString("ko-KR"),
     },
     {
@@ -117,10 +153,28 @@ export default function BrandsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{brandLabels.pageTitle}</h1>
-        <Button onClick={handleCreate}>
-          <Plus className="mr-2 h-4 w-4" />
-          {brandLabels.addButton}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Select
+            value={sortValue}
+            onValueChange={handleSortSelect}
+            items={Object.fromEntries(sortOptions.map((o) => [o.value, o.label]))}
+          >
+            <SelectTrigger className="h-9 w-32" aria-label={brandLabels.sortLabel}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button onClick={handleCreate}>
+            <Plus className="mr-2 h-4 w-4" />
+            {brandLabels.addButton}
+          </Button>
+        </div>
       </div>
 
       {loading ? (
@@ -132,6 +186,9 @@ export default function BrandsPage() {
           columns={columns}
           data={brands}
           keyExtractor={(brand) => brand.id}
+          sort={sort}
+          order={order}
+          onSort={handleSort}
           emptyMessage={brandLabels.emptyMessage}
         />
       )}

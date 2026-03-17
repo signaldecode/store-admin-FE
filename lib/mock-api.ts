@@ -69,8 +69,23 @@ export const mockHandler: MockHandler = async (method, endpoint, body) => {
   }
 
   // --- Brands ---
-  if (endpoint === "/brands" && method === "GET") {
-    return ok(brands);
+  if (endpoint.startsWith("/brands") && !endpoint.match(/^\/brands\/\d+/) && method === "GET") {
+    const url = new URL(`http://x${endpoint}`);
+    const sort = url.searchParams.get("sort") || "createdAt";
+    const order = url.searchParams.get("order") || "desc";
+
+    const sorted = [...brands].sort((a, b) => {
+      const aVal = a[sort as keyof Brand];
+      const bVal = b[sort as keyof Brand];
+      if (typeof aVal === "string" && typeof bVal === "string") {
+        return order === "asc"
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      }
+      return 0;
+    });
+
+    return ok(sorted);
   }
   if (endpoint.match(/^\/brands\/\d+$/) && method === "GET") {
     const id = Number(endpoint.split("/")[2]);

@@ -8,3 +8,8 @@ export interface Brand {
 export interface BrandFormData {
   name: string;
 }
+
+export interface BrandListParams {
+  sort?: string;
+  order?: "asc" | "desc";
+}

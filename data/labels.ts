@@ -309,6 +309,13 @@ export const brand = {
   nameLabel: "브랜드명",
   namePlaceholder: "브랜드명을 입력하세요",
   nameRequired: "브랜드명을 입력해주세요.",
+
+  // 정렬
+  sortLabel: "정렬",
+  sortNewest: "최신순",
+  sortOldest: "오래된순",
+  sortNameAsc: "이름순",
+  sortNameDesc: "이름 역순",
 };
 
 // ─── 관리자 ───
