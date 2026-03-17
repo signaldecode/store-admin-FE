@@ -10,7 +10,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import ImageUploader from "@/components/common/ImageUploader";
 import type { Brand, BrandFormData } from "@/types/brand";
 import type { ApiError } from "@/types/api";
 import { brand as brandLabels, common } from "@/data/labels";
@@ -31,12 +33,16 @@ export default function BrandFormDialog({
   const isEdit = !!brand;
 
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [logoImages, setLogoImages] = useState<{ file?: File; url: string }[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (open) {
       setName(brand?.name || "");
+      setDescription(brand?.description || "");
+      setLogoImages(brand?.logoUrl ? [{ url: brand.logoUrl }] : []);
       setError("");
     }
   }, [open, brand]);
@@ -51,7 +57,8 @@ export default function BrandFormDialog({
 
     setLoading(true);
     try {
-      await onSubmit({ name: name.trim() });
+      const logoUrl = logoImages.length > 0 ? logoImages[0].url : null;
+      await onSubmit({ name: name.trim(), description: description.trim(), logoUrl });
       onOpenChange(false);
     } catch (err) {
       const apiError = err as ApiError;
@@ -89,6 +96,29 @@ export default function BrandFormDialog({
                 {error}
               </p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="brand-description">{brandLabels.descriptionLabel}</Label>
+            <Textarea
+              id="brand-description"
+              className="resize-none"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={brandLabels.descriptionPlaceholder}
+              disabled={loading}
+              rows={3}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>{brandLabels.logoLabel}</Label>
+            <ImageUploader
+              images={logoImages}
+              onChange={setLogoImages}
+              maxCount={1}
+              maxSizeMB={2}
+            />
           </div>
 
           <DialogFooter>

@@ -93,10 +93,12 @@ export const mockHandler: MockHandler = async (method, endpoint, body) => {
     return brand ? ok(brand) : ok(null);
   }
   if (endpoint === "/brands" && method === "POST") {
-    const data = body as { name: string };
+    const data = body as { name: string; description: string; logoUrl: string | null };
     const brand: Brand = {
       id: getId(),
       name: data.name,
+      description: data.description ?? "",
+      logoUrl: data.logoUrl ?? null,
       createdAt: now(),
       updatedAt: now(),
     };
@@ -105,9 +107,9 @@ export const mockHandler: MockHandler = async (method, endpoint, body) => {
   }
   if (endpoint.match(/^\/brands\/\d+$/) && method === "PUT") {
     const id = Number(endpoint.split("/")[2]);
-    const data = body as { name: string };
+    const data = body as { name: string; description: string; logoUrl: string | null };
     brands = brands.map((b) =>
-      b.id === id ? { ...b, name: data.name, updatedAt: now() } : b
+      b.id === id ? { ...b, name: data.name, description: data.description ?? "", logoUrl: data.logoUrl ?? null, updatedAt: now() } : b
     );
     return ok(brands.find((b) => b.id === id));
   }

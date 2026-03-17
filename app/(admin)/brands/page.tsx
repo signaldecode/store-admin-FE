@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,7 @@ import type { Brand, BrandFormData } from "@/types/brand";
 import { brand as brandLabels, common } from "@/data/labels";
 
 export default function BrandsPage() {
+  const router = useRouter();
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -110,6 +112,23 @@ export default function BrandsPage() {
   };
 
   const columns: Column<Brand>[] = [
+    {
+      key: "logo",
+      label: brandLabels.colLogo,
+      className: "w-12",
+      render: (brand) =>
+        brand.logoUrl ? (
+          <img
+            src={brand.logoUrl}
+            alt={`${brand.name} 로고`}
+            className="h-8 w-8 rounded object-contain"
+          />
+        ) : (
+          <div className="flex h-8 w-8 items-center justify-center rounded bg-muted text-xs text-muted-foreground">
+            {brand.name.charAt(0)}
+          </div>
+        ),
+    },
     { key: "name", label: brandLabels.colName, sortable: true },
     {
       key: "createdAt",
@@ -189,6 +208,7 @@ export default function BrandsPage() {
           sort={sort}
           order={order}
           onSort={handleSort}
+          onRowClick={(brand) => router.push(`/brands/${brand.id}`)}
           emptyMessage={brandLabels.emptyMessage}
         />
       )}
