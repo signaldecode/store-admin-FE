@@ -4,26 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getMe } from "@/services/authService";
-import type { Admin } from "@/types/admin";
-
-const SKIP_AUTH =
-  process.env.NODE_ENV === "development" ||
-  process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
-
-/** 개발용 더미 관리자 */
-const DEV_ADMIN: Admin = {
-  id: 1,
-  email: "dev@admin.com",
-  name: "이드니형",
-  role: "SUPER",
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-};
 
 /**
  * 인증 가드 훅
- * - 개발 모드: 항상 로그인 상태 유지 (API 호출 없음)
- * - 프로덕션: /api/auth/me 호출로 인증 확인, 미인증 시 /login 리다이렉트
+ * - /auth/me 호출로 인증 확인, 미인증 시 /login 리다이렉트
  */
 export function useAuth() {
   const router = useRouter();
@@ -32,13 +16,6 @@ export function useAuth() {
 
   useEffect(() => {
     if (isAuthenticated) return;
-
-    // 개발 모드: 더미 관리자로 즉시 인증
-    if (SKIP_AUTH) {
-      setAdmin(DEV_ADMIN);
-      setIsLoading(false);
-      return;
-    }
 
     let cancelled = false;
 

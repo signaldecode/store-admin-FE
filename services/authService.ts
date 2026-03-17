@@ -3,7 +3,7 @@ import type { Admin, LoginRequest } from "@/types/admin";
 import type { ApiResponse } from "@/types/api";
 
 export function login(data: LoginRequest) {
-  return api<ApiResponse<Admin>>("/auth/login", {
+  return api<ApiResponse<string>>("/auth/login", {
     method: "POST",
     body: data,
   });
@@ -11,6 +11,10 @@ export function login(data: LoginRequest) {
 
 export function logout() {
   return api<void>("/auth/logout", { method: "POST" });
+}
+
+export function refresh() {
+  return api<ApiResponse<string>>("/auth/refresh", { method: "POST" });
 }
 
 export function getMe() {

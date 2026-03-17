@@ -17,15 +17,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { getProduct, deleteProduct } from "@/services/productService";
-import { PRODUCT_STATUS_LABEL, OPTION_TYPE_LABEL } from "@/data/labels";
+import { PRODUCT_STATUS_LABEL } from "@/data/labels";
 import type { Product } from "@/types/product";
 import type { ProductStatus } from "@/lib/constants";
 import { product as productLabels, productOption, common, imageUploader } from "@/data/labels";
 
-const statusVariant: Record<ProductStatus, "success" | "warning" | "destructive"> = {
-  SALE: "success",
-  SOLDOUT: "warning",
-  HIDDEN: "destructive",
+const statusVariant: Record<ProductStatus, "success" | "warning" | "destructive" | "default"> = {
+  ON_SALE: "success",
+  SOLD_OUT: "destructive",
+  DISCONTINUED: "warning",
+  DRAFT: "default",
 };
 
 export default function ProductDetailPage() {
@@ -137,29 +138,22 @@ export default function ProductDetailPage() {
       {/* 상세 정보 */}
       <div className="space-y-4 rounded-md border p-4">
         <InfoRow label={productLabels.infoPrice} value={`${product.price.toLocaleString("ko-KR")}${common.currency}`} />
-        <InfoRow
-          label={productLabels.infoStock}
-          value={
-            product.variants.length > 0
-              ? `${product.variants.reduce((sum, v) => sum + v.stock, 0).toLocaleString("ko-KR")} (${productLabels.stockDisabledHint})`
-              : product.stock.toLocaleString("ko-KR")
-          }
-        />
+        {product.discountPrice != null && (
+          <InfoRow label={productLabels.infoDiscountPrice} value={`${product.discountPrice.toLocaleString("ko-KR")}${common.currency}`} />
+        )}
+        <InfoRow label={productLabels.infoStock} value={product.stock.toLocaleString("ko-KR")} />
+        {product.sku && <InfoRow label="SKU" value={product.sku} />}
         {product.marginPrice1 != null && (
           <InfoRow label={productLabels.infoMarginPrice1} value={`${product.marginPrice1.toLocaleString("ko-KR")}${common.currency}`} />
         )}
         {product.marginPrice2 != null && (
           <InfoRow label={productLabels.infoMarginPrice2} value={`${product.marginPrice2.toLocaleString("ko-KR")}${common.currency}`} />
         )}
-        <InfoRow
-          label={productLabels.infoCategory}
-          value={
-            [product.mainCategoryName, product.subCategoryName, product.detailCategoryName]
-              .filter(Boolean)
-              .join(" > ")
-          }
-        />
+        <InfoRow label={productLabels.infoCategory} value={product.categoryName || "-"} />
         <InfoRow label={productLabels.infoBrand} value={product.brandName || "-"} />
+        {product.origin && <InfoRow label={productLabels.infoOrigin} value={product.origin} />}
+        {product.material && <InfoRow label={productLabels.infoMaterial} value={product.material} />}
+        {product.washingInfo && <InfoRow label={productLabels.infoWashingInfo} value={product.washingInfo} />}
         <InfoRow
           label={productLabels.infoCreatedAt}
           value={new Date(product.createdAt).toLocaleDateString("ko-KR")}
@@ -186,17 +180,13 @@ export default function ProductDetailPage() {
             <h2 className="text-sm font-medium text-muted-foreground">{productOption.detailHeading}</h2>
             {product.options.map((opt) => (
               <div key={opt.id} className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{opt.name}</span>
-                  <Badge variant="outline" className="text-xs">
-                    {OPTION_TYPE_LABEL[opt.type]}
-                  </Badge>
-                </div>
+                <span className="text-sm font-medium">{opt.optionName}</span>
                 {opt.values.length > 0 && (
                   <div className="flex flex-wrap gap-1">
-                    {opt.values.map((val) => (
-                      <Badge key={val} variant="secondary">
-                        {val}
+                    {opt.values.map((v) => (
+                      <Badge key={v.id} variant="secondary">
+                        {v.value}
+                        {v.extraPrice > 0 && ` +${v.extraPrice.toLocaleString("ko-KR")}${common.currency}`}
                       </Badge>
                     ))}
                   </div>
@@ -207,8 +197,8 @@ export default function ProductDetailPage() {
         </>
       )}
 
-      {/* Variant 테이블 */}
-      {product.variants.length > 0 && (
+      {/* SKU 테이블 */}
+      {product.skus.length > 0 && (
         <div className="space-y-2">
           <h2 className="text-sm font-medium text-muted-foreground">
             {productOption.variantHeading}
@@ -224,18 +214,18 @@ export default function ProductDetailPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {product.variants.map((v) => (
-                  <TableRow key={v.id}>
+                {product.skus.map((s) => (
+                  <TableRow key={s.id}>
                     <TableCell>
-                      {Object.entries(v.optionValues)
+                      {Object.entries(s.optionValues)
                         .map(([k, val]) => `${k}: ${val}`)
                         .join(", ")}
                     </TableCell>
-                    <TableCell>{v.sku || "-"}</TableCell>
-                    <TableCell>{v.stock}</TableCell>
+                    <TableCell>{s.sku || "-"}</TableCell>
+                    <TableCell>{s.stock}</TableCell>
                     <TableCell>
-                      {v.additionalPrice > 0
-                        ? `+${v.additionalPrice.toLocaleString("ko-KR")}${common.currency}`
+                      {s.extraPrice > 0
+                        ? `+${s.extraPrice.toLocaleString("ko-KR")}${common.currency}`
                         : "-"}
                     </TableCell>
                   </TableRow>

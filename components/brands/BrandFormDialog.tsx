@@ -21,7 +21,7 @@ interface BrandFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   brand?: Brand | null;
-  onSubmit: (data: BrandFormData) => Promise<void>;
+  onSubmit: (data: BrandFormData, logoImage?: File) => Promise<void>;
 }
 
 export default function BrandFormDialog({
@@ -57,8 +57,8 @@ export default function BrandFormDialog({
 
     setLoading(true);
     try {
-      const logoUrl = logoImages.length > 0 ? logoImages[0].url : null;
-      await onSubmit({ name: name.trim(), description: description.trim(), logoUrl });
+      const logoFile = logoImages.length > 0 ? logoImages[0].file : undefined;
+      await onSubmit({ name: name.trim(), description: description.trim() }, logoFile);
       onOpenChange(false);
     } catch (err) {
       const apiError = err as ApiError;

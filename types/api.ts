@@ -8,12 +8,11 @@ export interface ApiResponse<T> {
 /** 페이지네이션 응답 */
 export interface PaginatedResponse<T> {
   success: boolean;
-  data: T[];
-  pagination: {
+  data: {
+    content: T[];
     page: number;
     size: number;
-    totalCount: number;
-    totalPages: number;
+    total_elements: number;
   };
 }
 
@@ -22,12 +21,12 @@ export interface PaginationParams {
   page?: number;
   size?: number;
   sort?: string;
-  order?: "asc" | "desc";
 }
 
 /** API 에러 */
 export interface ApiError {
   status: number;
+  code?: string;
   message: string;
   errors?: Record<string, string>;
 }

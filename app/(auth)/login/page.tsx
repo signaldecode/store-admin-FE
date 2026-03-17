@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { login } from "@/services/authService";
+import { login, getMe } from "@/services/authService";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { auth, common } from "@/data/labels";
 import type { ApiError } from "@/types/api";
@@ -36,8 +36,9 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const res = await login({ email, password });
-      setAdmin(res.data);
+      await login({ email, password });
+      const meRes = await getMe();
+      setAdmin(meRes.data);
       router.push("/");
     } catch (err) {
       const apiError = err as ApiError;

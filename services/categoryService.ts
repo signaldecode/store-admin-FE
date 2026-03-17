@@ -1,9 +1,9 @@
 import { api } from "@/lib/api";
-import type { Category, CategoryFormData } from "@/types/category";
+import type { Category, CategoryFormData, CategoryUpdateNode } from "@/types/category";
 import type { ApiResponse } from "@/types/api";
 
 export function getCategories() {
-  return api<ApiResponse<Category[]>>("/categories");
+  return api<ApiResponse<Category[]>>("/admin/categories");
 }
 
 export function getCategory(id: number) {
@@ -11,26 +11,22 @@ export function getCategory(id: number) {
 }
 
 export function createCategory(data: CategoryFormData) {
-  return api<ApiResponse<Category>>("/categories", {
+  return api<ApiResponse<Category>>("/admin/categories", {
     method: "POST",
     body: data,
   });
 }
 
-export function updateCategory(id: number, data: CategoryFormData) {
-  return api<ApiResponse<Category>>(`/categories/${id}`, {
+export function updateCategories(tree: CategoryUpdateNode[]) {
+  return api<void>("/admin/categories", {
     method: "PUT",
-    body: data,
+    body: tree,
   });
 }
 
-export function deleteCategory(id: number) {
-  return api<void>(`/categories/${id}`, { method: "DELETE" });
-}
-
-export function updateCategoryOrder(orderedIds: number[]) {
-  return api<void>("/categories/order", {
-    method: "PUT",
-    body: { orderedIds },
+export function deleteCategories(ids: number[]) {
+  return api<void>("/admin/categories", {
+    method: "DELETE",
+    body: { ids },
   });
 }

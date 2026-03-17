@@ -5,8 +5,8 @@ export interface Admin {
   email: string;
   name: string;
   role: AdminRole;
+  isActive: boolean;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface LoginRequest {
@@ -19,4 +19,10 @@ export interface AdminFormData {
   name: string;
   password?: string;
   role: AdminRole;
+}
+
+export interface AdminUpdateData {
+  name: string;
+  role: AdminRole;
+  isActive: boolean;
 }

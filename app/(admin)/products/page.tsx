@@ -31,23 +31,24 @@ import { getBrands } from "@/services/brandService";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePagination } from "@/hooks/usePagination";
 import { PAGE_SIZE_OPTIONS } from "@/lib/constants";
-import type { Product, ProductListParams } from "@/types/product";
+import type { ProductSummary, ProductListParams } from "@/types/product";
 import type { ProductStatus } from "@/lib/constants";
 import type { Category } from "@/types/category";
 import type { Brand } from "@/types/brand";
 import { product, common, pagination as paginationLabels, PRODUCT_STATUS_LABEL } from "@/data/labels";
 
-const statusVariant: Record<ProductStatus, "success" | "warning" | "destructive"> = {
-  SALE: "success",
-  SOLDOUT: "destructive",
-  HIDDEN: "warning",
+const statusVariant: Record<ProductStatus, "success" | "warning" | "destructive" | "default"> = {
+  ON_SALE: "success",
+  SOLD_OUT: "destructive",
+  DISCONTINUED: "warning",
+  DRAFT: "default",
 };
 
 export default function ProductsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -61,38 +62,28 @@ export default function ProductsPage() {
   const [statusFilter, setStatusFilter] = useState(searchParams.get("status") ?? "");
   const [mainCategoryFilter, setMainCategoryFilter] = useState("");
   const [subCategoryFilter, setSubCategoryFilter] = useState("");
-  const [detailCategoryFilter, setDetailCategoryFilter] = useState("");
   const [brandFilter, setBrandFilter] = useState("");
   const [brandDialogOpen, setBrandDialogOpen] = useState(false);
   const [brandSearch, setBrandSearch] = useState("");
 
-  const mainCategories = categories.filter((c) => c.level === 1);
-  const selectedMainCat = mainCategories.find((c) => c.name === mainCategoryFilter);
-  const subCategoriesForFilter = categories.filter(
-    (c) => c.level === 2 && (!mainCategoryFilter || c.parentId === selectedMainCat?.id)
-  );
+  // categories는 트리 구조 (depth 0 = 대분류, children = 중분류)
+  const selectedMainCat = categories.find((c) => c.name === mainCategoryFilter);
+  const subCategoriesForFilter = selectedMainCat?.children ?? [];
   const selectedSubCat = subCategoriesForFilter.find((c) => c.name === subCategoryFilter);
-  const detailCategoriesForFilter = categories.filter(
-    (c) => c.level === 3 && (!subCategoryFilter || c.parentId === selectedSubCat?.id)
-  );
-  const selectedDetailCat = detailCategoriesForFilter.find((c) => c.name === detailCategoryFilter);
   const selectedBrand = brands.find((b) => b.name === brandFilter);
-  const sortedBrands = [...brands].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  const previewBrands = sortedBrands.slice(0, 10);
-  const hasMoreBrands = sortedBrands.length > 10;
+  const previewBrands = brands.slice(0, 10);
+  const hasMoreBrands = brands.length > 10;
   const brandFilterInPreview = !brandFilter || previewBrands.some((b) => b.name === brandFilter);
-  const filteredBrandsForDialog = sortedBrands.filter((b) =>
+  const filteredBrandsForDialog = brands.filter((b) =>
     b.name.toLowerCase().includes(brandSearch.toLowerCase())
   );
   const debouncedKeyword = useDebounce(keyword);
 
-  const activeFilterCount = [statusFilter, mainCategoryFilter, subCategoryFilter, detailCategoryFilter, brandFilter].filter(Boolean).length;
+  const activeFilterCount = [statusFilter, subCategoryFilter, brandFilter].filter(Boolean).length;
 
   const resetFilters = () => {
     setStatusFilter("");
-    setMainCategoryFilter("");
     setSubCategoryFilter("");
-    setDetailCategoryFilter("");
     setBrandFilter("");
   };
 
@@ -121,24 +112,17 @@ export default function ProductsPage() {
   const pagination = usePagination();
 
   // 삭제
-  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ProductSummary | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   // 카테고리/브랜드 목록 로드
   useEffect(() => {
-    const loadFilters = async () => {
-      try {
-        const [catRes, brandRes] = await Promise.all([
-          getCategories(),
-          getBrands(),
-        ]);
-        setCategories(catRes.data);
-        setBrands(brandRes.data);
-      } catch {
-        // api.ts에서 공통 에러 처리
-      }
-    };
-    loadFilters();
+    getCategories()
+      .then((res) => setCategories(res.data))
+      .catch(() => {});
+    getBrands({ size: 100 })
+      .then((res) => setBrands(res.data.content))
+      .catch(() => {});
   }, []);
 
   const fetchProducts = useCallback(async () => {
@@ -147,18 +131,15 @@ export default function ProductsPage() {
       const params: ProductListParams = {
         page: pagination.page,
         size: pagination.size,
-        sort,
-        order,
+        sort: sort ? `${sort},${order}` : undefined,
         keyword: debouncedKeyword || undefined,
         status: statusFilter ? (statusFilter as ProductStatus) : undefined,
-        mainCategoryId: selectedMainCat?.id,
-        subCategoryId: selectedSubCat?.id,
-        detailCategoryId: selectedDetailCat?.id,
+        categoryId: selectedSubCat?.id ?? selectedMainCat?.id,
         brandId: selectedBrand?.id,
       };
       const res = await getProducts(params);
-      setProducts(res.data);
-      pagination.setTotalCount(res.pagination.totalCount);
+      setProducts(res.data.content);
+      pagination.setTotalCount(res.data.total_elements);
     } catch {
       // api.ts에서 공통 에러 처리
     } finally {
@@ -173,7 +154,6 @@ export default function ProductsPage() {
     statusFilter,
     mainCategoryFilter,
     subCategoryFilter,
-    detailCategoryFilter,
     brandFilter,
   ]);
 
@@ -184,7 +164,7 @@ export default function ProductsPage() {
   // 필터 변경 시 1페이지로
   useEffect(() => {
     pagination.resetPage();
-  }, [debouncedKeyword, statusFilter, mainCategoryFilter, subCategoryFilter, detailCategoryFilter, brandFilter]);
+  }, [debouncedKeyword, statusFilter, mainCategoryFilter, subCategoryFilter, brandFilter]);
 
   const handleSort = (key: string) => {
     if (sort === key) {
@@ -209,20 +189,20 @@ export default function ProductsPage() {
     }
   };
 
-  const handleView = (product: Product) =>
+  const handleView = (product: ProductSummary) =>
     router.push(`/products/${product.id}`);
-  const handleEdit = (product: Product) =>
+  const handleEdit = (product: ProductSummary) =>
     router.push(`/products/${product.id}/edit`);
 
-  const columns: Column<Product>[] = [
+  const columns: Column<ProductSummary>[] = [
     {
       key: "image",
       label: product.colImage,
       className: "w-12",
       render: (p) =>
-        p.images[0] ? (
+        p.thumbnailUrl ? (
           <img
-            src={p.images[0].url}
+            src={p.thumbnailUrl}
             alt={p.name}
             className="h-10 w-10 object-contain"
           />
@@ -244,16 +224,25 @@ export default function ProductsPage() {
       key: "price",
       label: product.colPrice,
       sortable: true,
-      render: (p) => `${p.price.toLocaleString("ko-KR")}${common.currency}`,
+      render: (p) =>
+        p.discountPrice != null ? (
+          <div>
+            <span className="text-xs text-muted-foreground line-through">
+              {p.price.toLocaleString("ko-KR")}{common.currency}
+            </span>
+            <span className="ml-1.5 text-sm font-medium">
+              {p.discountPrice.toLocaleString("ko-KR")}{common.currency}
+            </span>
+          </div>
+        ) : (
+          `${p.price.toLocaleString("ko-KR")}${common.currency}`
+        ),
     },
     {
       key: "category",
       label: product.colCategory,
       render: (p) => (
-        <span className="text-sm">
-          {p.mainCategoryName} &gt; {p.subCategoryName}
-          {p.detailCategoryName && ` > ${p.detailCategoryName}`}
-        </span>
+        <span className="text-sm">{p.categoryName || "-"}</span>
       ),
     },
     {
@@ -302,7 +291,31 @@ export default function ProductsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">{product.pageTitle}</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-semibold">{product.pageTitle}</h1>
+          <Select
+            value={mainCategoryFilter || "__all__"}
+            onValueChange={(v) => {
+              if (!v) return;
+              setMainCategoryFilter(v === "__all__" ? "" : v);
+              setSubCategoryFilter("");
+            }}
+            items={Object.fromEntries([
+              ["__all__", product.filterMainCategoryAll],
+              ...categories.map((c) => [c.name, c.name]),
+            ])}
+          >
+            <SelectTrigger className="h-9 w-40" aria-label={product.filterMainCategoryGroup}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">{product.filterMainCategoryAll}</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="flex items-center gap-2">
           <div className="hidden items-center rounded-md border md:flex">
             <Button
@@ -424,28 +437,6 @@ export default function ProductsPage() {
             </div>
           </div>
 
-          {/* 대분류 */}
-          <div className="space-y-1.5">
-            <span className="text-xs text-muted-foreground">{product.filterMainCategoryGroup}</span>
-            <div className="flex flex-wrap gap-1.5">
-              {mainCategories.map((c) => (
-                <Button
-                  key={c.id}
-                  variant={mainCategoryFilter === c.name ? "default" : "outline"}
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={() => {
-                    setMainCategoryFilter(mainCategoryFilter === c.name ? "" : c.name);
-                    setSubCategoryFilter("");
-                    setDetailCategoryFilter("");
-                  }}
-                >
-                  {c.name}
-                </Button>
-              ))}
-            </div>
-          </div>
-
           {/* 중분류 (대분류 선택 시) */}
           {mainCategoryFilter && subCategoriesForFilter.length > 0 && (
             <div className="space-y-1.5">
@@ -457,30 +448,7 @@ export default function ProductsPage() {
                     variant={subCategoryFilter === c.name ? "default" : "outline"}
                     size="sm"
                     className="h-7 text-xs"
-                    onClick={() => {
-                      setSubCategoryFilter(subCategoryFilter === c.name ? "" : c.name);
-                      setDetailCategoryFilter("");
-                    }}
-                  >
-                    {c.name}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 소분류 (중분류 선택 시) */}
-          {subCategoryFilter && detailCategoriesForFilter.length > 0 && (
-            <div className="space-y-1.5">
-              <span className="text-xs text-muted-foreground">{product.filterDetailCategoryGroup}</span>
-              <div className="flex flex-wrap gap-1.5">
-                {detailCategoriesForFilter.map((c) => (
-                  <Button
-                    key={c.id}
-                    variant={detailCategoryFilter === c.name ? "default" : "outline"}
-                    size="sm"
-                    className="h-7 text-xs"
-                    onClick={() => setDetailCategoryFilter(detailCategoryFilter === c.name ? "" : c.name)}
+                    onClick={() => setSubCategoryFilter(subCategoryFilter === c.name ? "" : c.name)}
                   >
                     {c.name}
                   </Button>

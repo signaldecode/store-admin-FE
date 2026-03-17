@@ -54,18 +54,18 @@ export default function CategoryFormDialog({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 대분류 목록
+  // 대분류 목록 (depth === 0)
   const mainCategories = useMemo(
-    () => categories.filter((c) => c.level === 1 && c.id !== category?.id),
+    () => categories.filter((c) => c.depth === 0 && c.id !== category?.id),
     [categories, category]
   );
 
-  // 중분류 목록 (선택된 대분류 하위)
+  // 중분류 목록 (depth === 1, 선택된 대분류 하위)
   const subCategories = useMemo(
     () =>
       categories.filter(
         (c) =>
-          c.level === 2 &&
+          c.depth === 1 &&
           c.parentId === (mainCategoryId ? Number(mainCategoryId) : null) &&
           c.id !== category?.id
       ),
@@ -86,11 +86,11 @@ export default function CategoryFormDialog({
       setError("");
       if (category) {
         setName(category.name);
-        setLevel(category.level.toString() as Level);
-        if (category.level === 2) {
+        setLevel((category.depth + 1).toString() as Level);
+        if (category.depth === 1) {
           setMainCategoryId(category.parentId?.toString() || "");
           setSubCategoryId("");
-        } else if (category.level === 3) {
+        } else if (category.depth === 2) {
           // 소분류: 부모(중분류)의 부모(대분류)를 찾아야 함
           const parentSub = categories.find((c) => c.id === category.parentId);
           setMainCategoryId(parentSub?.parentId?.toString() || "");
@@ -109,11 +109,15 @@ export default function CategoryFormDialog({
   }, [open, category, categories]);
 
   /** 레벨에 따라 parentId 결정 */
-  function resolveParentId(): number | null {
-    if (level === "1") return null;
-    if (level === "2") return mainCategoryId ? Number(mainCategoryId) : null;
-    if (level === "3") return subCategoryId ? Number(subCategoryId) : null;
-    return null;
+  function resolveParentId(): number {
+    if (level === "2" && mainCategoryId) return Number(mainCategoryId);
+    if (level === "3" && subCategoryId) return Number(subCategoryId);
+    return 0;
+  }
+
+  /** 레벨 → depth 변환 (대분류=0, 중분류=1, 소분류=2) */
+  function resolveDepth(): number {
+    return Number(level) - 1;
   }
 
   const validate = (): boolean => {
@@ -145,6 +149,7 @@ export default function CategoryFormDialog({
       await onSubmit({
         name: name.trim(),
         parentId: resolveParentId(),
+        depth: resolveDepth(),
       });
       onOpenChange(false);
     } catch (err) {

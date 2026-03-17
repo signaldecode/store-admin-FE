@@ -4,13 +4,14 @@
  * - 향후 다국어(i18n) 전환 시 이 파일만 교체하면 된다
  */
 
-import type { ProductStatus, OptionType, AdminRole } from "@/lib/constants";
+import type { ProductStatus, OptionType, AdminRole, DiscountType } from "@/lib/constants";
 
 // ─── 열거형 라벨 ───
 export const PRODUCT_STATUS_LABEL: Record<ProductStatus, string> = {
-  SALE: "판매중",
-  SOLDOUT: "품절",
-  HIDDEN: "숨김",
+  ON_SALE: "판매중",
+  SOLD_OUT: "품절",
+  DISCONTINUED: "판매중단",
+  DRAFT: "임시저장",
 };
 
 export const OPTION_TYPE_LABEL: Record<OptionType, string> = {
@@ -18,9 +19,15 @@ export const OPTION_TYPE_LABEL: Record<OptionType, string> = {
   FREE: "자유 입력",
 };
 
+export const DISCOUNT_TYPE_LABEL: Record<DiscountType, string> = {
+  NONE: "할인 없음",
+  RATE: "정률 (%)",
+  AMOUNT: "정액 (원)",
+};
+
 export const ADMIN_ROLE_LABEL: Record<AdminRole, string> = {
-  SUPER: "슈퍼 관리자",
-  MANAGER: "매니저",
+  SUPER_ADMIN: "슈퍼 관리자",
+  ADMIN: "관리자",
 };
 
 // ─── 공통 ───
@@ -114,6 +121,8 @@ export const product = {
   colUpdatedAt: "수정일",
 
   // 섹션
+  sectionMainCategory: "대분류 선택",
+  sectionMainCategoryHint: "대분류를 먼저 선택해주세요.",
   sectionBasic: "기본 정보",
   sectionAdditional: "추가 정보",
   sectionOptions: "사용자 정의 옵션",
@@ -127,11 +136,20 @@ export const product = {
   stockLabel: "재고",
   stockPlaceholder: "재고 수량을 입력하세요",
   stockDisabledHint: "옵션이 있는 상품은 조합별 재고를 입력하세요",
+  discountTypeLabel: "할인 유형",
+  discountValueLabel: "할인 값",
+  discountValuePlaceholder: "할인 값을 입력하세요",
+  discountValueSuffixRate: "%",
+  discountValueSuffixAmount: "원",
+  discountPriceLabel: "할인가",
+  discountRateMax: "할인율은 100% 이하여야 합니다.",
+  discountAmountMax: "할인 금액이 가격보다 클 수 없습니다.",
   marginPrice1Label: "마진 1 가격 (원)",
   marginPrice1Placeholder: "마진 1 가격을 입력하세요",
   marginPrice2Label: "마진 2 가격 (원)",
   marginPrice2Placeholder: "마진 2 가격을 입력하세요",
   statusLabel: "상태",
+  visibleLabel: "노출 여부",
   imageLabel: "상품 이미지",
 
   // 분류 폼
@@ -158,6 +176,7 @@ export const product = {
   filterActiveCount: (count: number) => `${count}개 적용`,
   filterStatusGroup: "상태",
   filterMainCategoryGroup: "대분류",
+  filterMainCategoryAll: "전체",
   filterSubCategoryGroup: "중분류",
   filterDetailCategoryGroup: "소분류",
   filterBrandGroup: "브랜드",
@@ -190,8 +209,14 @@ export const product = {
   infoStock: "재고",
   infoMarginPrice1: "마진 1 가격",
   infoMarginPrice2: "마진 2 가격",
+  infoDiscountType: "할인 유형",
+  infoDiscountValue: "할인 값",
+  infoDiscountPrice: "할인가",
   infoCategory: "분류",
   infoBrand: "브랜드",
+  infoOrigin: "원산지",
+  infoMaterial: "소재",
+  infoWashingInfo: "세탁 정보",
   infoCreatedAt: "등록일",
   infoUpdatedAt: "수정일",
   descriptionHeading: "상품 설명",
@@ -241,6 +266,7 @@ export const productOption = {
   variantColSku: "SKU",
   variantColStock: "재고",
   variantColPrice: "추가금액",
+  variantColDiscontPrice: "할인가", 
 };
 
 // ─── 이미지 업로더 ───
@@ -338,9 +364,10 @@ export const admin = {
   emptyMessage: "등록된 관리자가 없습니다.",
   createTitle: "관리자 추가",
   editTitle: "관리자 수정",
-  deleteTitle: "관리자 삭제",
+  deleteTitle: "관리자 비활성화",
   deleteDescription: (name: string, email: string) =>
-    `${name}(${email}) 계정을 삭제하시겠습니까?`,
+    `${name}(${email}) 계정을 비활성화하시겠습니까?`,
+  isActiveLabel: "활성 상태",
   colEmail: "이메일",
   colName: "이름",
   colRole: "역할",

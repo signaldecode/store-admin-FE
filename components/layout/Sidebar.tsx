@@ -5,11 +5,17 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { menuItems } from "@/data/menuData";
 import { useSidebarStore } from "@/stores/useSidebarStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { layout } from "@/data/labels";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const isOpen = useSidebarStore((s) => s.isOpen);
+  const adminRole = useAuthStore((s) => s.admin?.role);
+
+  const visibleItems = menuItems.filter(
+    (item) => !item.requiredRole || item.requiredRole === adminRole
+  );
 
   return (
     <aside
@@ -31,7 +37,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-1 p-2" aria-label={layout.mainMenu}>
-        {menuItems.map((item) => {
+        {visibleItems.map((item) => {
           const isActive =
             item.href === "/"
               ? pathname === "/"

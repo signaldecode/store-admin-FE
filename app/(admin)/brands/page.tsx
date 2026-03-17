@@ -65,8 +65,8 @@ export default function BrandsPage() {
   const fetchBrands = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getBrands({ sort, order });
-      setBrands(res.data ?? []);
+      const res = await getBrands({ sort: sort ? `${sort},${order}` : undefined, size: 100 });
+      setBrands(res.data.content);
     } catch {
       // api.ts에서 공통 에러 처리
     } finally {
@@ -88,11 +88,11 @@ export default function BrandsPage() {
     setFormOpen(true);
   };
 
-  const handleSubmit = async (data: BrandFormData) => {
+  const handleSubmit = async (data: BrandFormData, logoImage?: File) => {
     if (editTarget) {
-      await updateBrand(editTarget.id, data);
+      await updateBrand(editTarget.id, data, logoImage);
     } else {
-      await createBrand(data);
+      await createBrand(data, logoImage);
     }
     await fetchBrands();
   };

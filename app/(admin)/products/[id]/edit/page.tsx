@@ -30,7 +30,7 @@ export default function ProductEditPage() {
         ]);
         setProduct(productRes.data);
         setCategories(catRes.data);
-        setBrands(brandRes.data);
+        setBrands(brandRes.data.content);
       } catch {
         // api.ts에서 공통 에러 처리
       } finally {
@@ -40,8 +40,8 @@ export default function ProductEditPage() {
     load();
   }, [id]);
 
-  const handleSubmit = async (data: FormData) => {
-    await updateProduct(id, data);
+  const handleSubmit: React.ComponentProps<typeof ProductForm>["onSubmit"] = async (data, thumbnail, images) => {
+    await updateProduct(id, data, thumbnail, images);
   };
 
   if (loading) {

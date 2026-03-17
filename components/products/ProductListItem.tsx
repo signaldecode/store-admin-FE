@@ -10,21 +10,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import StatusBadge from "@/components/common/StatusBadge";
 import { PRODUCT_STATUS_LABEL } from "@/data/labels";
-import type { Product } from "@/types/product";
+import type { ProductSummary } from "@/types/product";
 import type { ProductStatus } from "@/lib/constants";
 import { product as productLabels, common } from "@/data/labels";
 
 interface ProductListItemProps {
-  product: Product;
-  onView: (product: Product) => void;
-  onEdit: (product: Product) => void;
-  onDelete: (product: Product) => void;
+  product: ProductSummary;
+  onView: (product: ProductSummary) => void;
+  onEdit: (product: ProductSummary) => void;
+  onDelete: (product: ProductSummary) => void;
 }
 
-const statusVariant: Record<ProductStatus, "success" | "warning" | "destructive"> = {
-  SALE: "success",
-  SOLDOUT: "warning",
-  HIDDEN: "destructive",
+const statusVariant: Record<ProductStatus, "success" | "warning" | "destructive" | "default"> = {
+  ON_SALE: "success",
+  SOLD_OUT: "destructive",
+  DISCONTINUED: "warning",
+  DRAFT: "default",
 };
 
 export default function ProductListItem({
@@ -35,9 +36,9 @@ export default function ProductListItem({
 }: ProductListItemProps) {
   return (
     <div className="flex items-center gap-4 rounded-md border p-4">
-      {product.images[0] ? (
+      {product.thumbnailUrl ? (
         <img
-          src={product.images[0].url}
+          src={product.thumbnailUrl}
           alt={product.name}
           className="h-16 w-16 shrink-0 rounded-md object-cover"
         />
@@ -55,8 +56,17 @@ export default function ProductListItem({
           {product.name}
         </button>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span>{product.price.toLocaleString("ko-KR")}{common.currency}</span>
-          <span>{product.mainCategoryName} &gt; {product.subCategoryName}</span>
+          {product.discountPrice != null ? (
+            <>
+              <span className="text-muted-foreground/60 line-through">
+                {product.price.toLocaleString("ko-KR")}{common.currency}
+              </span>
+              <span>{product.discountPrice.toLocaleString("ko-KR")}{common.currency}</span>
+            </>
+          ) : (
+            <span>{product.price.toLocaleString("ko-KR")}{common.currency}</span>
+          )}
+          {product.categoryName && <span>{product.categoryName}</span>}
           {product.brandName && <span>{product.brandName}</span>}
         </div>
       </div>

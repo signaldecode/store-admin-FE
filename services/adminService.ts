@@ -1,13 +1,9 @@
 import { api } from "@/lib/api";
-import type { Admin, AdminFormData } from "@/types/admin";
+import type { Admin, AdminFormData, AdminUpdateData } from "@/types/admin";
 import type { ApiResponse } from "@/types/api";
 
 export function getAdmins() {
   return api<ApiResponse<Admin[]>>("/admins");
-}
-
-export function getAdmin(id: number) {
-  return api<ApiResponse<Admin>>(`/admins/${id}`);
 }
 
 export function createAdmin(data: AdminFormData) {
@@ -17,13 +13,13 @@ export function createAdmin(data: AdminFormData) {
   });
 }
 
-export function updateAdmin(id: number, data: AdminFormData) {
+export function updateAdmin(id: number, data: AdminUpdateData) {
   return api<ApiResponse<Admin>>(`/admins/${id}`, {
-    method: "PUT",
+    method: "PATCH",
     body: data,
   });
 }
 
-export function deleteAdmin(id: number) {
+export function deactivateAdmin(id: number) {
   return api<void>(`/admins/${id}`, { method: "DELETE" });
 }
