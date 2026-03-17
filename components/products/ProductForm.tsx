@@ -41,7 +41,7 @@ import type { Brand } from "@/types/brand";
 import type { ApiError } from "@/types/api";
 import { product as productLabels, common, PRODUCT_STATUS_LABEL } from "@/data/labels";
 import NumberInput from "@/components/common/NumberInput";
-import { formatKoreanUnit } from "@/lib/utils";
+import { formatKoreanUnit, formatKoreanUnitShort } from "@/lib/utils";
 
 interface ImageFile {
   file?: File;
@@ -180,9 +180,7 @@ export default function ProductForm({
     if (!mainCategoryId) newErrors.mainCategoryId = productLabels.mainCategoryRequired;
     if (!subCategoryId) newErrors.subCategoryId = productLabels.subCategoryRequired;
     if (!price || Number(price) < 0) newErrors.price = productLabels.priceRequired;
-    if (!hasOptions) {
-      if (stock === "" || Number(stock) < 0) newErrors.stock = productLabels.stockRequired;
-    }
+    if (stock !== "" && Number(stock) < 0) newErrors.stock = productLabels.stockRequired;
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -239,10 +237,65 @@ export default function ProductForm({
     }
   };
 
+  const mainCategorySelected = !!mainCategoryId;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* ── 섹션 1: 기본 정보 (필수) ── */}
+      {/* ── 섹션 0: 대분류 선택 (최우선) ── */}
       <Card>
+        <CardHeader>
+          <CardTitle>{productLabels.sectionMainCategory} <span className="text-destructive">*</span></CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Select
+              value={mainCategoryId || null}
+              onValueChange={(v) => {
+                setMainCategoryId(v ?? EMPTY);
+                setSubCategoryId(EMPTY);
+                setDetailCategoryId(EMPTY);
+              }}
+              disabled={loading}
+              items={mainCategoryItems}
+            >
+              <SelectTrigger
+                id="product-main-category"
+                aria-required="true"
+                aria-invalid={!!errors.mainCategoryId}
+                aria-describedby={
+                  errors.mainCategoryId
+                    ? "product-main-category-error"
+                    : !mainCategorySelected
+                      ? "product-main-category-hint"
+                      : undefined
+                }
+              >
+                <SelectValue placeholder={productLabels.mainCategoryPlaceholder} />
+              </SelectTrigger>
+              <SelectContent>
+                {mainCategories.map((c) => (
+                  <SelectItem key={c.id} value={c.id.toString()}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.mainCategoryId && (
+              <p id="product-main-category-error" className="text-sm text-destructive">
+                {errors.mainCategoryId}
+              </p>
+            )}
+            {!mainCategorySelected && !errors.mainCategoryId && (
+              <p id="product-main-category-hint" className="text-sm text-muted-foreground">
+                {productLabels.sectionMainCategoryHint}
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── 섹션 1: 기본 정보 (필수) ── */}
+      <Card className={!mainCategorySelected ? "pointer-events-none opacity-50" : undefined}>
         <CardHeader>
           <CardTitle>{productLabels.sectionBasic}</CardTitle>
         </CardHeader>
@@ -272,7 +325,7 @@ export default function ProductForm({
               placeholder={productLabels.namePlaceholder}
               aria-required="true"
               aria-describedby={errors.name ? "product-name-error" : undefined}
-              disabled={loading}
+              disabled={loading || !mainCategorySelected}
             />
             {errors.name && (
               <p id="product-name-error" className="text-sm text-destructive">
@@ -281,84 +334,43 @@ export default function ProductForm({
             )}
           </div>
 
-          {/* 대분류 / 중분류 (필수) */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="product-main-category">
-                {productLabels.mainCategoryLabel} <span className="text-destructive">*</span>
-              </Label>
-              <Select
-                value={mainCategoryId || null}
-                onValueChange={(v) => {
-                  setMainCategoryId(v ?? EMPTY);
-                  setSubCategoryId(EMPTY);
-                  setDetailCategoryId(EMPTY);
-                }}
-                disabled={loading}
-                items={mainCategoryItems}
+          {/* 중분류 (필수) */}
+          <div className="space-y-2">
+            <Label htmlFor="product-sub-category">
+              {productLabels.subCategoryLabel} <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              value={subCategoryId || null}
+              onValueChange={(v) => {
+                setSubCategoryId(v ?? EMPTY);
+                setDetailCategoryId(EMPTY);
+              }}
+              disabled={loading || !mainCategorySelected}
+              items={subCategoryItems}
+            >
+              <SelectTrigger
+                id="product-sub-category"
+                aria-required="true"
+                aria-invalid={!!errors.subCategoryId}
+                aria-describedby={
+                  errors.subCategoryId ? "product-sub-category-error" : undefined
+                }
               >
-                <SelectTrigger
-                  id="product-main-category"
-                  aria-required="true"
-                  aria-invalid={!!errors.mainCategoryId}
-                  aria-describedby={
-                    errors.mainCategoryId ? "product-main-category-error" : undefined
-                  }
-                >
-                  <SelectValue placeholder={productLabels.mainCategoryPlaceholder} />
-                </SelectTrigger>
-                <SelectContent>
-                  {mainCategories.map((c) => (
-                    <SelectItem key={c.id} value={c.id.toString()}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.mainCategoryId && (
-                <p id="product-main-category-error" className="text-sm text-destructive">
-                  {errors.mainCategoryId}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="product-sub-category">
-                {productLabels.subCategoryLabel} <span className="text-destructive">*</span>
-              </Label>
-              <Select
-                value={subCategoryId || null}
-                onValueChange={(v) => {
-                  setSubCategoryId(v ?? EMPTY);
-                  setDetailCategoryId(EMPTY);
-                }}
-                disabled={loading || !mainCategoryId}
-                items={subCategoryItems}
-              >
-                <SelectTrigger
-                  id="product-sub-category"
-                  aria-required="true"
-                  aria-invalid={!!errors.subCategoryId}
-                  aria-describedby={
-                    errors.subCategoryId ? "product-sub-category-error" : undefined
-                  }
-                >
-                  <SelectValue placeholder={!mainCategoryId ? productLabels.subCategoryDisabled : productLabels.subCategoryPlaceholder} />
-                </SelectTrigger>
-                <SelectContent>
-                  {subCategories.map((c) => (
-                    <SelectItem key={c.id} value={c.id.toString()}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.subCategoryId && (
-                <p id="product-sub-category-error" className="text-sm text-destructive">
-                  {errors.subCategoryId}
-                </p>
-              )}
-            </div>
+                <SelectValue placeholder={!mainCategorySelected ? productLabels.subCategoryDisabled : productLabels.subCategoryPlaceholder} />
+              </SelectTrigger>
+              <SelectContent>
+                {subCategories.map((c) => (
+                  <SelectItem key={c.id} value={c.id.toString()}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.subCategoryId && (
+              <p id="product-sub-category-error" className="text-sm text-destructive">
+                {errors.subCategoryId}
+              </p>
+            )}
           </div>
 
           {/* 가격 / 재고 */}
@@ -390,14 +402,18 @@ export default function ProductForm({
 
             <div className="space-y-2">
               <Label htmlFor="product-stock">
-                {productLabels.stockLabel} <span className="text-destructive">*</span>
+                {productLabels.stockLabel}
+                {stock && !hasOptions && (
+                  <span className="ml-1 font-normal text-muted-foreground">
+                    {formatKoreanUnitShort(stock)}
+                  </span>
+                )}
               </Label>
               <NumberInput
                 id="product-stock"
                 value={hasOptions ? "" : stock}
                 onValueChange={setStock}
                 placeholder={hasOptions ? "" : productLabels.stockPlaceholder}
-                aria-required={!hasOptions}
                 aria-describedby={
                   hasOptions
                     ? "product-stock-hint"
@@ -424,7 +440,7 @@ export default function ProductForm({
       </Card>
 
       {/* ── 섹션 2: 추가 정보 (선택) ── */}
-      <Card>
+      <Card className={!mainCategorySelected ? "pointer-events-none opacity-50" : undefined}>
         <CardHeader>
           <CardTitle>{productLabels.sectionAdditional}</CardTitle>
         </CardHeader>
@@ -501,7 +517,14 @@ export default function ProductForm({
           {/* 마진 1 / 마진 2 */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="product-margin-price1">{productLabels.marginPrice1Label}</Label>
+              <Label htmlFor="product-margin-price1">
+                {productLabels.marginPrice1Label}
+                {marginPrice1 && (
+                  <span className="ml-1 font-normal text-muted-foreground">
+                    {formatKoreanUnit(marginPrice1)}
+                  </span>
+                )}
+              </Label>
               <NumberInput
                 id="product-margin-price1"
                 value={marginPrice1}
@@ -512,7 +535,14 @@ export default function ProductForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="product-margin-price2">{productLabels.marginPrice2Label}</Label>
+              <Label htmlFor="product-margin-price2">
+                {productLabels.marginPrice2Label}
+                {marginPrice2 && (
+                  <span className="ml-1 font-normal text-muted-foreground">
+                    {formatKoreanUnit(marginPrice2)}
+                  </span>
+                )}
+              </Label>
               <NumberInput
                 id="product-margin-price2"
                 value={marginPrice2}
@@ -565,7 +595,7 @@ export default function ProductForm({
       </Card>
 
       {/* ── 섹션 3: 사용자 정의 옵션 (선택) ── */}
-      <Card>
+      <Card className={!mainCategorySelected ? "pointer-events-none opacity-50" : undefined}>
         <CardHeader>
           <CardTitle>{productLabels.sectionOptions}</CardTitle>
         </CardHeader>

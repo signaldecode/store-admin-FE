@@ -114,6 +114,8 @@ export const product = {
   colUpdatedAt: "수정일",
 
   // 섹션
+  sectionMainCategory: "대분류 선택",
+  sectionMainCategoryHint: "대분류를 먼저 선택해주세요.",
   sectionBasic: "기본 정보",
   sectionAdditional: "추가 정보",
   sectionOptions: "사용자 정의 옵션",
