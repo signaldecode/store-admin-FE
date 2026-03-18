@@ -344,6 +344,10 @@ export const category = {
   editModeSaving: "저장 중...",
   editModeUnsaved: "변경사항이 있습니다",
   renameLabel: (name: string) => `${name} 이름 변경`,
+  siteLabel: "사이트",
+  sitePlaceholder: "사이트 선택",
+  siteRequired: "사이트를 선택해주세요.",
+  siteAll: "전체 사이트",
 };
 
 // ─── 브랜드 ───

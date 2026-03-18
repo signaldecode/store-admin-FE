@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Category, CategoryFormData } from "@/types/category";
+import type { ActiveSite } from "@/types/site";
 import type { ApiError } from "@/types/api";
 import { category as categoryLabels, common } from "@/data/labels";
 
@@ -27,6 +28,8 @@ interface CategoryFormDialogProps {
   onOpenChange: (open: boolean) => void;
   category?: Category | null;
   categories: Category[];
+  sites: ActiveSite[];
+  selectedSiteId?: number;
   onSubmit: (data: CategoryFormData) => Promise<void>;
 }
 
@@ -43,16 +46,24 @@ export default function CategoryFormDialog({
   onOpenChange,
   category,
   categories,
+  sites,
+  selectedSiteId,
   onSubmit,
 }: CategoryFormDialogProps) {
   const isEdit = !!category;
 
   const [name, setName] = useState("");
+  const [siteId, setSiteId] = useState<string>("");
   const [level, setLevel] = useState<Level>("1");
   const [mainCategoryId, setMainCategoryId] = useState("");
   const [subCategoryId, setSubCategoryId] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const siteItems = useMemo(
+    () => Object.fromEntries(sites.map((s) => [s.id.toString(), s.name])),
+    [sites]
+  );
 
   // 대분류 목록 (depth === 0)
   const mainCategories = useMemo(
@@ -86,6 +97,7 @@ export default function CategoryFormDialog({
       setError("");
       if (category) {
         setName(category.name);
+        setSiteId(category.siteId?.toString() || "");
         setLevel((category.depth + 1).toString() as Level);
         if (category.depth === 1) {
           setMainCategoryId(category.parentId?.toString() || "");
@@ -101,18 +113,19 @@ export default function CategoryFormDialog({
         }
       } else {
         setName("");
+        setSiteId(selectedSiteId?.toString() || "");
         setLevel("1");
         setMainCategoryId("");
         setSubCategoryId("");
       }
     }
-  }, [open, category, categories]);
+  }, [open, category, categories, selectedSiteId]);
 
   /** 레벨에 따라 parentId 결정 */
-  function resolveParentId(): number {
+  function resolveParentId(): number | null {
     if (level === "2" && mainCategoryId) return Number(mainCategoryId);
     if (level === "3" && subCategoryId) return Number(subCategoryId);
-    return 0;
+    return null;
   }
 
   /** 레벨 → depth 변환 (대분류=0, 중분류=1, 소분류=2) */
@@ -121,6 +134,10 @@ export default function CategoryFormDialog({
   }
 
   const validate = (): boolean => {
+    if (!siteId) {
+      setError(categoryLabels.siteRequired);
+      return false;
+    }
     if (!name.trim()) {
       setError(categoryLabels.nameRequired);
       return false;
@@ -146,8 +163,11 @@ export default function CategoryFormDialog({
 
     setLoading(true);
     try {
+      const selectedSite = sites.find((s) => s.id === Number(siteId));
       await onSubmit({
         name: name.trim(),
+        siteId: Number(siteId),
+        siteName: selectedSite?.name ?? null,
         parentId: resolveParentId(),
         depth: resolveDepth(),
       });
@@ -170,6 +190,33 @@ export default function CategoryFormDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* 사이트 선택 */}
+          <div className="space-y-2">
+            <Label htmlFor="category-site">
+              {categoryLabels.siteLabel} <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              value={siteId || null}
+              onValueChange={(v) => {
+                setSiteId(v ?? "");
+                setError("");
+              }}
+              disabled={loading || isEdit || level !== "1"}
+              items={siteItems}
+            >
+              <SelectTrigger id="category-site" aria-required="true">
+                <SelectValue placeholder={categoryLabels.sitePlaceholder} />
+              </SelectTrigger>
+              <SelectContent>
+                {sites.map((s) => (
+                  <SelectItem key={s.id} value={s.id.toString()}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* 분류 단계 */}
           <div className="space-y-2">
             <Label htmlFor="category-level">{categoryLabels.levelLabel}</Label>
@@ -181,6 +228,12 @@ export default function CategoryFormDialog({
                   setMainCategoryId("");
                   setSubCategoryId("");
                   setError("");
+                  // 대분류로 돌아가면 사이트 선택 복원, 아니면 대분류 선택 시 자동 설정
+                  if (v === "1") {
+                    setSiteId(selectedSiteId?.toString() ?? "");
+                  } else {
+                    setSiteId("");
+                  }
                 }
               }}
               disabled={loading || isEdit}
@@ -209,6 +262,11 @@ export default function CategoryFormDialog({
                   setMainCategoryId(v ?? "");
                   setSubCategoryId("");
                   setError("");
+                  // 대분류의 사이트를 따라감
+                  const parent = mainCategories.find((c) => c.id === Number(v));
+                  if (parent) {
+                    setSiteId(parent.siteId?.toString() ?? "");
+                  }
                 }}
                 disabled={loading}
                 items={mainCategoryItems}

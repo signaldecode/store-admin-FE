@@ -3,6 +3,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Plus, ArrowUpDown, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import EmptyState from "@/components/common/EmptyState";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 import CategoryFormDialog from "@/components/categories/CategoryFormDialog";
@@ -13,7 +21,9 @@ import {
   updateCategories,
   deleteCategories,
 } from "@/services/categoryService";
+import { getActiveSites } from "@/services/siteService";
 import type { Category, CategoryFormData, CategoryUpdateNode } from "@/types/category";
+import type { ActiveSite } from "@/types/site";
 import { category as categoryLabels, common } from "@/data/labels";
 
 
@@ -44,6 +54,8 @@ function flattenTree(tree: Category[]): Category[] {
 function toUpdateNodes(tree: Category[], depth = 0): CategoryUpdateNode[] {
   return tree.map((item, index) => ({
     id: item.id,
+    siteId: item.siteId!,
+    siteName: item.siteName!,
     name: item.name,
     depth,
     sortOrder: index,
@@ -108,6 +120,10 @@ export default function CategoriesPage() {
   const [tree, setTree] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 사이트 필터
+  const [sites, setSites] = useState<ActiveSite[]>([]);
+  const [selectedSiteId, setSelectedSiteId] = useState<number | undefined>();
+
   // 순서 변경 모드
   const [editing, setEditing] = useState(false);
   const [draftTree, setDraftTree] = useState<Category[]>([]);
@@ -121,6 +137,13 @@ export default function CategoriesPage() {
   // 삭제 확인 다이얼로그
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // 사이트 목록 로드
+  useEffect(() => {
+    getActiveSites()
+      .then((res) => setSites(res.data))
+      .catch(() => {});
+  }, []);
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
@@ -140,8 +163,8 @@ export default function CategoriesPage() {
 
   /* ── 순서 변경 모드 진입/취소 ── */
   const enterEditMode = () => {
-    setDraftTree(cloneTree(tree));
-    originalTreeRef.current = cloneTree(tree);
+    setDraftTree(cloneTree(filteredTree));
+    originalTreeRef.current = cloneTree(filteredTree);
     setEditing(true);
   };
 
@@ -214,13 +237,22 @@ export default function CategoriesPage() {
     JSON.stringify(flattenTree(draftTree).map((c) => c.id)) !==
       JSON.stringify(flattenTree(originalTreeRef.current).map((c) => c.id));
 
-  const displayTree = editing ? draftTree : tree;
+  /** 사이트 필터 적용 (대분류의 siteId 기준 필터링) */
+  const filteredTree = selectedSiteId
+    ? tree.filter((item) => item.siteId === selectedSiteId)
+    : tree;
+
+  const displayTree = editing ? draftTree : filteredTree;
 
   const deleteDescription = deleteTarget
     ? deleteTarget.children?.length
       ? categoryLabels.deleteWithChildren(deleteTarget.name)
       : categoryLabels.deleteDescription(deleteTarget.name)
     : "";
+
+  const siteItems = Object.fromEntries(
+    sites.map((s) => [s.id.toString(), s.name])
+  );
 
   return (
     <div className="space-y-4">
@@ -250,7 +282,7 @@ export default function CategoriesPage() {
             </>
           ) : (
             <>
-              {tree.length > 0 && (
+              {filteredTree.length > 0 && (
                 <Button variant="outline" onClick={enterEditMode}>
                   <ArrowUpDown className="mr-2 h-4 w-4" />
                   {categoryLabels.reorderButton}
@@ -264,6 +296,32 @@ export default function CategoriesPage() {
           )}
         </div>
       </div>
+
+      {/* 사이트 필터 */}
+      {!editing && sites.length > 0 && (
+        <div className="flex items-center gap-2">
+          <Label htmlFor="category-site-filter">{categoryLabels.siteLabel}</Label>
+          <Select
+            value={selectedSiteId?.toString() ?? "all"}
+            onValueChange={(v) => {
+              setSelectedSiteId(v === "all" ? undefined : Number(v));
+            }}
+            items={{ all: categoryLabels.siteAll, ...siteItems }}
+          >
+            <SelectTrigger id="category-site-filter" className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{categoryLabels.siteAll}</SelectItem>
+              {sites.map((s) => (
+                <SelectItem key={s.id} value={s.id.toString()}>
+                  {s.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* 순서 변경 모드 안내 */}
       {editing && hasChanges && (
@@ -294,7 +352,9 @@ export default function CategoriesPage() {
         open={formOpen}
         onOpenChange={setFormOpen}
         category={editTarget}
-        categories={flattenTree(tree)}
+        categories={flattenTree(filteredTree)}
+        sites={sites}
+        selectedSiteId={selectedSiteId}
         onSubmit={handleSubmit}
       />
 
