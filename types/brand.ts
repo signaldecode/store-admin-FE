@@ -9,6 +9,11 @@ export interface Brand {
   createdAt: string;
 }
 
+export interface ActiveBrand {
+  id: number;
+  name: string;
+}
+
 export interface BrandFormData {
   name: string;
   description: string;

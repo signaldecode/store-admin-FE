@@ -1,5 +1,5 @@
 import { api } from "@/lib/api";
-import type { Brand, BrandFormData, BrandListParams } from "@/types/brand";
+import type { ActiveBrand, Brand, BrandFormData, BrandListParams } from "@/types/brand";
 import type { ApiResponse, PaginatedResponse } from "@/types/api";
 
 export function getBrands(params?: BrandListParams) {
@@ -43,4 +43,14 @@ export function updateBrand(id: number, data: BrandFormData, logoImage?: File) {
 
 export function deleteBrand(id: number) {
   return api<void>(`/admin/brands/${id}`, { method: "DELETE" });
+}
+
+export function getActiveBrands() {
+  return api<ApiResponse<ActiveBrand[]>>("/admin/brands/active");
+}
+
+export function toggleBrandStatus(id: number) {
+  return api<void>(`/admin/brands/${id}/status`, {
+    method: "PATCH",
+  });
 }

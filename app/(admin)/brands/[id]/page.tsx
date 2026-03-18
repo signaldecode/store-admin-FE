@@ -128,6 +128,10 @@ export default function BrandDetailPage() {
       <div className="space-y-4 rounded-md border p-4">
         <InfoRow label={brandLabels.infoName} value={brand.name} />
         <InfoRow
+          label={brandLabels.infoStatus}
+          value={brand.isActive ? brandLabels.statusActive : brandLabels.statusInactive}
+        />
+        <InfoRow
           label={brandLabels.infoCreatedAt}
           value={new Date(brand.createdAt).toLocaleDateString("ko-KR")}
         />

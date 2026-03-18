@@ -349,6 +349,16 @@ export const brand = {
   infoUpdatedAt: "수정일",
   noLogo: "등록된 로고가 없습니다.",
 
+  // 상태
+  colStatus: "상태",
+  statusActive: "활성",
+  statusInactive: "비활성",
+  statusToggleLabel: (name: string) => `${name} 브랜드 활성 상태 토글`,
+  infoStatus: "상태",
+  filterAll: "전체",
+  filterActiveOnly: "활성화 된 브랜드",
+  filterLabel: "상태 필터",
+
   // 정렬
   sortLabel: "정렬",
   sortNewest: "최신순",

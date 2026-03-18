@@ -77,6 +77,7 @@ export default function ProductForm({
   const [mainCategoryId, setMainCategoryId] = useState(EMPTY);
   const [subCategoryId, setSubCategoryId] = useState(EMPTY);
   const [brandId, setBrandId] = useState(EMPTY);
+  const [brandName, setBrandName] = useState("");
 
   // 카테고리: 트리 구조 (depth 0 = 대분류, children = 중분류)
   const subCategories = useMemo(() => {
@@ -93,7 +94,7 @@ export default function ProductForm({
     [subCategories]
   );
   const brandComboboxItems = useMemo(
-    () => brands.map((b) => ({ value: b.id.toString(), label: b.name })),
+    () => brands.map((b) => ({ value: b.name, label: b.name })),
     [brands]
   );
   const [brandSearch, setBrandSearch] = useState("");
@@ -136,6 +137,8 @@ export default function ProductForm({
       setStatus(product.status);
       setIsVisible(product.isVisible);
       setBrandId(product.brandId?.toString() || EMPTY);
+      const matchedBrand = brands.find((b) => b.id === product.brandId);
+      setBrandName(matchedBrand?.name || "");
       setImages(product.images.map((img) => ({ url: img.url })));
 
       // 카테고리: 트리에서 해당 categoryId 찾기
@@ -174,7 +177,7 @@ export default function ProductForm({
         );
       }
     }
-  }, [product, categories]);
+  }, [product, categories, brands]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -477,8 +480,12 @@ export default function ProductForm({
           <div className="space-y-2">
             <Label htmlFor="product-brand">{productLabels.brandLabel}</Label>
             <Combobox
-              value={brandId || null}
-              onValueChange={(v) => setBrandId(v ?? EMPTY)}
+              value={brandName || null}
+              onValueChange={(v) => {
+                const selected = brands.find((b) => b.name === v);
+                setBrandId(selected ? selected.id.toString() : EMPTY);
+                setBrandName(v ?? "");
+              }}
               onInputValueChange={(inputValue) => setBrandSearch(inputValue)}
               items={brandComboboxItems}
             >
@@ -495,7 +502,7 @@ export default function ProductForm({
                   <ComboboxItem value={null}>{productLabels.noSelection}</ComboboxItem>
                 )}
                 {filteredBrands.map((b) => (
-                  <ComboboxItem key={b.id} value={b.id.toString()}>
+                  <ComboboxItem key={b.id} value={b.name}>
                     {b.name}
                   </ComboboxItem>
                 ))}

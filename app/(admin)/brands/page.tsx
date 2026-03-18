@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -19,6 +20,7 @@ import {
   createBrand,
   updateBrand,
   deleteBrand,
+  toggleBrandStatus,
 } from "@/services/brandService";
 import type { Brand, BrandFormData } from "@/types/brand";
 import { brand as brandLabels, common } from "@/data/labels";
@@ -33,6 +35,10 @@ export default function BrandsPage() {
 
   const [deleteTarget, setDeleteTarget] = useState<Brand | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // 필터
+  type StatusFilter = "all" | "active";
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   // 정렬
   const [sort, setSort] = useState("createdAt");
@@ -74,6 +80,10 @@ export default function BrandsPage() {
     }
   }, [sort, order]);
 
+  const filteredBrands = statusFilter === "active"
+    ? brands.filter((b) => b.isActive)
+    : brands;
+
   useEffect(() => {
     fetchBrands();
   }, [fetchBrands]);
@@ -97,6 +107,22 @@ export default function BrandsPage() {
     await fetchBrands();
   };
 
+  const handleToggleStatus = async (brand: Brand) => {
+    const prevIsActive = brand.isActive;
+    // 낙관적 업데이트
+    setBrands((prev) =>
+      prev.map((b) => (b.id === brand.id ? { ...b, isActive: !prevIsActive } : b))
+    );
+    try {
+      await toggleBrandStatus(brand.id);
+    } catch {
+      // 실패 시 롤백
+      setBrands((prev) =>
+        prev.map((b) => (b.id === brand.id ? { ...b, isActive: prevIsActive } : b))
+      );
+    }
+  };
+
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleteLoading(true);
@@ -116,20 +142,50 @@ export default function BrandsPage() {
       key: "logo",
       label: brandLabels.colLogo,
       className: "w-12",
-      render: (brand) =>
-        brand.logoUrl ? (
-          <img
-            src={brand.logoUrl}
-            alt={`${brand.name} 로고`}
-            className="h-8 w-8 rounded object-contain"
-          />
-        ) : (
-          <div className="flex h-8 w-8 items-center justify-center rounded bg-muted text-xs text-muted-foreground">
-            {brand.name.charAt(0)}
-          </div>
-        ),
+      render: (brand) => (
+        <button
+          className="cursor-pointer"
+          onClick={() => router.push(`/brands/${brand.id}`)}
+        >
+          {brand.logoUrl ? (
+            <img
+              src={brand.logoUrl}
+              alt={`${brand.name} 로고`}
+              className="h-8 w-8 rounded object-contain"
+            />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded bg-muted text-xs text-muted-foreground">
+              {brand.name.charAt(0)}
+            </div>
+          )}
+        </button>
+      ),
     },
-    { key: "name", label: brandLabels.colName, sortable: true },
+    {
+      key: "name",
+      label: brandLabels.colName,
+      sortable: true,
+      render: (brand) => (
+        <button
+          className="cursor-pointer text-left hover:underline"
+          onClick={() => router.push(`/brands/${brand.id}`)}
+        >
+          {brand.name}
+        </button>
+      ),
+    },
+    {
+      key: "isActive",
+      label: brandLabels.colStatus,
+      className: "w-20",
+      render: (brand) => (
+        <Switch
+          checked={brand.isActive}
+          onCheckedChange={() => handleToggleStatus(brand)}
+          aria-label={brandLabels.statusToggleLabel(brand.name)}
+        />
+      ),
+    },
     {
       key: "createdAt",
       label: brandLabels.colCreatedAt,
@@ -145,10 +201,7 @@ export default function BrandsPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleEdit(brand);
-            }}
+            onClick={() => handleEdit(brand)}
           >
             {common.edit}
           </Button>
@@ -156,10 +209,7 @@ export default function BrandsPage() {
             variant="ghost"
             size="sm"
             className="text-destructive hover:text-destructive"
-            onClick={(e) => {
-              e.stopPropagation();
-              setDeleteTarget(brand);
-            }}
+            onClick={() => setDeleteTarget(brand)}
           >
             {common.delete}
           </Button>
@@ -173,6 +223,19 @@ export default function BrandsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{brandLabels.pageTitle}</h1>
         <div className="flex items-center gap-2">
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => setStatusFilter(v as StatusFilter)}
+            items={{ all: brandLabels.filterAll, active: brandLabels.filterActiveOnly }}
+          >
+            <SelectTrigger className="h-9 w-24" aria-label={brandLabels.filterLabel}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{brandLabels.filterAll}</SelectItem>
+              <SelectItem value="active">{brandLabels.filterActiveOnly}</SelectItem>
+            </SelectContent>
+          </Select>
           <Select
             value={sortValue}
             onValueChange={handleSortSelect}
@@ -203,12 +266,11 @@ export default function BrandsPage() {
       ) : (
         <DataTable
           columns={columns}
-          data={brands}
+          data={filteredBrands}
           keyExtractor={(brand) => brand.id}
           sort={sort}
           order={order}
           onSort={handleSort}
-          onRowClick={(brand) => router.push(`/brands/${brand.id}`)}
           emptyMessage={brandLabels.emptyMessage}
         />
       )}
