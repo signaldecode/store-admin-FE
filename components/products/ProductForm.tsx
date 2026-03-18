@@ -108,7 +108,8 @@ export default function ProductForm({
     []
   );
 
-  const [images, setImages] = useState<ImageFile[]>([]);
+  const [thumbnail, setThumbnail] = useState<ImageFile[]>([]);
+  const [additionalImages, setAdditionalImages] = useState<ImageFile[]>([]);
   const [options, setOptions] = useState<OptionDraft[]>([]);
   const [variants, setVariants] = useState<VariantDraft[]>([]);
   const [optionPrices, setOptionPrices] = useState<
@@ -139,7 +140,10 @@ export default function ProductForm({
       setBrandId(product.brandId?.toString() || EMPTY);
       const matchedBrand = brands.find((b) => b.id === product.brandId);
       setBrandName(matchedBrand?.name || "");
-      setImages(product.images.map((img) => ({ url: img.url })));
+      const thumbImg = product.images.find((img) => img.isThumbnail);
+      const otherImgs = product.images.filter((img) => !img.isThumbnail);
+      if (thumbImg) setThumbnail([{ url: thumbImg.url }]);
+      setAdditionalImages(otherImgs.map((img) => ({ url: img.url })));
 
       // 카테고리: 트리에서 해당 categoryId 찾기
       if (product.categoryId) {
@@ -238,12 +242,13 @@ export default function ProductForm({
         }
       }
 
-      // 이미지 분리: 첫 번째 = 썸네일, 나머지 = 추가 이미지
-      const newFiles = images.filter((img) => img.file).map((img) => img.file!);
-      const thumbnail = newFiles[0];
-      const additionalImages = newFiles.slice(1);
+      // 이미지: 대표 이미지 + 추가 이미지
+      const thumbFile = thumbnail[0]?.file;
+      const imageFiles = additionalImages
+        .filter((img) => img.file)
+        .map((img) => img.file!);
 
-      await onSubmit(formData, thumbnail, additionalImages.length > 0 ? additionalImages : undefined);
+      await onSubmit(formData, thumbFile, imageFiles.length > 0 ? imageFiles : undefined);
       router.push("/products");
     } catch (err) {
       const apiError = err as ApiError;
@@ -317,15 +322,22 @@ export default function ProductForm({
           <CardTitle>{productLabels.sectionBasic}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* 이미지 */}
+          {/* 대표 이미지 */}
           <div className="space-y-2">
-            <Label>{productLabels.imageLabel}</Label>
-            <ImageUploader images={images} onChange={setImages} />
-            {errors.images && (
+            <Label>{productLabels.thumbnailLabel} <span className="text-destructive">*</span></Label>
+            <p className="text-xs text-muted-foreground">{productLabels.thumbnailHint}</p>
+            <ImageUploader images={thumbnail} onChange={setThumbnail} maxCount={1} maxSizeMB={1} />
+            {errors.thumbnail && (
               <p className="text-sm text-destructive" role="alert">
-                {errors.images}
+                {errors.thumbnail}
               </p>
             )}
+          </div>
+
+          {/* 추가 이미지 */}
+          <div className="space-y-2">
+            <Label>{productLabels.additionalImageLabel}</Label>
+            <ImageUploader images={additionalImages} onChange={setAdditionalImages} maxCount={9} maxSizeMB={1} />
           </div>
 
           {/* 상품명 */}

@@ -19,4 +19,7 @@ export interface BrandFormData {
   description: string;
 }
 
-export interface BrandListParams extends PaginationParams {}
+export interface BrandListParams extends PaginationParams {
+  keyword?: string;
+  isActive?: boolean;
+}

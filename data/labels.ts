@@ -151,6 +151,9 @@ export const product = {
   statusLabel: "상태",
   visibleLabel: "노출 여부",
   imageLabel: "상품 이미지",
+  thumbnailLabel: "대표 이미지",
+  thumbnailHint: "상품 목록에 표시되는 메인 이미지입니다.",
+  additionalImageLabel: "추가 이미지",
 
   // 분류 폼
   mainCategoryLabel: "대분류",
@@ -277,6 +280,7 @@ export const imageUploader = {
   altText: (name: string, index: number) => `${name} 이미지 ${index + 1}`,
   hint: (maxCount: number, maxSizeMB: number) =>
     `최대 ${maxCount}장, 장당 ${maxSizeMB}MB 이하`,
+  hintSingle: (maxSizeMB: number) => `${maxSizeMB}MB 이하`,
 };
 
 // ─── 카테고리 ───
@@ -348,6 +352,9 @@ export const brand = {
   infoCreatedAt: "등록일",
   infoUpdatedAt: "수정일",
   noLogo: "등록된 로고가 없습니다.",
+
+  // 검색
+  searchPlaceholder: "브랜드명으로 검색",
 
   // 상태
   colStatus: "상태",

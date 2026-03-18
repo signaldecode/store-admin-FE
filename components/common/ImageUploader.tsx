@@ -97,7 +97,7 @@ export default function ImageUploader({
         ref={inputRef}
         type="file"
         accept={accept}
-        multiple
+        multiple={maxCount > 1}
         className="hidden"
         onChange={(e) => {
           if (e.target.files) handleFiles(e.target.files);
@@ -106,7 +106,9 @@ export default function ImageUploader({
       />
 
       <p className="text-xs text-muted-foreground">
-        {imageUploader.hint(maxCount, maxSizeMB)}
+        {maxCount === 1
+          ? imageUploader.hintSingle(maxSizeMB)
+          : imageUploader.hint(maxCount, maxSizeMB)}
       </p>
     </div>
   );
