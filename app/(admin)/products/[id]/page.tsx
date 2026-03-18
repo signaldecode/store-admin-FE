@@ -17,6 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { getProduct, deleteProduct } from "@/services/productService";
+import { useProductCacheStore } from "@/stores/useProductCacheStore";
 import { PRODUCT_STATUS_LABEL } from "@/data/labels";
 import type { Product } from "@/types/product";
 import type { ProductStatus } from "@/lib/constants";
@@ -104,7 +105,10 @@ export default function ProductDetailPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => router.push(`/products/${id}/edit`)}
+            onClick={() => {
+              useProductCacheStore.getState().set(product);
+              router.push(`/products/${id}/edit`);
+            }}
           >
             <Pencil className="mr-1 h-4 w-4" />
             {common.edit}
@@ -121,19 +125,15 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      {/* 이미지 */}
-      {product.images.length > 0 && (
-        <div className="flex flex-wrap gap-3">
-          {product.images.map((img, i) => (
-            <img
-              key={img.id}
-              src={img.url}
-              alt={imageUploader.altText(product.name, i)}
-              className="h-32 w-32 rounded-md border object-cover"
-            />
-          ))}
-        </div>
-      )}
+      {/* 대표 이미지 */}
+      {product.images.filter((img) => img.isThumbnail).map((img, i) => (
+        <img
+          key={img.id}
+          src={img.url}
+          alt={imageUploader.altText(product.name, i)}
+          className="h-32 w-32 rounded-md border object-cover"
+        />
+      ))}
 
       {/* 상세 정보 */}
       <div className="space-y-4 rounded-md border p-4">
@@ -163,14 +163,6 @@ export default function ProductDetailPage() {
           value={new Date(product.updatedAt).toLocaleDateString("ko-KR")}
         />
       </div>
-
-      {/* 설명 */}
-      {product.description && (
-        <div className="space-y-2">
-          <h2 className="text-sm font-medium text-muted-foreground">{productLabels.descriptionHeading}</h2>
-          <p className="whitespace-pre-wrap text-sm">{product.description}</p>
-        </div>
-      )}
 
       {/* 옵션 정보 */}
       {product.options.length > 0 && (
@@ -233,6 +225,17 @@ export default function ProductDetailPage() {
               </TableBody>
             </Table>
           </div>
+        </div>
+      )}
+
+      {/* 설명 (HTML) */}
+      {product.description && (
+        <div className="space-y-2">
+          <h2 className="text-sm font-medium text-muted-foreground">{productLabels.descriptionHeading}</h2>
+          <div
+            className="tiptap rounded-md border p-4"
+            dangerouslySetInnerHTML={{ __html: product.description }}
+          />
         </div>
       )}
 

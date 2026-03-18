@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor from "@/components/common/RichTextEditor";
 import {
   Select,
   SelectContent,
@@ -50,7 +50,7 @@ interface ProductFormProps {
   product?: Product | null;
   categories: Category[];
   brands: ActiveBrand[];
-  onSubmit: (data: ProductFormData, thumbnail?: File, images?: File[]) => Promise<void>;
+  onSubmit: (data: ProductFormData, thumbnail?: File) => Promise<void>;
 }
 
 const EMPTY = "";
@@ -109,7 +109,6 @@ export default function ProductForm({
   );
 
   const [thumbnail, setThumbnail] = useState<ImageFile[]>([]);
-  const [additionalImages, setAdditionalImages] = useState<ImageFile[]>([]);
   const [options, setOptions] = useState<OptionDraft[]>([]);
   const [variants, setVariants] = useState<VariantDraft[]>([]);
   const [optionPrices, setOptionPrices] = useState<
@@ -141,9 +140,7 @@ export default function ProductForm({
       const matchedBrand = brands.find((b) => b.id === product.brandId);
       setBrandName(matchedBrand?.name || "");
       const thumbImg = product.images.find((img) => img.isThumbnail);
-      const otherImgs = product.images.filter((img) => !img.isThumbnail);
       if (thumbImg) setThumbnail([{ url: thumbImg.url }]);
-      setAdditionalImages(otherImgs.map((img) => ({ url: img.url })));
 
       // 카테고리: 트리에서 해당 categoryId 찾기
       if (product.categoryId) {
@@ -242,13 +239,8 @@ export default function ProductForm({
         }
       }
 
-      // 이미지: 대표 이미지 + 추가 이미지
       const thumbFile = thumbnail[0]?.file;
-      const imageFiles = additionalImages
-        .filter((img) => img.file)
-        .map((img) => img.file!);
-
-      await onSubmit(formData, thumbFile, imageFiles.length > 0 ? imageFiles : undefined);
+      await onSubmit(formData, thumbFile);
       router.push("/products");
     } catch (err) {
       const apiError = err as ApiError;
@@ -332,12 +324,6 @@ export default function ProductForm({
                 {errors.thumbnail}
               </p>
             )}
-          </div>
-
-          {/* 추가 이미지 */}
-          <div className="space-y-2">
-            <Label>{productLabels.additionalImageLabel}</Label>
-            <ImageUploader images={additionalImages} onChange={setAdditionalImages} maxCount={9} maxSizeMB={1} />
           </div>
 
           {/* 상품명 */}
@@ -601,16 +587,13 @@ export default function ProductForm({
             </div>
           </div>
 
-          {/* 설명 */}
+          {/* 설명 (리치 텍스트 에디터) */}
           <div className="space-y-2">
-            <Label htmlFor="product-description">{productLabels.descriptionLabel}</Label>
-            <Textarea
-              id="product-description"
+            <Label className="whitespace-pre-line">{productLabels.descriptionLabel}</Label>
+            <RichTextEditor
               value={description}
-              className="resize-none"
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={setDescription}
               placeholder={productLabels.descriptionPlaceholder}
-              rows={5}
               disabled={loading}
             />
           </div>

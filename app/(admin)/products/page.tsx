@@ -191,8 +191,6 @@ export default function ProductsPage() {
 
   const handleView = (product: ProductSummary) =>
     router.push(`/products/${product.id}`);
-  const handleEdit = (product: ProductSummary) =>
-    router.push(`/products/${product.id}/edit`);
 
   const columns: Column<ProductSummary>[] = [
     {
@@ -271,19 +269,14 @@ export default function ProductsPage() {
       label: "",
       className: "w-28",
       render: (p) => (
-        <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleEdit(p); }}>
-            {common.edit}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-destructive hover:text-destructive"
-            onClick={(e) => { e.stopPropagation(); setDeleteTarget(p); }}
-          >
-            {common.delete}
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-destructive hover:text-destructive"
+          onClick={(e) => { e.stopPropagation(); setDeleteTarget(p); }}
+        >
+          {common.delete}
+        </Button>
       ),
     },
   ];
@@ -540,7 +533,7 @@ export default function ProductsPage() {
                       key={p.id}
                       product={p}
                       onView={handleView}
-                      onEdit={handleEdit}
+                      
                       onDelete={setDeleteTarget}
                     />
                   ))}
@@ -561,7 +554,7 @@ export default function ProductsPage() {
                   key={p.id}
                   product={p}
                   onView={handleView}
-                  onEdit={handleEdit}
+                  
                   onDelete={setDeleteTarget}
                 />
               ))

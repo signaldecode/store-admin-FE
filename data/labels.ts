@@ -130,8 +130,8 @@ export const product = {
   // 폼 라벨
   nameLabel: "상품명",
   namePlaceholder: "상품명을 입력하세요",
-  descriptionLabel: "상품 설명",
-  descriptionPlaceholder: "상품 설명을 입력하세요",
+  descriptionLabel: "상품 설명 \n\n 이미지 업로드시 같은 너비(860px)의 이미지를 권장합니다.",
+  descriptionPlaceholder: "상품 설명을 입력하세요. 이미지 업로드시 같은 너비(860px)의 이미지를 권장합니다.",
   priceLabel: "가격 (원)",
   stockLabel: "재고",
   stockPlaceholder: "재고 수량을 입력하세요",
@@ -270,6 +270,28 @@ export const productOption = {
   variantColStock: "재고",
   variantColPrice: "추가금액",
   variantColDiscontPrice: "할인가", 
+};
+
+// ─── 리치 텍스트 에디터 ───
+export const richTextEditor = {
+  toolbarLabel: "텍스트 서식 도구",
+  placeholder: "상품 설명을 작성하세요. 이미지를 드래그하거나 붙여넣을 수 있습니다.",
+  bold: "굵게",
+  italic: "기울임",
+  underline: "밑줄",
+  strikethrough: "취소선",
+  heading1: "제목 1",
+  heading2: "제목 2",
+  heading3: "제목 3",
+  bulletList: "글머리 기호 목록",
+  orderedList: "번호 매기기 목록",
+  alignLeft: "왼쪽 정렬",
+  alignCenter: "가운데 정렬",
+  alignRight: "오른쪽 정렬",
+  horizontalRule: "구분선",
+  insertImage: "이미지 삽입",
+  undo: "실행 취소",
+  redo: "다시 실행",
 };
 
 // ─── 이미지 업로더 ───

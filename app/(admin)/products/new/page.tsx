@@ -32,8 +32,8 @@ export default function ProductNewPage() {
     load();
   }, []);
 
-  const handleSubmit: React.ComponentProps<typeof ProductForm>["onSubmit"] = async (data, thumbnail, images) => {
-    await createProduct(data, thumbnail, images);
+  const handleSubmit: React.ComponentProps<typeof ProductForm>["onSubmit"] = async (data, thumbnail) => {
+    await createProduct(data, thumbnail);
   };
 
   if (loading) {

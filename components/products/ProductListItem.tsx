@@ -17,7 +17,6 @@ import { product as productLabels, common } from "@/data/labels";
 interface ProductListItemProps {
   product: ProductSummary;
   onView: (product: ProductSummary) => void;
-  onEdit: (product: ProductSummary) => void;
   onDelete: (product: ProductSummary) => void;
 }
 
@@ -31,7 +30,6 @@ const statusVariant: Record<ProductStatus, "success" | "warning" | "destructive"
 export default function ProductListItem({
   product,
   onView,
-  onEdit,
   onDelete,
 }: ProductListItemProps) {
   return (
@@ -85,9 +83,6 @@ export default function ProductListItem({
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => onView(product)}>
             {productLabels.menuView}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onEdit(product)}>
-            {productLabels.menuEdit}
           </DropdownMenuItem>
           <DropdownMenuItem
             className="text-destructive focus:text-destructive"
