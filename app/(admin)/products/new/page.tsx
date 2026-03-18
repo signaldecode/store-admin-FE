@@ -4,14 +4,14 @@ import { useState, useEffect } from "react";
 import ProductForm from "@/components/products/ProductForm";
 import { createProduct } from "@/services/productService";
 import { getCategories } from "@/services/categoryService";
-import { getBrands } from "@/services/brandService";
+import { getActiveBrands } from "@/services/brandService";
 import type { Category } from "@/types/category";
-import type { Brand } from "@/types/brand";
+import type { ActiveBrand } from "@/types/brand";
 import { common, product } from "@/data/labels";
 
 export default function ProductNewPage() {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [brands, setBrands] = useState<Brand[]>([]);
+  const [brands, setBrands] = useState<ActiveBrand[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,10 +19,10 @@ export default function ProductNewPage() {
       try {
         const [catRes, brandRes] = await Promise.all([
           getCategories(),
-          getBrands(),
+          getActiveBrands(),
         ]);
         setCategories(catRes.data);
-        setBrands(brandRes.data.content);
+        setBrands(brandRes.data);
       } catch {
         // api.ts에서 공통 에러 처리
       } finally {

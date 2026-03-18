@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -13,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import DataTable, { type Column } from "@/components/common/DataTable";
+import Pagination from "@/components/common/Pagination";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 import BrandFormDialog from "@/components/brands/BrandFormDialog";
 import {
@@ -24,11 +26,15 @@ import {
 } from "@/services/brandService";
 import type { Brand, BrandFormData } from "@/types/brand";
 import { brand as brandLabels, common } from "@/data/labels";
+import { useDebounce } from "@/hooks/useDebounce";
+
+const PAGE_SIZE = 10;
 
 export default function BrandsPage() {
   const router = useRouter();
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalElements, setTotalElements] = useState(0);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Brand | null>(null);
@@ -36,9 +42,16 @@ export default function BrandsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Brand | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  // 검색
+  const [keyword, setKeyword] = useState("");
+  const debouncedKeyword = useDebounce(keyword, 300);
+
   // 필터
-  type StatusFilter = "all" | "active";
+  type StatusFilter = "all" | "active" | "inactive";
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+
+  // 페이지네이션
+  const [page, setPage] = useState(1);
 
   // 정렬
   const [sort, setSort] = useState("createdAt");
@@ -68,21 +81,33 @@ export default function BrandsPage() {
     }
   };
 
+  const totalPages = Math.ceil(totalElements / PAGE_SIZE);
+
   const fetchBrands = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getBrands({ sort: sort ? `${sort},${order}` : undefined, size: 100 });
+      const isActive =
+        statusFilter === "active" ? true : statusFilter === "inactive" ? false : undefined;
+      const res = await getBrands({
+        keyword: debouncedKeyword || undefined,
+        isActive,
+        page,
+        size: PAGE_SIZE,
+        sort: sort ? `${sort},${order}` : undefined,
+      });
       setBrands(res.data.content);
+      setTotalElements(res.data.total_elements);
     } catch {
       // api.ts에서 공통 에러 처리
     } finally {
       setLoading(false);
     }
-  }, [sort, order]);
+  }, [debouncedKeyword, statusFilter, page, sort, order]);
 
-  const filteredBrands = statusFilter === "active"
-    ? brands.filter((b) => b.isActive)
-    : brands;
+  // 검색어/필터 변경 시 페이지 1로 리셋
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedKeyword, statusFilter]);
 
   useEffect(() => {
     fetchBrands();
@@ -222,41 +247,57 @@ export default function BrandsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{brandLabels.pageTitle}</h1>
-        <div className="flex items-center gap-2">
-          <Select
-            value={statusFilter}
-            onValueChange={(v) => setStatusFilter(v as StatusFilter)}
-            items={{ all: brandLabels.filterAll, active: brandLabels.filterActiveOnly }}
-          >
-            <SelectTrigger className="h-9 w-24" aria-label={brandLabels.filterLabel}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{brandLabels.filterAll}</SelectItem>
-              <SelectItem value="active">{brandLabels.filterActiveOnly}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={sortValue}
-            onValueChange={handleSortSelect}
-            items={Object.fromEntries(sortOptions.map((o) => [o.value, o.label]))}
-          >
-            <SelectTrigger className="h-9 w-32" aria-label={brandLabels.sortLabel}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {sortOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button onClick={handleCreate}>
-            <Plus className="mr-2 h-4 w-4" />
-            {brandLabels.addButton}
-          </Button>
+        <Button onClick={handleCreate}>
+          <Plus className="mr-2 h-4 w-4" />
+          {brandLabels.addButton}
+        </Button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-48">
+          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            placeholder={brandLabels.searchPlaceholder}
+            className="pl-9"
+            aria-label={brandLabels.searchPlaceholder}
+          />
         </div>
+        <Select
+          value={statusFilter}
+          onValueChange={(v) => setStatusFilter(v as StatusFilter)}
+          items={{
+            all: brandLabels.filterAll,
+            active: brandLabels.statusActive,
+            inactive: brandLabels.statusInactive,
+          }}
+        >
+          <SelectTrigger className="h-9 w-36" aria-label={brandLabels.filterLabel}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{brandLabels.filterAll}</SelectItem>
+            <SelectItem value="active">{brandLabels.statusActive}</SelectItem>
+            <SelectItem value="inactive">{brandLabels.statusInactive}</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select
+          value={sortValue}
+          onValueChange={handleSortSelect}
+          items={Object.fromEntries(sortOptions.map((o) => [o.value, o.label]))}
+        >
+          <SelectTrigger className="h-9 w-32" aria-label={brandLabels.sortLabel}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {sortOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (
@@ -264,15 +305,27 @@ export default function BrandsPage() {
           <p className="text-sm text-muted-foreground">{common.loading}</p>
         </div>
       ) : (
-        <DataTable
-          columns={columns}
-          data={filteredBrands}
-          keyExtractor={(brand) => brand.id}
-          sort={sort}
-          order={order}
-          onSort={handleSort}
-          emptyMessage={brandLabels.emptyMessage}
-        />
+        <>
+          <DataTable
+            columns={columns}
+            data={brands}
+            keyExtractor={(brand) => brand.id}
+            sort={sort}
+            order={order}
+            onSort={handleSort}
+            emptyMessage={brandLabels.emptyMessage}
+          />
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              {common.totalCount(totalElements)}
+            </p>
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          </div>
+        </>
       )}
 
       <BrandFormDialog

@@ -5,10 +5,10 @@ import { useParams } from "next/navigation";
 import ProductForm from "@/components/products/ProductForm";
 import { getProduct, updateProduct } from "@/services/productService";
 import { getCategories } from "@/services/categoryService";
-import { getBrands } from "@/services/brandService";
+import { getActiveBrands } from "@/services/brandService";
 import type { Product } from "@/types/product";
 import type { Category } from "@/types/category";
-import type { Brand } from "@/types/brand";
+import type { ActiveBrand } from "@/types/brand";
 import { common, product as productLabels } from "@/data/labels";
 
 export default function ProductEditPage() {
@@ -17,7 +17,7 @@ export default function ProductEditPage() {
 
   const [product, setProduct] = useState<Product | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [brands, setBrands] = useState<Brand[]>([]);
+  const [brands, setBrands] = useState<ActiveBrand[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,11 +26,11 @@ export default function ProductEditPage() {
         const [productRes, catRes, brandRes] = await Promise.all([
           getProduct(id),
           getCategories(),
-          getBrands(),
+          getActiveBrands(),
         ]);
         setProduct(productRes.data);
         setCategories(catRes.data);
-        setBrands(brandRes.data.content);
+        setBrands(brandRes.data);
       } catch {
         // api.ts에서 공통 에러 처리
       } finally {

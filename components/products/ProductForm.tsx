@@ -35,7 +35,7 @@ import { PRODUCT_STATUS, OPTION_TYPE } from "@/lib/constants";
 import type { Product, ProductFormData, ProductOptionInput, ProductSkuInput } from "@/types/product";
 import type { ProductStatus } from "@/lib/constants";
 import type { Category } from "@/types/category";
-import type { Brand } from "@/types/brand";
+import type { ActiveBrand } from "@/types/brand";
 import type { ApiError } from "@/types/api";
 import { product as productLabels, common, PRODUCT_STATUS_LABEL } from "@/data/labels";
 import NumberInput from "@/components/common/NumberInput";
@@ -49,7 +49,7 @@ interface ImageFile {
 interface ProductFormProps {
   product?: Product | null;
   categories: Category[];
-  brands: Brand[];
+  brands: ActiveBrand[];
   onSubmit: (data: ProductFormData, thumbnail?: File, images?: File[]) => Promise<void>;
 }
 

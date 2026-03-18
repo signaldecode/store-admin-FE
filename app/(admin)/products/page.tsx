@@ -27,14 +27,14 @@ import ConfirmDialog from "@/components/common/ConfirmDialog";
 import ProductListItem from "@/components/products/ProductListItem";
 import { getProducts, deleteProduct } from "@/services/productService";
 import { getCategories } from "@/services/categoryService";
-import { getBrands } from "@/services/brandService";
+import { getActiveBrands } from "@/services/brandService";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePagination } from "@/hooks/usePagination";
 import { PAGE_SIZE_OPTIONS } from "@/lib/constants";
 import type { ProductSummary, ProductListParams } from "@/types/product";
 import type { ProductStatus } from "@/lib/constants";
 import type { Category } from "@/types/category";
-import type { Brand } from "@/types/brand";
+import type { ActiveBrand } from "@/types/brand";
 import { product, common, pagination as paginationLabels, PRODUCT_STATUS_LABEL } from "@/data/labels";
 
 const statusVariant: Record<ProductStatus, "success" | "warning" | "destructive" | "default"> = {
@@ -51,7 +51,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<ProductSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [brands, setBrands] = useState<Brand[]>([]);
+  const [brands, setBrands] = useState<ActiveBrand[]>([]);
 
   // 뷰 모드
   const [viewMode, setViewMode] = useState<"list" | "card">("list");
@@ -120,8 +120,8 @@ export default function ProductsPage() {
     getCategories()
       .then((res) => setCategories(res.data))
       .catch(() => {});
-    getBrands({ size: 100 })
-      .then((res) => setBrands(res.data.content))
+    getActiveBrands()
+      .then((res) => setBrands(res.data))
       .catch(() => {});
   }, []);
 

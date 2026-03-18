@@ -38,7 +38,7 @@ export default function DashboardPage() {
         const [productRes, categoryRes, brandRes] = await Promise.all([
           getProducts({ page: 1, size: 1 }),
           getCategories(),
-          getBrands(),
+          getBrands({ page: 1, size: 1 }),
         ]);
 
         const soldoutRes = await getProducts({
