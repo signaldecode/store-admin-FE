@@ -374,6 +374,54 @@ export const brand = {
   sortNameDesc: "이름 역순",
 };
 
+// ─── 사이트 ───
+export const site = {
+  pageTitle: "사이트 관리",
+  addButton: "사이트 추가",
+  emptyMessage: "등록된 사이트가 없습니다.",
+  createTitle: "사이트 추가",
+  editTitle: "사이트 수정",
+  deleteTitle: "사이트 삭제",
+  deleteDescription: (name: string) =>
+    `"${name}" 사이트를 삭제하시겠습니까? 해당 사이트에 연결된 상품이 있을 수 있습니다.`,
+
+  // 테이블 컬럼
+  colCode: "코드",
+  colName: "사이트명",
+  colDomain: "도메인",
+  colStatus: "상태",
+  colCreatedAt: "등록일",
+
+  // 폼
+  codeLabel: "사이트 코드",
+  codePlaceholder: "furniture",
+  codeRequired: "사이트 코드를 입력해주세요.",
+  nameLabel: "사이트명",
+  namePlaceholder: "사이트명을 입력하세요",
+  nameRequired: "사이트명을 입력해주세요.",
+  domainLabel: "도메인",
+  domainPlaceholder: "예: https://woorifurniture.co.kr/",
+  descriptionLabel: "설명",
+  descriptionPlaceholder: "사이트에 대한 설명을 입력하세요",
+
+  // 상태
+  statusActive: "활성",
+  statusInactive: "비활성",
+  statusToggleLabel: (name: string) => `${name} 사이트 활성 상태 토글`,
+  filterAll: "전체",
+  filterLabel: "상태 필터",
+
+  // 검색
+  searchPlaceholder: "사이트명으로 검색",
+
+  // 정렬
+  sortLabel: "정렬",
+  sortNewest: "최신순",
+  sortOldest: "오래된순",
+  sortNameAsc: "이름순",
+  sortNameDesc: "이름 역순",
+};
+
 // ─── 관리자 ───
 export const admin = {
   pageTitle: "관리자 계정",
