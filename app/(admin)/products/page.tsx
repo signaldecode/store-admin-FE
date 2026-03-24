@@ -28,12 +28,14 @@ import ProductListItem from "@/components/products/ProductListItem";
 import { getProducts, deleteProduct } from "@/services/productService";
 import { getCategories } from "@/services/categoryService";
 import { getActiveBrands } from "@/services/brandService";
+import { getActiveSites } from "@/services/siteService";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePagination } from "@/hooks/usePagination";
 import { PAGE_SIZE_OPTIONS } from "@/lib/constants";
 import type { ProductSummary, ProductListParams } from "@/types/product";
 import type { ProductStatus } from "@/lib/constants";
 import type { Category } from "@/types/category";
+import type { ActiveSite } from "@/types/site";
 import type { ActiveBrand } from "@/types/brand";
 import { product, common, pagination as paginationLabels, PRODUCT_STATUS_LABEL } from "@/data/labels";
 
@@ -50,6 +52,7 @@ export default function ProductsPage() {
 
   const [products, setProducts] = useState<ProductSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sites, setSites] = useState<ActiveSite[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<ActiveBrand[]>([]);
 
@@ -60,16 +63,25 @@ export default function ProductsPage() {
   const [keyword, setKeyword] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState(searchParams.get("status") ?? "");
+  const [siteFilter, setSiteFilter] = useState("");
   const [mainCategoryFilter, setMainCategoryFilter] = useState("");
   const [subCategoryFilter, setSubCategoryFilter] = useState("");
+  const [detailCategoryFilter, setDetailCategoryFilter] = useState("");
   const [brandFilter, setBrandFilter] = useState("");
   const [brandDialogOpen, setBrandDialogOpen] = useState(false);
   const [brandSearch, setBrandSearch] = useState("");
 
-  // categories는 트리 구조 (depth 0 = 대분류, children = 중분류)
-  const selectedMainCat = categories.find((c) => c.name === mainCategoryFilter);
+  // 사이트 → 대분류 → 중분류 → 소분류 캐스케이딩
+  const selectedSite = sites.find((s) => s.id.toString() === siteFilter);
+  const mainCategoriesForFilter = siteFilter
+    ? categories.filter((c) => c.siteId?.toString() === siteFilter)
+    : categories;
+  const selectedMainCat = mainCategoriesForFilter.find((c) => c.id.toString() === mainCategoryFilter);
   const subCategoriesForFilter = selectedMainCat?.children ?? [];
-  const selectedSubCat = subCategoriesForFilter.find((c) => c.name === subCategoryFilter);
+  const selectedSubCat = subCategoriesForFilter.find((c) => c.id.toString() === subCategoryFilter);
+  const detailCategoriesForFilter = selectedSubCat?.children ?? [];
+  const selectedDetailCat = detailCategoriesForFilter.find((c) => c.id.toString() === detailCategoryFilter);
+
   const selectedBrand = brands.find((b) => b.name === brandFilter);
   const previewBrands = brands.slice(0, 10);
   const hasMoreBrands = brands.length > 10;
@@ -79,11 +91,14 @@ export default function ProductsPage() {
   );
   const debouncedKeyword = useDebounce(keyword);
 
-  const activeFilterCount = [statusFilter, subCategoryFilter, brandFilter].filter(Boolean).length;
+  const activeFilterCount = [statusFilter, siteFilter, mainCategoryFilter, subCategoryFilter, detailCategoryFilter, brandFilter].filter(Boolean).length;
 
   const resetFilters = () => {
     setStatusFilter("");
+    setSiteFilter("");
+    setMainCategoryFilter("");
     setSubCategoryFilter("");
+    setDetailCategoryFilter("");
     setBrandFilter("");
   };
 
@@ -115,8 +130,11 @@ export default function ProductsPage() {
   const [deleteTarget, setDeleteTarget] = useState<ProductSummary | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // 카테고리/브랜드 목록 로드
+  // 사이트/카테고리/브랜드 목록 로드
   useEffect(() => {
+    getActiveSites()
+      .then((res) => setSites(res.data))
+      .catch(() => {});
     getCategories()
       .then((res) => setCategories(res.data))
       .catch(() => {});
@@ -134,7 +152,8 @@ export default function ProductsPage() {
         sort: sort ? `${sort},${order}` : undefined,
         keyword: debouncedKeyword || undefined,
         status: statusFilter ? (statusFilter as ProductStatus) : undefined,
-        categoryId: selectedSubCat?.id ?? selectedMainCat?.id,
+        siteId: selectedSite?.id,
+        categoryId: selectedDetailCat?.id ?? selectedSubCat?.id ?? selectedMainCat?.id,
         brandId: selectedBrand?.id,
       };
       const res = await getProducts(params);
@@ -152,8 +171,10 @@ export default function ProductsPage() {
     order,
     debouncedKeyword,
     statusFilter,
+    siteFilter,
     mainCategoryFilter,
     subCategoryFilter,
+    detailCategoryFilter,
     brandFilter,
   ]);
 
@@ -164,7 +185,7 @@ export default function ProductsPage() {
   // 필터 변경 시 1페이지로
   useEffect(() => {
     pagination.resetPage();
-  }, [debouncedKeyword, statusFilter, mainCategoryFilter, subCategoryFilter, brandFilter]);
+  }, [debouncedKeyword, statusFilter, siteFilter, mainCategoryFilter, subCategoryFilter, detailCategoryFilter, brandFilter]);
 
   const handleSort = (key: string) => {
     if (sort === key) {
@@ -284,31 +305,7 @@ export default function ProductsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-semibold">{product.pageTitle}</h1>
-          <Select
-            value={mainCategoryFilter || "__all__"}
-            onValueChange={(v) => {
-              if (!v) return;
-              setMainCategoryFilter(v === "__all__" ? "" : v);
-              setSubCategoryFilter("");
-            }}
-            items={Object.fromEntries([
-              ["__all__", product.filterMainCategoryAll],
-              ...categories.map((c) => [c.name, c.name]),
-            ])}
-          >
-            <SelectTrigger className="h-9 w-40" aria-label={product.filterMainCategoryGroup}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">{product.filterMainCategoryAll}</SelectItem>
-              {categories.map((c) => (
-                <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <h1 className="text-2xl font-semibold">{product.pageTitle}</h1>
         <div className="flex items-center gap-2">
           <div className="hidden items-center rounded-md border md:flex">
             <Button
@@ -430,25 +427,112 @@ export default function ProductsPage() {
             </div>
           </div>
 
-          {/* 중분류 (대분류 선택 시) */}
-          {mainCategoryFilter && subCategoriesForFilter.length > 0 && (
-            <div className="space-y-1.5">
-              <span className="text-xs text-muted-foreground">{product.filterSubCategoryGroup}</span>
-              <div className="flex flex-wrap gap-1.5">
-                {subCategoriesForFilter.map((c) => (
-                  <Button
-                    key={c.id}
-                    variant={subCategoryFilter === c.name ? "default" : "outline"}
-                    size="sm"
-                    className="h-7 text-xs"
-                    onClick={() => setSubCategoryFilter(subCategoryFilter === c.name ? "" : c.name)}
-                  >
-                    {c.name}
-                  </Button>
-                ))}
-              </div>
+          {/* 사이트 → 카테고리 (대분류 → 중분류 → 소분류) */}
+          <div className="space-y-1.5">
+            <span className="text-xs text-muted-foreground">{product.filterSiteGroup} / {product.filterMainCategoryGroup}</span>
+            <div className="flex flex-wrap gap-2">
+              {/* 사이트 */}
+              {sites.length > 0 && (
+                <Select
+                  value={siteFilter || "__none__"}
+                  onValueChange={(v) => {
+                    if (!v) return;
+                    setSiteFilter(v === "__none__" ? "" : v);
+                    setMainCategoryFilter("");
+                    setSubCategoryFilter("");
+                    setDetailCategoryFilter("");
+                  }}
+                  items={Object.fromEntries([
+                    ["__none__", product.filterSiteAll],
+                    ...sites.map((s) => [s.id.toString(), s.name]),
+                  ])}
+                >
+                  <SelectTrigger className="h-8 w-36 text-xs" aria-label={product.filterSiteGroup}>
+                    <SelectValue placeholder={product.filterSiteAll} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">{product.filterSiteAll}</SelectItem>
+                    {sites.map((s) => (
+                      <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {/* 대분류 */}
+              <Select
+                value={mainCategoryFilter || "__none__"}
+                onValueChange={(v) => {
+                  if (!v) return;
+                  setMainCategoryFilter(v === "__none__" ? "" : v);
+                  setSubCategoryFilter("");
+                  setDetailCategoryFilter("");
+                }}
+                items={Object.fromEntries([
+                  ["__none__", product.filterMainCategoryAll],
+                  ...mainCategoriesForFilter.map((c) => [c.id.toString(), c.name]),
+                ])}
+              >
+                <SelectTrigger className="h-8 w-36 text-xs" aria-label={product.filterMainCategoryGroup}>
+                  <SelectValue placeholder={product.filterMainCategoryAll} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">{product.filterMainCategoryAll}</SelectItem>
+                  {mainCategoriesForFilter.map((c) => (
+                    <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* 중분류 */}
+              <Select
+                value={subCategoryFilter || "__none__"}
+                onValueChange={(v) => {
+                  if (!v) return;
+                  setSubCategoryFilter(v === "__none__" ? "" : v);
+                  setDetailCategoryFilter("");
+                }}
+                disabled={!mainCategoryFilter || subCategoriesForFilter.length === 0}
+                items={Object.fromEntries([
+                  ["__none__", product.filterMainCategoryAll],
+                  ...subCategoriesForFilter.map((c) => [c.id.toString(), c.name]),
+                ])}
+              >
+                <SelectTrigger className="h-8 w-36 text-xs" aria-label={product.filterSubCategoryGroup}>
+                  <SelectValue placeholder={mainCategoryFilter ? product.filterSubCategoryGroup : product.filterSubCategoryDisabled} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">{product.filterMainCategoryAll}</SelectItem>
+                  {subCategoriesForFilter.map((c) => (
+                    <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* 소분류 */}
+              <Select
+                value={detailCategoryFilter || "__none__"}
+                onValueChange={(v) => {
+                  if (!v) return;
+                  setDetailCategoryFilter(v === "__none__" ? "" : v);
+                }}
+                disabled={!subCategoryFilter || detailCategoriesForFilter.length === 0}
+                items={Object.fromEntries([
+                  ["__none__", product.filterMainCategoryAll],
+                  ...detailCategoriesForFilter.map((c) => [c.id.toString(), c.name]),
+                ])}
+              >
+                <SelectTrigger className="h-8 w-36 text-xs" aria-label={product.filterDetailCategoryGroup}>
+                  <SelectValue placeholder={subCategoryFilter ? product.filterDetailCategoryGroup : product.filterDetailCategoryDisabled} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">{product.filterMainCategoryAll}</SelectItem>
+                  {detailCategoriesForFilter.map((c) => (
+                    <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          )}
+          </div>
 
           {/* 브랜드 */}
           {brands.length > 0 && (

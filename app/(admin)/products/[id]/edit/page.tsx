@@ -6,10 +6,12 @@ import ProductForm from "@/components/products/ProductForm";
 import { getProduct, updateProduct } from "@/services/productService";
 import { getCategories } from "@/services/categoryService";
 import { getActiveBrands } from "@/services/brandService";
+import { getActiveSites } from "@/services/siteService";
 import { useProductCacheStore } from "@/stores/useProductCacheStore";
 import type { Product } from "@/types/product";
 import type { Category } from "@/types/category";
 import type { ActiveBrand } from "@/types/brand";
+import type { ActiveSite } from "@/types/site";
 import { common, product as productLabels } from "@/data/labels";
 
 export default function ProductEditPage() {
@@ -17,6 +19,7 @@ export default function ProductEditPage() {
   const id = Number(params.id);
 
   const [product, setProduct] = useState<Product | null>(null);
+  const [sites, setSites] = useState<ActiveSite[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<ActiveBrand[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,12 +34,14 @@ export default function ProductEditPage() {
             ? cached
             : (await getProduct(id)).data;
 
-        const [catRes, brandRes] = await Promise.all([
+        const [siteRes, catRes, brandRes] = await Promise.all([
+          getActiveSites(),
           getCategories(),
           getActiveBrands(),
         ]);
 
         setProduct(productData);
+        setSites(siteRes.data);
         setCategories(catRes.data);
         setBrands(brandRes.data);
       } catch {
@@ -74,6 +79,7 @@ export default function ProductEditPage() {
       <h1 className="text-2xl font-semibold">{productLabels.editTitle}</h1>
       <ProductForm
         product={product}
+        sites={sites}
         categories={categories}
         brands={brands}
         onSubmit={handleSubmit}

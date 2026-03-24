@@ -111,6 +111,7 @@ export interface ProductSummary {
 
 export interface ProductListParams extends PaginationParams {
   keyword?: string;
+  siteId?: number;
   categoryId?: number;
   brandId?: number;
   status?: ProductStatus;
