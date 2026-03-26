@@ -44,18 +44,19 @@ export default function DashboardPage() {
   // 대시보드 데이터 로드 (사이트 변경 시 재호출)
   useEffect(() => {
     setLoading(true);
-    getDashboard()
+    getDashboard(siteId)
       .then((res) => setData(res.data))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [siteId]);
 
+  const os = data?.ordersByStatus ?? {};
   const totalOrders = data
-    ? data.orderStatus.pending + data.orderStatus.paid + data.orderStatus.preparing + data.orderStatus.shipping + data.orderStatus.delivered
+    ? (os.PENDING ?? 0) + (os.PAID ?? 0) + (os.PREPARING ?? 0) + (os.SHIPPING ?? 0) + (os.DELIVERED ?? 0)
     : 0;
 
   const completionRate = totalOrders > 0
-    ? Math.round((data!.orderStatus.delivered / totalOrders) * 100)
+    ? Math.round(((os.DELIVERED ?? 0) / totalOrders) * 100)
     : 0;
 
   return (
@@ -102,10 +103,10 @@ export default function DashboardPage() {
                 {/* 상태별 카운트 2×2 */}
                 <div className="grid grid-cols-2 gap-3">
                   {([
-                    { label: L.orderPending, count: data!.orderStatus.pending, icon: Clock, color: "text-amber-500" },
-                    { label: L.orderPaid, count: data!.orderStatus.paid, icon: CreditCard, color: "text-blue-500" },
-                    { label: L.orderPreparing, count: data!.orderStatus.preparing, icon: Package, color: "text-indigo-500" },
-                    { label: L.orderShipping, count: data!.orderStatus.shipping, icon: Truck, color: "text-purple-500" },
+                    { label: L.orderPending, count: os.PENDING ?? 0, icon: Clock, color: "text-amber-500" },
+                    { label: L.orderPaid, count: os.PAID ?? 0, icon: CreditCard, color: "text-blue-500" },
+                    { label: L.orderPreparing, count: os.PREPARING ?? 0, icon: Package, color: "text-indigo-500" },
+                    { label: L.orderShipping, count: os.SHIPPING ?? 0, icon: Truck, color: "text-purple-500" },
                   ] as const).map((item) => (
                     <div key={item.label} className="flex items-center gap-3 rounded-md border p-3">
                       <item.icon className={`h-4 w-4 shrink-0 ${item.color}`} />
@@ -137,14 +138,14 @@ export default function DashboardPage() {
                 <div className="rounded-lg bg-primary/5 p-5 text-center">
                   <p className="text-sm text-muted-foreground">{L.todaySales}</p>
                   <p className="mt-1 text-3xl font-bold text-primary">
-                    {(data!.sales.todaySales ?? 0).toLocaleString("ko-KR")}
+                    {(data!.todayRevenue ?? 0).toLocaleString("ko-KR")}
                     <span className="ml-1 text-base font-normal">{common.currency}</span>
                   </p>
                 </div>
                 <div className="rounded-lg border p-5 text-center">
                   <p className="text-sm text-muted-foreground">{L.monthlySales}</p>
                   <p className="mt-1 text-3xl font-bold">
-                    {(data!.sales.monthlySales ?? 0).toLocaleString("ko-KR")}
+                    {(data!.monthlyRevenue ?? 0).toLocaleString("ko-KR")}
                     <span className="ml-1 text-base font-normal">{common.currency}</span>
                   </p>
                 </div>
@@ -183,9 +184,9 @@ export default function DashboardPage() {
                   </thead>
                   <tbody>
                     {data!.recentOrders.map((o) => (
-                      <tr key={o.orderId} className="border-b last:border-0">
+                      <tr key={o.id} className="border-b last:border-0">
                         <td className="py-2.5">
-                          <Link href={`/orders/${o.orderId}`} className="hover:underline">{o.orderNumber}</Link>
+                          <Link href={`/orders/${o.id}`} className="hover:underline">{o.orderNumber}</Link>
                         </td>
                         <td className="py-2.5">
                           <span className="inline-flex items-center gap-1.5">
@@ -194,7 +195,7 @@ export default function DashboardPage() {
                           </span>
                         </td>
                         <td className="py-2.5 text-right font-medium">
-                          {(o.totalAmount ?? 0).toLocaleString("ko-KR")}{common.currency}
+                          {(o.grandTotal ?? 0).toLocaleString("ko-KR")}{common.currency}
                         </td>
                       </tr>
                     ))}
@@ -228,13 +229,13 @@ export default function DashboardPage() {
               <div className="flex items-center justify-center gap-8 py-4">
                 <div className="text-center">
                   <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-                    <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">{data!.claims.requestedCount}</span>
+                    <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">{data!.claimsByStatus?.REQUESTED ?? 0}</span>
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">{L.claimsRequested}</p>
                 </div>
                 <div className="text-center">
                   <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{data!.claims.inProgressCount}</span>
+                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{data!.claimsByStatus?.IN_PROGRESS ?? 0}</span>
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">{L.claimsInProgress}</p>
                 </div>

@@ -9,7 +9,7 @@ import {
   RotateCcw,
   Users,
   Crown,
-  Image,
+  // Image,
   Megaphone,
   Ticket,
   MessageSquare,
@@ -20,7 +20,7 @@ import {
   PanelTop,
   Tags,
   HelpCircle,
-  Monitor,
+  // Monitor,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { AdminRole } from "@/lib/constants";
@@ -70,11 +70,11 @@ export const menuGroups: MenuGroup[] = [
   {
     label: "콘텐츠",
     items: [
-      { label: "배너", href: "/banners", icon: Image },
+      // { label: "배너", href: "/banners", icon: Image },
       { label: "팝업", href: "/popups", icon: PanelTop },
       { label: "공지사항", href: "/notices", icon: Bell },
       { label: "FAQ", href: "/faqs", icon: CircleHelp },
-      { label: "전시 관리", href: "/displays", icon: Monitor },
+      // { label: "전시 관리", href: "/displays", icon: Monitor },
     ],
   },
   {
