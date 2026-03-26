@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -22,13 +23,16 @@ import type { SiteSettings, SiteSettingsUpdate, SeoConfig } from "@/types/site";
 import type { ApiError } from "@/types/api";
 import { site as L, settings as s, common } from "@/data/labels";
 
-type Tab = "basic" | "business" | "bank" | "cs" | "seo";
+type Tab = "basic" | "business" | "settlement" | "cs" | "social" | "notification" | "security" | "seo";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "basic", label: L.tabBasic },
   { key: "business", label: L.tabBusiness },
-  { key: "bank", label: "계좌 정보" },
+  { key: "settlement", label: "정산/계좌" },
   { key: "cs", label: L.tabCs },
+  { key: "social", label: "소셜 미디어" },
+  { key: "notification", label: "알림 설정" },
+  { key: "security", label: "보안" },
   { key: "seo", label: L.tabSeo },
 ];
 
@@ -79,11 +83,42 @@ export default function SettingsPage() {
   const [metaDescription, setMetaDescription] = useState("");
   const [metaKeywords, setMetaKeywords] = useState("");
 
-  // 계좌 정보 (tenant settings API)
+  // ─── tenant settings (카테고리별 key-value) ───
   const [tenantSettingsData, setTenantSettingsData] = useState<TenantSettings>({});
+
+  // settlement
   const [bankName, setBankName] = useState("");
   const [bankAccount, setBankAccount] = useState("");
   const [bankHolder, setBankHolder] = useState("");
+  const [paymentDeadlineDays, setPaymentDeadlineDays] = useState("");
+
+  // maintenance
+  const [mtEnabled, setMtEnabled] = useState(false);
+  const [mtMessage, setMtMessage] = useState("");
+  const [mtStartAt, setMtStartAt] = useState("");
+  const [mtEndAt, setMtEndAt] = useState("");
+
+  // social
+  const [socialInstagram, setSocialInstagram] = useState("");
+  const [socialFacebook, setSocialFacebook] = useState("");
+  const [socialYoutube, setSocialYoutube] = useState("");
+  const [socialBlog, setSocialBlog] = useState("");
+  const [socialKakao, setSocialKakao] = useState("");
+
+  // notification
+  const [notiOrderEmail, setNotiOrderEmail] = useState("");
+  // const [notiClaimEmail, setNotiClaimEmail] = useState("");
+  const [notiInquiryEmail, setNotiInquiryEmail] = useState("");
+  const [notiOrderEnabled, setNotiOrderEnabled] = useState(false);
+  // const [notiClaimEnabled, setNotiClaimEnabled] = useState(false);
+  const [notiInquiryEnabled, setNotiInquiryEnabled] = useState(false);
+
+  // security
+  const [secSessionTimeout, setSecSessionTimeout] = useState("");
+  const [secMaxLoginAttempts, setSecMaxLoginAttempts] = useState("");
+  const [secAccountLockDuration, setSecAccountLockDuration] = useState("");
+  const [secPasswordChangeRequired, setSecPasswordChangeRequired] = useState(false);
+  const [secPasswordChangeCycle, setSecPasswordChangeCycle] = useState("");
 
   const [logoFile, setLogoFile] = useState<File | undefined>();
   const [faviconFile, setFaviconFile] = useState<File | undefined>();
@@ -158,9 +193,40 @@ export default function SettingsPage() {
         populateForm(res.data);
         const ts = res.data.settings ?? {};
         setTenantSettingsData(ts);
-        setBankName(ts.bank?.bankName ?? "");
-        setBankAccount(ts.bank?.bankAccount ?? "");
-        setBankHolder(ts.bank?.bankHolder ?? "");
+        // settlement
+        const stl = ts.settlement ?? {};
+        setBankName(stl.bank_name ?? "");
+        setBankAccount(stl.bank_account ?? "");
+        setBankHolder(stl.bank_holder ?? "");
+        setPaymentDeadlineDays(stl.payment_deadline_days ?? "");
+        // maintenance
+        const mt = ts.maintenance ?? {};
+        setMtEnabled(mt.enabled === "true");
+        setMtMessage(mt.message ?? "");
+        setMtStartAt(mt.start_at?.slice(0, 16) ?? "");
+        setMtEndAt(mt.end_at?.slice(0, 16) ?? "");
+        // social
+        const sc = ts.social ?? {};
+        setSocialInstagram(sc.instagram ?? "");
+        setSocialFacebook(sc.facebook ?? "");
+        setSocialYoutube(sc.youtube ?? "");
+        setSocialBlog(sc.blog ?? "");
+        setSocialKakao(sc.kakao ?? "");
+        // notification
+        const nt = ts.notification ?? {};
+        setNotiOrderEmail(nt.order_email ?? "");
+        // setNotiClaimEmail(nt.claim_email ?? "");
+        setNotiInquiryEmail(nt.inquiry_email ?? "");
+        setNotiOrderEnabled(nt.order_enabled === "true");
+        // setNotiClaimEnabled(nt.claim_enabled === "true");
+        setNotiInquiryEnabled(nt.inquiry_enabled === "true");
+        // security
+        const sec = ts.security ?? {};
+        setSecSessionTimeout(sec.session_timeout ?? "");
+        setSecMaxLoginAttempts(sec.max_login_attempts ?? "");
+        setSecAccountLockDuration(sec.account_lock_duration ?? "");
+        setSecPasswordChangeRequired(sec.password_change_required === "true");
+        setSecPasswordChangeCycle(sec.password_change_cycle ?? "");
       })
       .catch(() => setSettings(null))
       .finally(() => setSettingsLoading(false));
@@ -212,13 +278,41 @@ export default function SettingsPage() {
         seoConfig: Object.keys(seoConfig).length > 0 ? JSON.stringify(seoConfig) : undefined,
       };
 
-      // settings에 계좌 정보 병합
       data.settings = {
         ...tenantSettingsData,
-        bank: {
-          bankName: bankName.trim(),
-          bankAccount: bankAccount.trim(),
-          bankHolder: bankHolder.trim(),
+        settlement: {
+          bank_name: bankName.trim(),
+          bank_account: bankAccount.trim(),
+          bank_holder: bankHolder.trim(),
+          payment_deadline_days: paymentDeadlineDays.trim(),
+        },
+        maintenance: {
+          enabled: String(mtEnabled),
+          message: mtMessage.trim(),
+          start_at: mtStartAt,
+          end_at: mtEndAt,
+        },
+        social: {
+          instagram: socialInstagram.trim(),
+          facebook: socialFacebook.trim(),
+          youtube: socialYoutube.trim(),
+          blog: socialBlog.trim(),
+          kakao: socialKakao.trim(),
+        },
+        notification: {
+          order_email: notiOrderEmail.trim(),
+          // claim_email: notiClaimEmail.trim(),
+          inquiry_email: notiInquiryEmail.trim(),
+          order_enabled: String(notiOrderEnabled),
+          // claim_enabled: String(notiClaimEnabled),
+          inquiry_enabled: String(notiInquiryEnabled),
+        },
+        security: {
+          session_timeout: secSessionTimeout.trim(),
+          max_login_attempts: secMaxLoginAttempts.trim(),
+          account_lock_duration: secAccountLockDuration.trim(),
+          password_change_required: String(secPasswordChangeRequired),
+          password_change_cycle: secPasswordChangeCycle.trim(),
         },
       };
 
@@ -448,10 +542,10 @@ export default function SettingsPage() {
             </Card>
           )}
 
-          {/* 계좌 정보 */}
-          {tab === "bank" && (
+          {/* 정산/계좌 */}
+          {tab === "settlement" && (
             <Card>
-              <CardHeader><CardTitle>계좌 정보</CardTitle></CardHeader>
+              <CardHeader><CardTitle>정산/계좌 정보</CardTitle></CardHeader>
               <CardContent className="space-y-6">
                 <p className="text-sm text-muted-foreground">
                   무통장 입금 시 안내할 계좌 정보를 입력하세요.
@@ -483,6 +577,18 @@ export default function SettingsPage() {
                     placeholder="홍길동"
                   />
                 </div>
+                <Separator />
+                <div className="space-y-2">
+                  <Label htmlFor="s-paymentDeadline">입금 기한 (일)</Label>
+                  <Input
+                    id="s-paymentDeadline"
+                    type="number"
+                    value={paymentDeadlineDays}
+                    onChange={(e) => setPaymentDeadlineDays(e.target.value)}
+                    placeholder="3"
+                  />
+                  <p className="text-xs text-muted-foreground">무통장 입금 주문 시 입금 기한 (일 단위)</p>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -510,6 +616,108 @@ export default function SettingsPage() {
                   <Label htmlFor="s-csHours">{L.csHoursLabel}</Label>
                   <Input id="s-csHours" value={csHours} onChange={(e) => setCsHours(e.target.value)} placeholder={L.csHoursPlaceholder} />
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 소셜 미디어 */}
+          {tab === "social" && (
+            <Card>
+              <CardHeader><CardTitle>소셜 미디어</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="s-instagram">Instagram</Label>
+                  <Input id="s-instagram" value={socialInstagram} onChange={(e) => setSocialInstagram(e.target.value)} placeholder="https://instagram.com/shop" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="s-facebook">Facebook</Label>
+                  <Input id="s-facebook" value={socialFacebook} onChange={(e) => setSocialFacebook(e.target.value)} placeholder="https://facebook.com/shop" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="s-youtube">YouTube</Label>
+                  <Input id="s-youtube" value={socialYoutube} onChange={(e) => setSocialYoutube(e.target.value)} placeholder="https://youtube.com/shop" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="s-blog">Blog</Label>
+                  <Input id="s-blog" value={socialBlog} onChange={(e) => setSocialBlog(e.target.value)} placeholder="https://blog.naver.com/shop" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="s-kakao">Kakao</Label>
+                  <Input id="s-kakao" value={socialKakao} onChange={(e) => setSocialKakao(e.target.value)} placeholder="https://pf.kakao.com/shop" />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 알림 설정 */}
+          {tab === "notification" && (
+            <Card>
+              <CardHeader><CardTitle>알림 설정</CardTitle></CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="s-notiOrderEmail">주문 알림 이메일</Label>
+                    <Input id="s-notiOrderEmail" type="email" value={notiOrderEmail} onChange={(e) => setNotiOrderEmail(e.target.value)} placeholder="order@shop.com" />
+                  </div>
+                  <div className="flex items-center gap-3 pt-6">
+                    <Switch id="s-notiOrderEnabled" checked={notiOrderEnabled} onCheckedChange={setNotiOrderEnabled} />
+                    <Label htmlFor="s-notiOrderEnabled">주문 알림 활성</Label>
+                  </div>
+                </div>
+                {/* <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="s-notiClaimEmail">클레임 알림 이메일</Label>
+                    <Input id="s-notiClaimEmail" type="email" value={notiClaimEmail} onChange={(e) => setNotiClaimEmail(e.target.value)} placeholder="claim@shop.com" />
+                  </div>
+                  <div className="flex items-center gap-3 pt-6">
+                    <Switch id="s-notiClaimEnabled" checked={notiClaimEnabled} onCheckedChange={setNotiClaimEnabled} />
+                    <Label htmlFor="s-notiClaimEnabled">클레임 알림 활성</Label>
+                  </div>
+                </div> */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="s-notiInquiryEmail">문의 알림 이메일</Label>
+                    <Input id="s-notiInquiryEmail" type="email" value={notiInquiryEmail} onChange={(e) => setNotiInquiryEmail(e.target.value)} placeholder="inquiry@shop.com" />
+                  </div>
+                  <div className="flex items-center gap-3 pt-6">
+                    <Switch id="s-notiInquiryEnabled" checked={notiInquiryEnabled} onCheckedChange={setNotiInquiryEnabled} />
+                    <Label htmlFor="s-notiInquiryEnabled">문의 알림 활성</Label>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 보안 */}
+          {tab === "security" && (
+            <Card>
+              <CardHeader><CardTitle>보안 설정</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="s-secSession">세션 타임아웃 (분)</Label>
+                    <Input id="s-secSession" type="number" value={secSessionTimeout} onChange={(e) => setSecSessionTimeout(e.target.value)} placeholder="30" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="s-secMaxLogin">최대 로그인 시도 횟수</Label>
+                    <Input id="s-secMaxLogin" type="number" value={secMaxLoginAttempts} onChange={(e) => setSecMaxLoginAttempts(e.target.value)} placeholder="5" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="s-secLockDuration">계정 잠금 시간 (분)</Label>
+                  <Input id="s-secLockDuration" type="number" value={secAccountLockDuration} onChange={(e) => setSecAccountLockDuration(e.target.value)} placeholder="30" />
+                </div>
+                <Separator />
+                <div className="flex items-center gap-3">
+                  <Switch id="s-secPwRequired" checked={secPasswordChangeRequired} onCheckedChange={setSecPasswordChangeRequired} />
+                  <Label htmlFor="s-secPwRequired">비밀번호 변경 강제</Label>
+                </div>
+                {secPasswordChangeRequired && (
+                  <div className="space-y-2">
+                    <Label htmlFor="s-secPwCycle">비밀번호 변경 주기 (일)</Label>
+                    <Input id="s-secPwCycle" type="number" value={secPasswordChangeCycle} onChange={(e) => setSecPasswordChangeCycle(e.target.value)} placeholder="90" />
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

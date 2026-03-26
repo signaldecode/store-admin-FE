@@ -9,7 +9,7 @@ import {
   RotateCcw,
   Users,
   Crown,
-  // Image,
+  Image,
   Megaphone,
   Ticket,
   MessageSquare,
@@ -70,7 +70,7 @@ export const menuGroups: MenuGroup[] = [
   {
     label: "콘텐츠",
     items: [
-      // { label: "배너", href: "/banners", icon: Image },
+      { label: "배너", href: "/banners", icon: Image },
       { label: "팝업", href: "/popups", icon: PanelTop },
       { label: "공지사항", href: "/notices", icon: Bell },
       { label: "FAQ", href: "/faqs", icon: CircleHelp },

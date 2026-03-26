@@ -74,6 +74,7 @@ export default function SiteSettingsPage() {
   const [bankName, setBankName] = useState("");
   const [bankAccount, setBankAccount] = useState("");
   const [bankHolder, setBankHolder] = useState("");
+  const [paymentDeadlineDays, setPaymentDeadlineDays] = useState("");
 
   const [logoFile, setLogoFile] = useState<File | undefined>();
   const [faviconFile, setFaviconFile] = useState<File | undefined>();
@@ -123,9 +124,11 @@ export default function SiteSettingsPage() {
         populateForm(res.data);
         const ts = res.data.settings ?? {};
         setTenantSettingsData(ts);
-        setBankName(ts.bank?.bankName ?? "");
-        setBankAccount(ts.bank?.bankAccount ?? "");
-        setBankHolder(ts.bank?.bankHolder ?? "");
+        const stl = ts.settlement ?? {};
+        setBankName(stl.bank_name ?? "");
+        setBankAccount(stl.bank_account ?? "");
+        setBankHolder(stl.bank_holder ?? "");
+        setPaymentDeadlineDays(stl.payment_deadline_days ?? "");
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -179,10 +182,11 @@ export default function SiteSettingsPage() {
       // settings에 계좌 정보 병합
       data.settings = {
         ...tenantSettingsData,
-        bank: {
-          bankName: bankName.trim(),
-          bankAccount: bankAccount.trim(),
-          bankHolder: bankHolder.trim(),
+        settlement: {
+          bank_name: bankName.trim(),
+          bank_account: bankAccount.trim(),
+          bank_holder: bankHolder.trim(),
+          payment_deadline_days: paymentDeadlineDays.trim(),
         },
       };
 
@@ -451,6 +455,18 @@ export default function SiteSettingsPage() {
                 onChange={(e) => setBankHolder(e.target.value)}
                 placeholder="홍길동"
               />
+            </div>
+            <Separator />
+            <div className="space-y-2">
+              <Label htmlFor="s-paymentDeadline">입금 기한 (일)</Label>
+              <Input
+                id="s-paymentDeadline"
+                type="number"
+                value={paymentDeadlineDays}
+                onChange={(e) => setPaymentDeadlineDays(e.target.value)}
+                placeholder="3"
+              />
+              <p className="text-xs text-muted-foreground">무통장 입금 주문 시 입금 기한 (일 단위)</p>
             </div>
           </CardContent>
         </Card>

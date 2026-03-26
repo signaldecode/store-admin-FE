@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Plus, Search } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Plus, Search, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +46,6 @@ const PAGE_SIZE = 10;
 const INITIAL_FORM: Omit<BannerFormData, "tenantId"> = {
   title: "",
   position: "HERO",
-  imageUrl: "",
   sortOrder: 0,
   status: "ACTIVE",
   startedAt: "",
@@ -64,6 +63,9 @@ export default function BannersPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Banner | null>(null);
   const [formData, setFormData] = useState<Omit<BannerFormData, "tenantId">>(INITIAL_FORM);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [formLoading, setFormLoading] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState<Banner | null>(null);
@@ -95,8 +97,6 @@ export default function BannersPage() {
       const status = statusFilter === "all" ? undefined : statusFilter;
       const res = await getBanners({
         tenantId: siteId ?? undefined,
-        keyword: debouncedKeyword || undefined,
-        status,
         page,
         size: PAGE_SIZE,
       });
@@ -130,6 +130,8 @@ export default function BannersPage() {
   const handleCreate = () => {
     setEditTarget(null);
     setFormData(INITIAL_FORM);
+    setImageFile(null);
+    setImagePreview(null);
     setFormOpen(true);
   };
 
@@ -138,26 +140,35 @@ export default function BannersPage() {
     setFormData({
       title: banner.title,
       position: banner.position,
-      imageUrl: banner.imageUrl,
       sortOrder: banner.sortOrder,
       status: banner.status,
-      startedAt: banner.startedAt.slice(0, 16),
+      startedAt: banner.startedAt?.slice(0, 16),
       endedAt: banner.endedAt ? banner.endedAt.slice(0, 16) : undefined,
       noEndDate: banner.noEndDate,
       linkUrl: banner.linkUrl ?? undefined,
     });
+    setImageFile(null);
+    setImagePreview(banner.imageUrl);
     setFormOpen(true);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
   };
 
   const handleFormSubmit = async () => {
     if (!formData.title.trim()) return;
+    if (!editTarget && !imageFile) return; // 등록 시 이미지 필수
     setFormLoading(true);
     try {
       const payload: BannerFormData = { ...formData, tenantId: siteId ?? 0 };
       if (editTarget) {
-        await updateBanner(editTarget.id, payload);
+        await updateBanner(payload, editTarget.id, imageFile ?? undefined);
       } else {
-        await createBanner(payload);
+        await createBanner(payload, imageFile!);
       }
       setFormOpen(false);
       await fetchBanners();
@@ -201,6 +212,14 @@ export default function BannersPage() {
   };
 
   const columns: Column<Banner>[] = [
+    {
+      key: "image",
+      label: "이미지",
+      className: "w-20",
+      render: (banner) => banner.imageUrl ? (
+        <img src={banner.imageUrl} alt={banner.title} className="h-10 w-16 rounded border object-cover" />
+      ) : "-",
+    },
     {
       key: "title",
       label: bannerLabels.colTitle,
@@ -269,7 +288,7 @@ export default function BannersPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <SiteSelect value={siteId} onChange={setSiteId} />
+        <SiteSelect value={siteId} onChange={setSiteId} required />
         <div className="relative flex-1 min-w-48">
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -338,6 +357,38 @@ export default function BannersPage() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            {/* 이미지 업로드 */}
+            <div className="space-y-1.5">
+              <Label>
+                배너 이미지 {!editTarget && <span className="text-destructive">*</span>}
+              </Label>
+              <div className="flex items-center gap-4">
+                {imagePreview && (
+                  <div className="rounded-md border p-1">
+                    <img src={imagePreview} alt="배너 미리보기" className="h-20 max-w-48 object-contain" />
+                  </div>
+                )}
+                <div>
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => imageInputRef.current?.click()}
+                  >
+                    <Upload className="mr-1.5 h-3.5 w-3.5" />
+                    {imagePreview ? "이미지 변경" : "이미지 선택"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-1.5">
               <Label htmlFor="banner-title">
                 {bannerLabels.titleLabel} <span className="text-destructive">*</span>
