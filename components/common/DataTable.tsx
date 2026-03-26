@@ -93,7 +93,11 @@ export default function DataTable<T>({
             <TableRow
               key={keyExtractor(item)}
               className={onRowClick ? "cursor-pointer" : undefined}
-              onClick={() => onRowClick?.(item)}
+              onClick={(e) => {
+                const target = e.target as HTMLElement;
+                if (target.closest("button, input, a, [role='checkbox'], [data-slot='checkbox']")) return;
+                onRowClick?.(item);
+              }}
               onKeyDown={
                 onRowClick
                   ? (e) => {

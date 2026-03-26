@@ -4,7 +4,13 @@
  * - 향후 다국어(i18n) 전환 시 이 파일만 교체하면 된다
  */
 
-import type { ProductStatus, OptionType, AdminRole, DiscountType } from "@/lib/constants";
+import type {
+  ProductStatus, OptionType, AdminRole, DiscountType,
+  OrderStatus, MemberStatus, ClaimType, ClaimStatus,
+  InquiryStatus, BannerPosition, BannerStatus,
+  NoticeType, NoticeStatus, CouponStatus, CouponDiscountType,
+  CouponType, CouponValidityType, PopupType, PopupStatus, QnaStatus,
+} from "@/lib/constants";
 
 // ─── 열거형 라벨 ───
 export const PRODUCT_STATUS_LABEL: Record<ProductStatus, string> = {
@@ -28,6 +34,104 @@ export const DISCOUNT_TYPE_LABEL: Record<DiscountType, string> = {
 export const ADMIN_ROLE_LABEL: Record<AdminRole, string> = {
   SUPER_ADMIN: "슈퍼 관리자",
   ADMIN: "관리자",
+};
+
+export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
+  PENDING: "결제대기",
+  PAID: "결제완료",
+  PREPARING: "상품준비중",
+  SHIPPING: "배송중",
+  DELIVERED: "배송완료",
+  CANCELLED: "주문취소",
+  REFUNDED: "환불완료",
+};
+
+export const MEMBER_STATUS_LABEL: Record<MemberStatus, string> = {
+  ACTIVE: "활성",
+  DORMANT: "휴면",
+  WITHDRAWN: "탈퇴",
+};
+
+export const CLAIM_TYPE_LABEL: Record<ClaimType, string> = {
+  CANCEL: "취소",
+  RETURN: "반품",
+  EXCHANGE: "교환",
+};
+
+export const CLAIM_STATUS_LABEL: Record<ClaimStatus, string> = {
+  REQUESTED: "접수",
+  APPROVED: "승인",
+  IN_PROGRESS: "처리중",
+  COMPLETED: "완료",
+  REJECTED: "거절",
+};
+
+export const INQUIRY_STATUS_LABEL: Record<InquiryStatus, string> = {
+  WAITING: "대기",
+  ANSWERED: "답변완료",
+};
+
+export const BANNER_POSITION_LABEL: Record<BannerPosition, string> = {
+  HERO: "히어로",
+  SLIDE: "슬라이드",
+  HALF: "하프",
+  FULL: "풀",
+};
+
+export const BANNER_STATUS_LABEL: Record<BannerStatus, string> = {
+  ACTIVE: "활성",
+  INACTIVE: "비활성",
+  SCHEDULED: "예약",
+};
+
+export const NOTICE_TYPE_LABEL: Record<NoticeType, string> = {
+  NOTICE: "공지",
+  INSPECTION: "점검",
+  GUIDELINES: "가이드",
+  EVENT: "이벤트",
+};
+
+export const NOTICE_STATUS_LABEL: Record<NoticeStatus, string> = {
+  ACTIVE: "게시중",
+  INACTIVE: "비활성",
+};
+
+export const COUPON_STATUS_LABEL: Record<CouponStatus, string> = {
+  REGISTERED: "등록",
+  ACTIVE: "활성",
+  STOPPED: "중지",
+  ENDED: "종료",
+  RECALLED: "회수",
+};
+
+export const COUPON_TYPE_LABEL: Record<CouponType, string> = {
+  PRODUCT_DISCOUNT: "상품 할인",
+  FREE_SHIPPING: "무료 배송",
+};
+
+export const COUPON_VALIDITY_TYPE_LABEL: Record<CouponValidityType, string> = {
+  DAYS_FROM_DOWNLOAD: "다운로드 후 N일",
+  FIXED_PERIOD: "고정 기간",
+};
+
+export const POPUP_TYPE_LABEL: Record<PopupType, string> = {
+  CENTER: "중앙",
+  FLOATING: "플로팅",
+};
+
+export const POPUP_STATUS_LABEL: Record<PopupStatus, string> = {
+  ACTIVE: "활성",
+  INACTIVE: "비활성",
+};
+
+export const QNA_STATUS_LABEL: Record<QnaStatus, string> = {
+  WAITING: "대기",
+  ANSWERED: "답변완료",
+};
+
+export const COUPON_DISCOUNT_TYPE_LABEL: Record<CouponDiscountType, string> = {
+  RATE: "정률 (%)",
+  AMOUNT: "정액 (원)",
 };
 
 // ─── 공통 ───
@@ -61,8 +165,8 @@ export const common = {
 
 // ─── 레이아웃 ───
 export const layout = {
-  appName: "시그널 디코드 스토어",
-  appNameShort: "시",
+  appName: "MIREP 아카이빙",
+  appNameShort: "MIREP",
   mainMenu: "메인 메뉴",
   mobileMenu: "모바일 메뉴",
   menuOpen: "메뉴 열기",
@@ -90,6 +194,29 @@ export const dashboard = {
   soldoutProducts: "품절 상품",
   categories: "카테고리",
   brands: "브랜드",
+
+  // 주문 현황
+  orderStatusTitle: "주문 현황",
+  orderCompletion: "주문 처리율",
+  orderPending: "신규주문",
+  orderPaid: "결제완료",
+  orderPreparing: "배송준비",
+  orderShipping: "배송중",
+
+  // 매출
+  salesTitle: "매출",
+  todaySales: "오늘 매출",
+  monthlySales: "월간 매출",
+
+  // 최근 주문
+  recentOrdersTitle: "최근 주문",
+  recentOrdersEmpty: "최근 주문이 없습니다.",
+  viewAll: "전체보기",
+
+  // 클레임
+  claimsTitle: "클레임 현황",
+  claimsRequested: "접수",
+  claimsInProgress: "처리중",
 };
 
 // ─── 상품 ───
@@ -181,7 +308,7 @@ export const product = {
   filterActiveCount: (count: number) => `${count}개 적용`,
   filterStatusGroup: "상태",
   filterSiteGroup: "사이트",
-  filterSiteAll: "전체 사이트",
+  filterSiteAll: "전체 사이트", 
   filterMainCategoryGroup: "대분류",
   filterMainCategoryAll: "전체",
   filterMainCategoryDisabled: "사이트를 먼저 선택",
@@ -419,21 +546,21 @@ export const site = {
     `"${name}" 사이트를 삭제하시겠습니까? 해당 사이트에 연결된 상품이 있을 수 있습니다.`,
 
   // 테이블 컬럼
-  colCode: "코드",
+  colCode: "대분류",
   colName: "사이트명",
   colDomain: "도메인",
   colStatus: "상태",
   colCreatedAt: "등록일",
 
   // 폼
-  codeLabel: "사이트 코드",
-  codePlaceholder: "furniture",
-  codeRequired: "사이트 코드를 입력해주세요.",
+  codeLabel: "대분류",
+  codePlaceholder: "가구",
+  codeRequired: "대분류를 입력해주세요.",
   nameLabel: "사이트명",
   namePlaceholder: "사이트명을 입력하세요",
   nameRequired: "사이트명을 입력해주세요.",
   domainLabel: "도메인",
-  domainPlaceholder: "예: https://woorifurniture.co.kr/",
+  domainPlaceholder: "예: https://example.co.kr/",
   descriptionLabel: "설명",
   descriptionPlaceholder: "사이트에 대한 설명을 입력하세요",
 
@@ -484,6 +611,539 @@ export const admin = {
   rolePlaceholder: "역할 선택",
 };
 
+// ─── 주문 ───
+export const order = {
+  pageTitle: "주문 관리",
+  detailTitle: "주문 상세",
+  emptyMessage: "주문 내역이 없습니다.",
+  notFound: "주문을 찾을 수 없습니다.",
+  backToList: "목록으로",
+
+  // 테이블 컬럼
+  colOrderNumber: "주문번호",
+  colCustomer: "주문자",
+  colItems: "주문상품",
+  colTotalAmount: "결제금액",
+  colStatus: "상태",
+  colCreatedAt: "주문일시",
+
+  // 상세
+  sectionOrderInfo: "주문 정보",
+  sectionItems: "주문 상품",
+  sectionShipping: "배송 정보",
+  sectionPayment: "결제 정보",
+  recipientName: "수령인",
+  recipientPhone: "연락처",
+  address: "주소",
+  shippingMemo: "배송 메모",
+  paymentMethod: "결제수단",
+  paidAt: "결제일시",
+
+  // 배송 관리
+  sectionDelivery: "배송 관리",
+  registerInvoice: "송장 등록",
+  carrierId: "택배사",
+  carrierIdPlaceholder: "택배사 ID (1: CJ대한통운, 2: 한진택배, 3: 롯데택배)",
+  trackingNumber: "송장번호",
+  trackingNumberPlaceholder: "송장번호를 입력하세요",
+  submitShipment: "송장 등록",
+  refreshTracking: "배송 추적 새로고침",
+  shipmentRegistered: "송장이 등록되었습니다.",
+  trackingRefreshed: "배송 추적이 갱신되었습니다.",
+
+  // 환불
+  sectionRefund: "환불",
+  refundAmount: "환불 금액",
+  refundReason: "환불 사유",
+  refundReasonPlaceholder: "환불 사유를 입력하세요",
+  submitRefund: "환불 처리",
+  refundSuccess: "환불이 처리되었습니다.",
+
+  // 검색/필터
+  searchPlaceholder: "주문번호 또는 주문자명으로 검색",
+  filterStatus: "주문 상태",
+  sortNewest: "최신순",
+  sortOldest: "오래된순",
+  sortLabel: "정렬",
+};
+
+// ─── 회원 ───
+export const member = {
+  pageTitle: "회원 관리",
+  detailTitle: "회원 상세",
+  emptyMessage: "등록된 회원이 없습니다.",
+  notFound: "회원을 찾을 수 없습니다.",
+  backToList: "목록으로",
+
+  // 테이블 컬럼
+  colName: "이름",
+  colEmail: "이메일",
+  colPhone: "연락처",
+  colGrade: "등급",
+  colStatus: "상태",
+  colCreatedAt: "가입일",
+
+  // 상세
+  sectionBasicInfo: "기본 정보",
+  sectionOrders: "주문 내역",
+  sectionPoints: "포인트",
+  sectionMemos: "CS 메모",
+  totalPoints: "보유 포인트",
+  adjustPoints: "포인트 조정",
+  adjustReason: "사유",
+  adjustReasonPlaceholder: "포인트 조정 사유를 입력하세요",
+  adjustAmount: "조정 금액",
+  memoPlaceholder: "메모 내용을 입력하세요",
+  addMemo: "메모 추가",
+
+  // 등급 관리
+  gradePageTitle: "등급 관리",
+  gradeName: "등급명",
+  gradeMinAmount: "기준 금액",
+  gradeIconUrl: "아이콘",
+  gradeEmptyMessage: "등록된 등급이 없습니다.",
+
+  // 검색/필터
+  searchPlaceholder: "이름 또는 이메일로 검색",
+  filterStatus: "회원 상태",
+  filterGrade: "등급",
+  sortNewest: "최신순",
+  sortOldest: "오래된순",
+  sortLabel: "정렬",
+};
+
+// ─── 배너 ───
+export const banner = {
+  pageTitle: "배너 관리",
+  addButton: "배너 추가",
+  emptyMessage: "등록된 배너가 없습니다.",
+  createTitle: "배너 추가",
+  editTitle: "배너 수정",
+  deleteTitle: "배너 삭제",
+  deleteDescription: (title: string) => `"${title}" 배너를 삭제하시겠습니까?`,
+
+  // 테이블 컬럼
+  colImage: "",
+  colTitle: "제목",
+  colPosition: "위치",
+  colStatus: "상태",
+  colPeriod: "게시 기간",
+  colCreatedAt: "등록일",
+
+  // 폼
+  titleLabel: "제목",
+  titlePlaceholder: "배너 제목을 입력하세요",
+  titleRequired: "제목을 입력해주세요.",
+  positionLabel: "위치",
+  positionPlaceholder: "배너 위치 선택",
+  imageLabel: "배너 이미지",
+  linkUrlLabel: "링크 URL",
+  linkUrlPlaceholder: "https://example.com",
+  statusLabel: "상태",
+  startedAtLabel: "게시 시작일",
+  endedAtLabel: "게시 종료일",
+  noEndDate: "종료일 없음",
+  sortOrderLabel: "정렬 순서",
+
+  // 검색
+  searchPlaceholder: "배너 제목으로 검색",
+  filterStatus: "상태",
+};
+
+// ─── 공지사항 ───
+export const notice = {
+  pageTitle: "공지사항",
+  addButton: "공지 등록",
+  createTitle: "공지 등록",
+  editTitle: "공지 수정",
+  emptyMessage: "등록된 공지가 없습니다.",
+  deleteTitle: "공지 삭제",
+  deleteDescription: (title: string) => `"${title}" 공지를 삭제하시겠습니까?`,
+  backToList: "목록으로",
+
+  // 테이블 컬럼
+  colTitle: "제목",
+  colType: "유형",
+  colStatus: "상태",
+  colPinned: "고정",
+  colCreatedAt: "등록일",
+
+  // 폼
+  titleLabel: "제목",
+  titlePlaceholder: "공지 제목을 입력하세요",
+  titleRequired: "제목을 입력해주세요.",
+  typeLabel: "유형",
+  typePlaceholder: "유형 선택",
+  contentLabel: "내용",
+  contentPlaceholder: "공지 내용을 입력하세요",
+  contentRequired: "내용을 입력해주세요.",
+  statusLabel: "상태",
+  isPinnedLabel: "상단 고정",
+
+  // 검색
+  searchPlaceholder: "공지 제목으로 검색",
+  filterType: "유형",
+};
+
+// ─── 프로모션 ───
+export const promotion = {
+  pageTitle: "프로모션",
+  addButton: "프로모션 등록",
+  createTitle: "프로모션 등록",
+  editTitle: "프로모션 수정",
+  emptyMessage: "등록된 프로모션이 없습니다.",
+  backToList: "목록으로",
+
+  // 테이블 컬럼
+  colName: "프로모션명",
+  colDiscountType: "할인 유형",
+  colDiscountValue: "할인 값",
+  colPeriod: "기간",
+  colStatus: "상태",
+  colCreatedAt: "등록일",
+
+  // 폼
+  nameLabel: "프로모션명",
+  namePlaceholder: "프로모션명을 입력하세요",
+  nameRequired: "프로모션명을 입력해주세요.",
+  discountTypeLabel: "할인 유형",
+  discountValueLabel: "할인 값",
+  discountValuePlaceholder: "할인 값을 입력하세요",
+  startedAtLabel: "시작일",
+  endedAtLabel: "종료일",
+  isActiveLabel: "활성 여부",
+  categoriesLabel: "적용 카테고리",
+
+  // 검색
+  searchPlaceholder: "프로모션명으로 검색",
+  filterActive: "활성 상태",
+  sortLabel: "정렬",
+  sortNewest: "최신순",
+  sortOldest: "오래된순",
+};
+
+// ─── 쿠폰 ───
+export const coupon = {
+  pageTitle: "쿠폰 관리",
+  addButton: "쿠폰 등록",
+  createTitle: "쿠폰 등록",
+  editTitle: "쿠폰 수정",
+  emptyMessage: "등록된 쿠폰이 없습니다.",
+  deleteTitle: "쿠폰 삭제",
+  deleteDescription: (name: string) => `"${name}" 쿠폰을 삭제하시겠습니까?`,
+  backToList: "목록으로",
+
+  // 테이블 컬럼
+  colName: "쿠폰명",
+  colDiscountType: "할인 유형",
+  colDiscountValue: "할인 값",
+  colMinOrder: "최소 주문금액",
+  colStatus: "상태",
+  colPeriod: "유효 기간",
+  colCreatedAt: "등록일",
+
+  // 폼
+  nameLabel: "쿠폰명",
+  namePlaceholder: "쿠폰명을 입력하세요",
+  nameRequired: "쿠폰명을 입력해주세요.",
+  descriptionLabel: "설명",
+  descriptionPlaceholder: "쿠폰 설명을 입력하세요",
+  discountTypeLabel: "할인 유형",
+  discountValueLabel: "할인 값",
+  discountValuePlaceholder: "할인 값을 입력하세요",
+  maxDiscountLabel: "최대 할인금액",
+  maxDiscountPlaceholder: "최대 할인금액",
+  minOrderLabel: "최소 주문금액",
+  minOrderPlaceholder: "최소 주문금액",
+  totalQuantityLabel: "발급 수량",
+  totalQuantityPlaceholder: "발급 수량",
+  validFromLabel: "유효 시작일",
+  validToLabel: "유효 종료일",
+  statusLabel: "상태",
+
+  // 검색
+  searchPlaceholder: "쿠폰명으로 검색",
+  filterStatus: "상태",
+  sortLabel: "정렬",
+  sortNewest: "최신순",
+  sortOldest: "오래된순",
+};
+
+// ─── 클레임 ───
+export const claim = {
+  pageTitle: "클레임 관리",
+  detailTitle: "클레임 상세",
+  emptyMessage: "클레임 내역이 없습니다.",
+  notFound: "클레임을 찾을 수 없습니다.",
+  backToList: "목록으로",
+
+  // 테이블 컬럼
+  colId: "번호",
+  colOrderNumber: "주문번호",
+  colType: "유형",
+  colReason: "사유",
+  colStatus: "상태",
+  colAmount: "예상 환불금액",
+  colCreatedAt: "접수일",
+
+  // 상세
+  sectionClaimInfo: "클레임 정보",
+  sectionItems: "클레임 상품",
+  reasonType: "사유 유형",
+  reason: "상세 사유",
+  refundAmount: "예상 환불금액",
+  refundMethod: "환불 방법",
+
+  // 액션
+  actionApprove: "승인",
+  actionReject: "거절",
+  actionReceiveInspect: "검수 확인",
+  actionReturnShipping: "반송 처리",
+  actionReship: "재배송",
+  actionComplete: "완료 처리",
+  actionRegisterReturn: "반송 정보 등록",
+  returnCarrierId: "택배사",
+  returnCarrierIdPlaceholder: "택배사 ID를 입력하세요",
+  returnTrackingNumber: "송장번호",
+  returnTrackingNumberPlaceholder: "송장번호를 입력하세요",
+  submitReturnShipping: "반송 등록",
+  returnShippingSuccess: "반송 정보가 등록되었습니다.",
+
+  // 검색
+  searchPlaceholder: "주문번호로 검색",
+  filterType: "클레임 유형",
+  filterStatus: "상태",
+  sortLabel: "정렬",
+  sortNewest: "최신순",
+  sortOldest: "오래된순",
+};
+
+// ─── 1:1 문의 ───
+export const inquiry = {
+  pageTitle: "1:1 문의",
+  detailTitle: "문의 상세",
+  emptyMessage: "문의 내역이 없습니다.",
+  notFound: "문의를 찾을 수 없습니다.",
+  backToList: "목록으로",
+
+  // 테이블 컬럼
+  colTitle: "제목",
+  colType: "유형",
+  colUser: "작성자",
+  colStatus: "상태",
+  colCreatedAt: "작성일",
+
+  // 상세
+  sectionQuestion: "문의 내용",
+  sectionAnswer: "답변",
+  answerPlaceholder: "답변을 입력하세요",
+  answerButton: "답변 등록",
+  answered: "답변 완료",
+  answeredAt: "답변일",
+  deleteTitle: "문의 삭제",
+  deleteDescription: (title: string) => `"${title}" 문의를 삭제하시겠습니까?`,
+
+  // 검색
+  searchPlaceholder: "문의 제목으로 검색",
+  filterType: "문의 유형",
+  filterStatus: "답변 상태",
+  sortLabel: "정렬",
+  sortNewest: "최신순",
+  sortOldest: "오래된순",
+};
+
+// ─── 리뷰 ───
+export const review = {
+  pageTitle: "리뷰 관리",
+  detailTitle: "리뷰 상세",
+  emptyMessage: "등록된 리뷰가 없습니다.",
+  notFound: "리뷰를 찾을 수 없습니다.",
+  backToList: "목록으로",
+
+  // 테이블 컬럼
+  colProduct: "상품",
+  colUser: "작성자",
+  colRating: "평점",
+  colContent: "내용",
+  colVisible: "노출",
+  colCreatedAt: "작성일",
+
+  // 상세
+  sectionReview: "리뷰 내용",
+  images: "리뷰 이미지",
+  rating: "평점",
+  visibilityToggle: "노출 상태 변경",
+
+  // 검색
+  searchPlaceholder: "상품명 또는 작성자로 검색",
+  sortLabel: "정렬",
+  sortNewest: "최신순",
+  sortOldest: "오래된순",
+  sortRatingHigh: "평점 높은순",
+  sortRatingLow: "평점 낮은순",
+};
+
+// ─── FAQ ───
+export const faq = {
+  pageTitle: "FAQ 관리",
+  addButton: "FAQ 추가",
+  emptyMessage: "등록된 FAQ가 없습니다.",
+  createTitle: "FAQ 추가",
+  editTitle: "FAQ 수정",
+  deleteTitle: "FAQ 삭제",
+  deleteDescription: (question: string) => `"${question}" FAQ를 삭제하시겠습니까?`,
+
+  // 테이블 컬럼
+  colCategory: "카테고리",
+  colQuestion: "질문",
+  colCreatedAt: "등록일",
+
+  // 폼
+  categoryLabel: "카테고리",
+  categoryPlaceholder: "카테고리 선택",
+  categoryRequired: "카테고리를 선택해주세요.",
+  questionLabel: "질문",
+  questionPlaceholder: "질문을 입력하세요",
+  questionRequired: "질문을 입력해주세요.",
+  answerLabel: "답변",
+  answerPlaceholder: "답변을 입력하세요",
+  answerRequired: "답변을 입력해주세요.",
+
+  // 카테고리 관리
+  categoryPageTitle: "FAQ 카테고리",
+  addCategoryButton: "카테고리 추가",
+  categoryNameLabel: "카테고리명",
+  categoryNamePlaceholder: "카테고리명을 입력하세요",
+  categoryNameRequired: "카테고리명을 입력해주세요.",
+  categoryDeleteTitle: "카테고리 삭제",
+  categoryDeleteDescription: (name: string) => `"${name}" 카테고리를 삭제하시겠습니까?`,
+  categoryEmptyMessage: "등록된 카테고리가 없습니다.",
+
+  // 검색
+  searchPlaceholder: "FAQ 검색",
+  filterCategory: "카테고리",
+};
+
+// ─── 팝업 ───
+export const popup = {
+  pageTitle: "팝업 관리",
+  addButton: "팝업 추가",
+  emptyMessage: "등록된 팝업이 없습니다.",
+  createTitle: "팝업 추가",
+  editTitle: "팝업 수정",
+  deleteTitle: "팝업 삭제",
+  deleteDescription: (title: string) => `"${title}" 팝업을 삭제하시겠습니까?`,
+
+  // 테이블 컬럼
+  colTitle: "제목",
+  colType: "유형",
+  colStatus: "상태",
+  colPeriod: "게시 기간",
+  colCreatedAt: "등록일",
+
+  // 폼
+  titleLabel: "제목",
+  titlePlaceholder: "팝업 제목을 입력하세요",
+  titleRequired: "제목을 입력해주세요.",
+  contentLabel: "내용",
+  contentPlaceholder: "팝업 내용을 입력하세요",
+  typeLabel: "유형",
+  typePlaceholder: "유형 선택",
+  statusLabel: "상태",
+  startDateLabel: "게시 시작일",
+  endDateLabel: "게시 종료일",
+
+  // 검색
+  searchPlaceholder: "팝업 제목으로 검색",
+  filterStatus: "상태",
+};
+
+// ─── 상품 Q&A ───
+export const qna = {
+  pageTitle: "상품 Q&A",
+  detailTitle: "Q&A 상세",
+  emptyMessage: "등록된 Q&A가 없습니다.",
+  notFound: "Q&A를 찾을 수 없습니다.",
+  backToList: "목록으로",
+
+  // 테이블 컬럼
+  colProduct: "상품",
+  colTitle: "제목",
+  colUser: "작성자",
+  colStatus: "상태",
+  colSecret: "비밀글",
+  colCreatedAt: "작성일",
+
+  // 상세
+  sectionQuestion: "질문",
+  sectionAnswer: "답변",
+  answerPlaceholder: "답변을 입력하세요",
+  answerButton: "답변 등록",
+  answered: "답변 완료",
+  answeredAt: "답변일",
+
+  // 검색
+  searchPlaceholder: "Q&A 검색",
+  filterStatus: "답변 상태",
+  sortLabel: "정렬",
+  sortNewest: "최신순",
+  sortOldest: "오래된순",
+};
+
+// ─── 태그 ───
+export const tag = {
+  pageTitle: "태그 관리",
+  addButton: "태그 추가",
+  emptyMessage: "등록된 태그가 없습니다.",
+  createTitle: "태그 추가",
+  nameLabel: "태그명",
+  namePlaceholder: "태그명을 입력하세요",
+  nameRequired: "태그명을 입력해주세요.",
+  colName: "태그명",
+  colCreatedAt: "등록일",
+};
+
+// ─── 설정 ───
+export const settings = {
+  pageTitle: "설정",
+
+  // 테넌트 (사이트 기본 설정)
+  sectionTenant: "사이트 기본 설정",
+  tenantName: "사이트명",
+  tenantDomain: "도메인",
+  tenantLogo: "로고",
+  tenantFavicon: "파비콘",
+  tenantSeo: "SEO 설정",
+  tenantSeoTitle: "SEO 타이틀",
+  tenantSeoDescription: "SEO 설명",
+  tenantSeoKeywords: "SEO 키워드",
+  tenantSocial: "소셜 설정",
+  tenantNotification: "알림 설정",
+  tenantSecurity: "보안 설정",
+  tenantMaintenance: "점검 모드",
+  tenantSettlement: "정산 설정",
+
+  // 정책
+  sectionPolicy: "약관/정책 관리",
+  policyOrder: "주문 정책",
+  policyDelivery: "배송 정책",
+  policyProduct: "상품 정책",
+  policyReturns: "반품/교환 정책",
+
+  // 헤더 메뉴
+  sectionHeaderMenu: "헤더 메뉴 관리",
+  headerMenuEmpty: "등록된 메뉴가 없습니다.",
+  headerMenuAdd: "메뉴 추가",
+  headerMenuLabel: "메뉴명",
+  headerMenuUrl: "URL",
+  headerMenuSortOrder: "정렬 순서",
+  headerMenuRemove: "메뉴 삭제",
+
+  // 전시 관리
+  sectionDisplay: "전시 관리",
+  displayEmpty: "등록된 전시 섹션이 없습니다.",
+};
+
 // ─── 페이지네이션 / 검색 ───
 export const pagination = {
   navLabel: "페이지 네비게이션",
@@ -498,6 +1158,6 @@ export const searchFilter = {
 
 // ─── 메타 ───
 export const meta = {
-  title: "Shop Admin",
-  description: "쇼핑몰 관리자 페이지",
+  title: "MIREP 아카이빙",
+  description: "MIREP 아카이빙 관리자 페이지",
 };
