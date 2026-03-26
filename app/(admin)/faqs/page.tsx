@@ -62,7 +62,7 @@ export default function FaqsPage() {
   // ─── FAQ List ───
   const [faqs, setFaqs] = useState<Faq[]>([]);
   const [faqLoading, setFaqLoading] = useState(true);
-  const [totalElements, setTotalElements] = useState(0);
+  const [total_elements, setTotalElements] = useState(0);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Faq | null>(null);
@@ -84,7 +84,7 @@ export default function FaqsPage() {
   const [sort, setSort] = useState("createdAt");
   const [order, setOrder] = useState<"asc" | "desc">("desc");
 
-  const totalPages = Math.ceil(totalElements / PAGE_SIZE);
+  const totalPages = Math.ceil(total_elements / PAGE_SIZE);
 
   // ─── Fetch Categories ───
   const fetchCategories = useCallback(async () => {
@@ -403,7 +403,7 @@ export default function FaqsPage() {
             />
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                {common.totalCount(totalElements)}
+                {common.totalCount(total_elements)}
               </p>
               <Pagination
                 page={page}

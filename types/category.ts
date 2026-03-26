@@ -1,7 +1,7 @@
 export interface Category {
   id: number;
-  siteId: number | null;
-  siteName: string | null;
+  tenantId: number | null;
+  tenantName: string | null;
   name: string;
   depth: number;
   sortOrder: number;
@@ -13,19 +13,16 @@ export interface Category {
 
 export interface CategoryFormData {
   name: string;
-  siteId: number | null;
-  siteName: string | null;
+  tenantId: number | null;
   parentId: number | null;
   depth: number;
 }
 
-/** PUT /admin/categories 요청용 트리 노드 */
+/** PUT /admin/categories 요청용 flat 노드 (BE는 flat list + parentId) */
 export interface CategoryUpdateNode {
   id: number;
-  siteId: number;
-  siteName: string;
+  tenantId: number;
   name: string;
-  depth: number;
   sortOrder: number;
-  children: CategoryUpdateNode[];
+  parentId: number | null;
 }

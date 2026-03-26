@@ -24,5 +24,4 @@ export interface AdminFormData {
 export interface AdminUpdateData {
   name: string;
   role: AdminRole;
-  isActive: boolean;
 }

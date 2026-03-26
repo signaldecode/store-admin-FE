@@ -53,10 +53,10 @@ export interface ProductOption {
 
 export interface ProductSku {
   id: number;
-  sku: string;
+  skuCode: string;
   stock: number;
-  extraPrice: number;
-  optionValues: Record<string, string>;
+  isActive: boolean;
+  optionValues: string[];
 }
 
 /** 상품 등록/수정 API 요청 JSON (multipart의 data 필드) */
@@ -86,7 +86,7 @@ export interface ProductFormData {
 export interface ProductOptionInput {
   optionName: string;
   sortOrder: number;
-  values: { value: string }[];
+  values: { value: string; extraPrice?: number; sortOrder: number }[];
 }
 
 export interface ProductSkuInput {

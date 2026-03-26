@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -48,9 +47,6 @@ export default function AdminFormDialog({
   const [name, setName] = useState("");
   const [role, setRole] = useState<AdminRole>(ADMIN_ROLE.ADMIN);
 
-  // 수정 전용 필드
-  const [isActive, setIsActive] = useState(true);
-
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
@@ -59,7 +55,6 @@ export default function AdminFormDialog({
       if (admin) {
         setName(admin.name);
         setRole(admin.role);
-        setIsActive(admin.isActive);
       } else {
         setEmail("");
         setPassword("");
@@ -90,7 +85,7 @@ export default function AdminFormDialog({
     setLoading(true);
     try {
       if (isEdit) {
-        await onSubmit({ name: name.trim(), role, isActive });
+        await onSubmit({ name: name.trim(), role });
       } else {
         await onSubmit({ email: email.trim(), name: name.trim(), password, role });
       }
@@ -208,18 +203,6 @@ export default function AdminFormDialog({
               </SelectContent>
             </Select>
           </div>
-
-          {isEdit && (
-            <div className="flex items-center justify-between">
-              <Label htmlFor="admin-isActive">{adminLabels.isActiveLabel}</Label>
-              <Switch
-                id="admin-isActive"
-                checked={isActive}
-                onCheckedChange={setIsActive}
-                disabled={loading}
-              />
-            </div>
-          )}
 
           {errors._form && (
             <p className="text-sm text-destructive" role="alert">

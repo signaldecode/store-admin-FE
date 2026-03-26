@@ -33,7 +33,7 @@ export default function QnasPage() {
   const [siteId, setSiteId] = useState<number | null>(null);
   const [qnas, setQnas] = useState<QnaSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [totalElements, setTotalElements] = useState(0);
+  const [total_elements, setTotalElements] = useState(0);
 
   // Search
   const [keyword, setKeyword] = useState("");
@@ -50,7 +50,7 @@ export default function QnasPage() {
   const [sort, setSort] = useState("createdAt");
   const [order, setOrder] = useState<"asc" | "desc">("desc");
 
-  const totalPages = Math.ceil(totalElements / PAGE_SIZE);
+  const totalPages = Math.ceil(total_elements / PAGE_SIZE);
 
   const fetchQnas = useCallback(async () => {
     setLoading(true);
@@ -187,7 +187,7 @@ export default function QnasPage() {
           />
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              {common.totalCount(totalElements)}
+              {common.totalCount(total_elements)}
             </p>
             <Pagination
               page={page}

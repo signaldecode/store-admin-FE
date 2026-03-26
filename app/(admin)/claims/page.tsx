@@ -35,7 +35,7 @@ export default function ClaimsPage() {
   const router = useRouter();
   const [claims, setClaims] = useState<ClaimSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [totalElements, setTotalElements] = useState(0);
+  const [total_elements, setTotalElements] = useState(0);
 
   // 검색
   const [keyword, setKeyword] = useState("");
@@ -77,7 +77,7 @@ export default function ClaimsPage() {
     }
   };
 
-  const totalPages = Math.ceil(totalElements / PAGE_SIZE);
+  const totalPages = Math.ceil(total_elements / PAGE_SIZE);
 
   const fetchClaims = useCallback(async () => {
     setLoading(true);
@@ -254,7 +254,7 @@ export default function ClaimsPage() {
           />
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              {common.totalCount(totalElements)}
+              {common.totalCount(total_elements)}
             </p>
             <Pagination
               page={page}

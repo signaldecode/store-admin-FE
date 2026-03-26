@@ -91,7 +91,7 @@ export default function ProductForm({
   );
   const mainCategories = useMemo(() => {
     if (!siteId) return [];
-    return categories.filter((c) => c.siteId?.toString() === siteId);
+    return categories.filter((c) => c.tenantId?.toString() === siteId);
   }, [categories, siteId]);
   const mainCategoryItems = useMemo(
     () => Object.fromEntries(mainCategories.map((c) => [c.id.toString(), c.name])),
@@ -171,14 +171,14 @@ export default function ProductForm({
         for (const main of categories) {
           // 대분류 자체가 선택된 경우
           if (main.id === product.categoryId) {
-            if (main.siteId) setSiteId(main.siteId.toString());
+            if (main.tenantId) setSiteId(main.tenantId.toString());
             setMainCategoryId(main.id.toString());
             break;
           }
           // 중분류에서 찾기
           for (const mid of main.children ?? []) {
             if (mid.id === product.categoryId) {
-              if (main.siteId) setSiteId(main.siteId.toString());
+              if (main.tenantId) setSiteId(main.tenantId.toString());
               setMainCategoryId(main.id.toString());
               setMidCategoryId(mid.id.toString());
               break;
@@ -186,7 +186,7 @@ export default function ProductForm({
             // 소분류에서 찾기
             const detail = mid.children?.find((d) => d.id === product.categoryId);
             if (detail) {
-              if (main.siteId) setSiteId(main.siteId.toString());
+              if (main.tenantId) setSiteId(main.tenantId.toString());
               setMainCategoryId(main.id.toString());
               setMidCategoryId(mid.id.toString());
               setDetailCategoryId(detail.id.toString());
@@ -206,13 +206,20 @@ export default function ProductForm({
         );
       }
       if (product.skus.length > 0) {
+        const optionNames = product.options.map((o) => o.optionName);
         setVariants(
-          product.skus.map((s) => ({
-            optionValues: s.optionValues,
-            sku: s.sku,
-            stock: s.stock,
-            additionalPrice: s.extraPrice,
-          }))
+          product.skus.map((s) => {
+            const record: Record<string, string> = {};
+            s.optionValues.forEach((val, i) => {
+              if (optionNames[i]) record[optionNames[i]] = val;
+            });
+            return {
+              optionValues: record,
+              sku: s.skuCode,
+              stock: s.stock,
+              additionalPrice: 0,
+            };
+          })
         );
       }
     }
@@ -267,7 +274,7 @@ export default function ProductForm({
           .map((o, i) => ({
             optionName: o.name.trim(),
             sortOrder: i + 1,
-            values: o.values.map((v) => ({ value: v })),
+            values: o.values.map((v, vi) => ({ value: v, sortOrder: vi + 1 })),
           }));
         formData.options = optionInputs;
 

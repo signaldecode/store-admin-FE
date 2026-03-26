@@ -97,7 +97,7 @@ export default function CategoryFormDialog({
       setError("");
       if (category) {
         setName(category.name);
-        setSiteId(category.siteId?.toString() || "");
+        setSiteId(category.tenantId?.toString() || "");
         setLevel((category.depth + 1).toString() as Level);
         if (category.depth === 1) {
           setMainCategoryId(category.parentId?.toString() || "");
@@ -163,11 +163,9 @@ export default function CategoryFormDialog({
 
     setLoading(true);
     try {
-      const selectedSite = sites.find((s) => s.id === Number(siteId));
       await onSubmit({
         name: name.trim(),
-        siteId: Number(siteId),
-        siteName: selectedSite?.name ?? null,
+        tenantId: Number(siteId),
         parentId: resolveParentId(),
         depth: resolveDepth(),
       });
@@ -265,7 +263,7 @@ export default function CategoryFormDialog({
                   // 대분류의 사이트를 따라감
                   const parent = mainCategories.find((c) => c.id === Number(v));
                   if (parent) {
-                    setSiteId(parent.siteId?.toString() ?? "");
+                    setSiteId(parent.tenantId?.toString() ?? "");
                   }
                 }}
                 disabled={loading}

@@ -34,7 +34,7 @@ export default function NoticesPage() {
   const router = useRouter();
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
-  const [totalElements, setTotalElements] = useState(0);
+  const [total_elements, setTotalElements] = useState(0);
 
   const [deleteTarget, setDeleteTarget] = useState<Notice | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -57,7 +57,7 @@ export default function NoticesPage() {
   const [sort, setSort] = useState("createdAt");
   const [order, setOrder] = useState<"asc" | "desc">("desc");
 
-  const totalPages = Math.ceil(totalElements / PAGE_SIZE);
+  const totalPages = Math.ceil(total_elements / PAGE_SIZE);
 
   const fetchNotices = useCallback(async () => {
     setLoading(true);
@@ -233,7 +233,7 @@ export default function NoticesPage() {
           />
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              {common.totalCount(totalElements)}
+              {common.totalCount(total_elements)}
             </p>
             <Pagination
               page={page}

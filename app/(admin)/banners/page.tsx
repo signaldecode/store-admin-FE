@@ -56,7 +56,7 @@ const INITIAL_FORM: BannerFormData = {
 export default function BannersPage() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
-  const [totalElements, setTotalElements] = useState(0);
+  const [total_elements, setTotalElements] = useState(0);
 
   // Dialog CRUD
   const [formOpen, setFormOpen] = useState(false);
@@ -85,7 +85,7 @@ export default function BannersPage() {
   const [sort, setSort] = useState("createdAt");
   const [order, setOrder] = useState<"asc" | "desc">("desc");
 
-  const totalPages = Math.ceil(totalElements / PAGE_SIZE);
+  const totalPages = Math.ceil(total_elements / PAGE_SIZE);
 
   const fetchBanners = useCallback(async () => {
     setLoading(true);
@@ -313,7 +313,7 @@ export default function BannersPage() {
           />
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              {common.totalCount(totalElements)}
+              {common.totalCount(total_elements)}
             </p>
             <Pagination
               page={page}

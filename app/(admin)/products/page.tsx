@@ -74,7 +74,7 @@ export default function ProductsPage() {
   // 사이트 → 대분류 → 중분류 → 소분류 캐스케이딩
   const selectedSite = sites.find((s) => s.id.toString() === siteFilter);
   const mainCategoriesForFilter = siteFilter
-    ? categories.filter((c) => c.siteId?.toString() === siteFilter)
+    ? categories.filter((c) => c.tenantId?.toString() === siteFilter)
     : categories;
   const selectedMainCat = mainCategoriesForFilter.find((c) => c.id.toString() === mainCategoryFilter);
   const subCategoriesForFilter = selectedMainCat?.children ?? [];

@@ -50,19 +50,22 @@ function flattenTree(tree: Category[]): Category[] {
   return result;
 }
 
-/** Category 트리 → API 요청용 CategoryUpdateNode 트리 변환 */
-function toUpdateNodes(tree: Category[], depth = 0): CategoryUpdateNode[] {
-  return tree.map((item, index) => ({
-    id: item.id,
-    siteId: item.siteId!,
-    siteName: item.siteName!,
-    name: item.name,
-    depth,
-    sortOrder: index,
-    children: item.children?.length
-      ? toUpdateNodes(item.children, depth + 1)
-      : [],
-  }));
+/** Category 트리 → API 요청용 flat list 변환 (BE는 flat + parentId 구조) */
+function toUpdateNodes(tree: Category[], parentId: number | null = null): CategoryUpdateNode[] {
+  const result: CategoryUpdateNode[] = [];
+  tree.forEach((item, index) => {
+    result.push({
+      id: item.id,
+      tenantId: item.tenantId!,
+      name: item.name,
+      sortOrder: index,
+      parentId,
+    });
+    if (item.children?.length) {
+      result.push(...toUpdateNodes(item.children, item.id));
+    }
+  });
+  return result;
 }
 
 /** 트리에서 특정 노드의 이름을 변경한 새 트리 반환 */
@@ -237,9 +240,9 @@ export default function CategoriesPage() {
     JSON.stringify(flattenTree(draftTree).map((c) => c.id)) !==
       JSON.stringify(flattenTree(originalTreeRef.current).map((c) => c.id));
 
-  /** 사이트 필터 적용 (대분류의 siteId 기준 필터링) */
+  /** 사이트 필터 적용 (대분류의 tenantId 기준 필터링) */
   const filteredTree = selectedSiteId
-    ? tree.filter((item) => item.siteId === selectedSiteId)
+    ? tree.filter((item) => item.tenantId === selectedSiteId)
     : tree;
 
   const displayTree = editing ? draftTree : filteredTree;

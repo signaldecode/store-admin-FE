@@ -55,7 +55,7 @@ const INITIAL_FORM: PopupFormData = {
 export default function PopupsPage() {
   const [popups, setPopups] = useState<Popup[]>([]);
   const [loading, setLoading] = useState(true);
-  const [totalElements, setTotalElements] = useState(0);
+  const [total_elements, setTotalElements] = useState(0);
 
   // Dialog CRUD
   const [formOpen, setFormOpen] = useState(false);
@@ -84,7 +84,7 @@ export default function PopupsPage() {
   const [sort, setSort] = useState("createdAt");
   const [order, setOrder] = useState<"asc" | "desc">("desc");
 
-  const totalPages = Math.ceil(totalElements / PAGE_SIZE);
+  const totalPages = Math.ceil(total_elements / PAGE_SIZE);
 
   const fetchPopups = useCallback(async () => {
     setLoading(true);
@@ -300,7 +300,7 @@ export default function PopupsPage() {
           />
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              {common.totalCount(totalElements)}
+              {common.totalCount(total_elements)}
             </p>
             <Pagination
               page={page}

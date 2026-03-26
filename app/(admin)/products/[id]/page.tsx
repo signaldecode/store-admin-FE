@@ -202,24 +202,16 @@ export default function ProductDetailPage() {
                   <TableHead>{productOption.variantColCombo}</TableHead>
                   <TableHead className="w-28">{productOption.variantColSku}</TableHead>
                   <TableHead className="w-20">{productOption.variantColStock}</TableHead>
-                  <TableHead className="w-28">{productOption.variantColPrice}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {product.skus.map((s) => (
                   <TableRow key={s.id}>
                     <TableCell>
-                      {Object.entries(s.optionValues)
-                        .map(([k, val]) => `${k}: ${val}`)
-                        .join(", ")}
+                      {product.options.map((opt, i) => `${opt.optionName}: ${s.optionValues[i]}`).join(", ")}
                     </TableCell>
-                    <TableCell>{s.sku || "-"}</TableCell>
+                    <TableCell>{s.skuCode || "-"}</TableCell>
                     <TableCell>{s.stock}</TableCell>
-                    <TableCell>
-                      {s.extraPrice > 0
-                        ? `+${s.extraPrice.toLocaleString("ko-KR")}${common.currency}`
-                        : "-"}
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

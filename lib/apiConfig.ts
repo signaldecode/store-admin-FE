@@ -27,7 +27,7 @@ const DOMAIN_ORIGIN_MAP: Record<string, ApiOrigin> = {
   products: "store",
   categories: "store",
   brands: "store",
-  sites: "store",
+  tenants: "store",
   admins: "store",
   images: "store",
 

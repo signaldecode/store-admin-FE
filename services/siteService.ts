@@ -10,37 +10,37 @@ export function getSites(params?: SiteListParams) {
           .map(([k, v]) => [k, String(v)])
       ).toString()
     : "";
-  return api<PaginatedResponse<Site>>(`/admin/sites${query}`);
+  return api<PaginatedResponse<Site>>(`/admin/tenants${query}`);
 }
 
 export function getSite(id: number) {
-  return api<ApiResponse<Site>>(`/admin/sites/${id}`);
+  return api<ApiResponse<Site>>(`/admin/tenants/${id}`);
 }
 
 export function createSite(data: SiteFormData) {
-  return api<ApiResponse<Site>>("/admin/sites", {
+  return api<ApiResponse<Site>>("/admin/tenants", {
     method: "POST",
     body: data,
   });
 }
 
 export function updateSite(id: number, data: SiteFormData) {
-  return api<ApiResponse<Site>>(`/admin/sites/${id}`, {
+  return api<ApiResponse<Site>>(`/admin/tenants/${id}`, {
     method: "PUT",
     body: data,
   });
 }
 
 export function deleteSite(id: number) {
-  return api<void>(`/admin/sites/${id}`, { method: "DELETE" });
+  return api<void>(`/admin/tenants/${id}`, { method: "DELETE" });
 }
 
 export function getActiveSites() {
-  return api<ApiResponse<ActiveSite[]>>("/admin/sites/active");
+  return api<ApiResponse<ActiveSite[]>>("/admin/tenants/active");
 }
 
 export function toggleSiteStatus(id: number) {
-  return api<void>(`/admin/sites/${id}/status`, {
+  return api<void>(`/admin/tenants/${id}/status`, {
     method: "PATCH",
   });
 }
