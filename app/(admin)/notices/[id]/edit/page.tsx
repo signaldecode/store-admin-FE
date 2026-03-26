@@ -39,8 +39,8 @@ export default function NoticeEditPage() {
       setLoading(true);
       try {
         const res = await getNotice(id);
-        const { type, title, content, isPinned, status } = res.data;
-        setFormData({ type, title, content, isPinned, status });
+        const d = res.data;
+        setFormData({ tenantId: d.tenantId ?? 0, type: d.type, title: d.title, content: d.content, isPinned: d.isPinned, status: d.status });
       } catch {
         // api.ts handles common errors
       } finally {
@@ -103,11 +103,10 @@ export default function NoticeEditPage() {
             onValueChange={(v) =>
               setFormData((prev) => prev && ({ ...prev, type: v as NoticeType }))
             }
-            items={Object.fromEntries(
-              Object.entries(NOTICE_TYPE_LABEL).map(([k, v]) => [k, v])
-            )}
           >
-            <SelectTrigger id="notice-type" className="w-full">
+            <SelectTrigger id="notice-type" className="w-full" items={Object.fromEntries(
+              Object.entries(NOTICE_TYPE_LABEL).map(([k, v]) => [k, v])
+            )}>
               <SelectValue placeholder={noticeLabels.typePlaceholder} />
             </SelectTrigger>
             <SelectContent>
@@ -152,11 +151,10 @@ export default function NoticeEditPage() {
             onValueChange={(v) =>
               setFormData((prev) => prev && ({ ...prev, status: v as NoticeStatus }))
             }
-            items={Object.fromEntries(
-              Object.entries(NOTICE_STATUS_LABEL).map(([k, v]) => [k, v])
-            )}
           >
-            <SelectTrigger id="notice-status" className="w-full">
+            <SelectTrigger id="notice-status" className="w-full" items={Object.fromEntries(
+              Object.entries(NOTICE_STATUS_LABEL).map(([k, v]) => [k, v])
+            )}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

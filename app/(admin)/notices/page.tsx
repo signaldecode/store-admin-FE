@@ -64,13 +64,14 @@ export default function NoticesPage() {
     try {
       const type = typeFilter === "all" ? undefined : typeFilter;
       const res = await getNotices({
+        tenantId: siteId ?? undefined,
         keyword: debouncedKeyword || undefined,
         type,
         page,
         size: PAGE_SIZE,
       });
-      setNotices(res.data.content);
-      setTotalElements(res.data.total_elements);
+      setNotices(res.data?.content ?? []);
+      setTotalElements(res.data?.total_elements ?? 0);
     } catch {
       // api.ts handles common errors
     } finally {
@@ -195,15 +196,14 @@ export default function NoticesPage() {
         <Select
           value={typeFilter}
           onValueChange={(v) => setTypeFilter(v as TypeFilter)}
-          items={{
+        >
+          <SelectTrigger className="h-9 w-36" aria-label={noticeLabels.filterType} items={{
             all: common.all,
             NOTICE: NOTICE_TYPE_LABEL.NOTICE,
             INSPECTION: NOTICE_TYPE_LABEL.INSPECTION,
             GUIDELINES: NOTICE_TYPE_LABEL.GUIDELINES,
             EVENT: NOTICE_TYPE_LABEL.EVENT,
-          }}
-        >
-          <SelectTrigger className="h-9 w-36" aria-label={noticeLabels.filterType}>
+          }}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

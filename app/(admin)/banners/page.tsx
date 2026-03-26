@@ -43,9 +43,11 @@ import { useDebounce } from "@/hooks/useDebounce";
 
 const PAGE_SIZE = 10;
 
-const INITIAL_FORM: BannerFormData = {
+const INITIAL_FORM: Omit<BannerFormData, "tenantId"> = {
   title: "",
   position: "HERO",
+  imageUrl: "",
+  sortOrder: 0,
   status: "ACTIVE",
   startedAt: "",
   endedAt: undefined,
@@ -61,7 +63,7 @@ export default function BannersPage() {
   // Dialog CRUD
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Banner | null>(null);
-  const [formData, setFormData] = useState<BannerFormData>(INITIAL_FORM);
+  const [formData, setFormData] = useState<Omit<BannerFormData, "tenantId">>(INITIAL_FORM);
   const [formLoading, setFormLoading] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState<Banner | null>(null);
@@ -92,13 +94,14 @@ export default function BannersPage() {
     try {
       const status = statusFilter === "all" ? undefined : statusFilter;
       const res = await getBanners({
+        tenantId: siteId ?? undefined,
         keyword: debouncedKeyword || undefined,
         status,
         page,
         size: PAGE_SIZE,
       });
-      setBanners(res.data.content);
-      setTotalElements(res.data.total_elements);
+      setBanners(res.data?.content ?? []);
+      setTotalElements(res.data?.total_elements ?? 0);
     } catch {
       // api.ts handles common errors
     } finally {
@@ -135,6 +138,8 @@ export default function BannersPage() {
     setFormData({
       title: banner.title,
       position: banner.position,
+      imageUrl: banner.imageUrl,
+      sortOrder: banner.sortOrder,
       status: banner.status,
       startedAt: banner.startedAt.slice(0, 16),
       endedAt: banner.endedAt ? banner.endedAt.slice(0, 16) : undefined,
@@ -148,10 +153,11 @@ export default function BannersPage() {
     if (!formData.title.trim()) return;
     setFormLoading(true);
     try {
+      const payload: BannerFormData = { ...formData, tenantId: siteId ?? 0 };
       if (editTarget) {
-        await updateBanner(editTarget.id, formData);
+        await updateBanner(editTarget.id, payload);
       } else {
-        await createBanner(formData);
+        await createBanner(payload);
       }
       setFormOpen(false);
       await fetchBanners();
@@ -277,14 +283,13 @@ export default function BannersPage() {
         <Select
           value={statusFilter}
           onValueChange={(v) => setStatusFilter(v as StatusFilter)}
-          items={{
+        >
+          <SelectTrigger className="h-9 w-36" aria-label={bannerLabels.filterStatus} items={{
             all: common.all,
             ACTIVE: BANNER_STATUS_LABEL.ACTIVE,
             INACTIVE: BANNER_STATUS_LABEL.INACTIVE,
             SCHEDULED: BANNER_STATUS_LABEL.SCHEDULED,
-          }}
-        >
-          <SelectTrigger className="h-9 w-36" aria-label={bannerLabels.filterStatus}>
+          }}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -353,11 +358,10 @@ export default function BannersPage() {
                 onValueChange={(v) =>
                   setFormData((prev) => ({ ...prev, position: v as BannerPosition }))
                 }
-                items={Object.fromEntries(
-                  Object.entries(BANNER_POSITION_LABEL).map(([k, v]) => [k, v])
-                )}
               >
-                <SelectTrigger id="banner-position" className="w-full">
+                <SelectTrigger id="banner-position" className="w-full" items={Object.fromEntries(
+                  Object.entries(BANNER_POSITION_LABEL).map(([k, v]) => [k, v])
+                )}>
                   <SelectValue placeholder={bannerLabels.positionPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
@@ -377,11 +381,10 @@ export default function BannersPage() {
                 onValueChange={(v) =>
                   setFormData((prev) => ({ ...prev, status: v as BannerStatus }))
                 }
-                items={Object.fromEntries(
-                  Object.entries(BANNER_STATUS_LABEL).map(([k, v]) => [k, v])
-                )}
               >
-                <SelectTrigger id="banner-status" className="w-full">
+                <SelectTrigger id="banner-status" className="w-full" items={Object.fromEntries(
+                  Object.entries(BANNER_STATUS_LABEL).map(([k, v]) => [k, v])
+                )}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

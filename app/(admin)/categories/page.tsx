@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Plus, ArrowUpDown, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,9 +21,7 @@ import {
   updateCategories,
   deleteCategories,
 } from "@/services/categoryService";
-import { getActiveSites } from "@/services/siteService";
 import type { Category, CategoryFormData, CategoryUpdateNode } from "@/types/category";
-import type { ActiveSite } from "@/types/site";
 import { category as categoryLabels, common } from "@/data/labels";
 
 
@@ -50,22 +48,18 @@ function flattenTree(tree: Category[]): Category[] {
   return result;
 }
 
-/** Category 트리 → API 요청용 flat list 변환 (BE는 flat + parentId 구조) */
-function toUpdateNodes(tree: Category[], parentId: number | null = null): CategoryUpdateNode[] {
-  const result: CategoryUpdateNode[] = [];
-  tree.forEach((item, index) => {
-    result.push({
-      id: item.id,
-      tenantId: item.tenantId!,
-      name: item.name,
-      sortOrder: index,
-      parentId,
-    });
-    if (item.children?.length) {
-      result.push(...toUpdateNodes(item.children, item.id));
-    }
-  });
-  return result;
+/** Category 트리 → API 요청용 CategoryUpdateNode 트리 변환 */
+function toUpdateNodes(tree: Category[], depth = 0): CategoryUpdateNode[] {
+  return tree.map((item, index) => ({
+    id: item.id,
+    siteUrl: item.siteUrl || undefined,
+    name: item.name,
+    depth,
+    sortOrder: index,
+    children: item.children?.length
+      ? toUpdateNodes(item.children, depth + 1)
+      : [],
+  }));
 }
 
 /** 트리에서 특정 노드의 이름을 변경한 새 트리 반환 */
@@ -123,9 +117,8 @@ export default function CategoriesPage() {
   const [tree, setTree] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 사이트 필터
-  const [sites, setSites] = useState<ActiveSite[]>([]);
-  const [selectedSiteId, setSelectedSiteId] = useState<number | undefined>();
+  // 대분류(사이트) 필터
+  const [selectedRootId, setSelectedRootId] = useState<number | undefined>();
 
   // 순서 변경 모드
   const [editing, setEditing] = useState(false);
@@ -140,13 +133,6 @@ export default function CategoriesPage() {
   // 삭제 확인 다이얼로그
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-
-  // 사이트 목록 로드
-  useEffect(() => {
-    getActiveSites()
-      .then((res) => setSites(res.data))
-      .catch(() => {});
-  }, []);
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
@@ -163,6 +149,13 @@ export default function CategoriesPage() {
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
+
+  // 대분류 목록 (필터 드롭다운용)
+  const rootCategories = useMemo(() => tree.filter((c) => c.depth === 0), [tree]);
+  const rootFilterItems = useMemo(
+    () => Object.fromEntries(rootCategories.map((c) => [c.id.toString(), c.name])),
+    [rootCategories]
+  );
 
   /* ── 순서 변경 모드 진입/취소 ── */
   const enterEditMode = () => {
@@ -211,7 +204,6 @@ export default function CategoriesPage() {
 
   const handleSubmit = async (data: CategoryFormData) => {
     if (editTarget) {
-      // 수정: 현재 트리에서 해당 카테고리의 name을 변경 후 전체 저장
       const updatedTree = updateNodeInTree(tree, editTarget.id, data.name);
       await updateCategories(toUpdateNodes(updatedTree));
     } else {
@@ -240,9 +232,9 @@ export default function CategoriesPage() {
     JSON.stringify(flattenTree(draftTree).map((c) => c.id)) !==
       JSON.stringify(flattenTree(originalTreeRef.current).map((c) => c.id));
 
-  /** 사이트 필터 적용 (대분류의 tenantId 기준 필터링) */
-  const filteredTree = selectedSiteId
-    ? tree.filter((item) => item.tenantId === selectedSiteId)
+  /** 대분류(사이트) 필터 적용 */
+  const filteredTree = selectedRootId
+    ? tree.filter((item) => item.id === selectedRootId)
     : tree;
 
   const displayTree = editing ? draftTree : filteredTree;
@@ -252,10 +244,6 @@ export default function CategoriesPage() {
       ? categoryLabels.deleteWithChildren(deleteTarget.name)
       : categoryLabels.deleteDescription(deleteTarget.name)
     : "";
-
-  const siteItems = Object.fromEntries(
-    sites.map((s) => [s.id.toString(), s.name])
-  );
 
   return (
     <div className="space-y-4">
@@ -300,25 +288,24 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      {/* 사이트 필터 */}
-      {!editing && sites.length > 0 && (
+      {/* 대분류(사이트) 필터 */}
+      {!editing && rootCategories.length > 1 && (
         <div className="flex items-center gap-2">
           <Label htmlFor="category-site-filter">{categoryLabels.siteLabel}</Label>
           <Select
-            value={selectedSiteId?.toString() ?? "all"}
+            value={selectedRootId?.toString() ?? "all"}
             onValueChange={(v) => {
-              setSelectedSiteId(v === "all" ? undefined : Number(v));
+              setSelectedRootId(v === "all" ? undefined : Number(v));
             }}
-            items={{ all: categoryLabels.siteAll, ...siteItems }}
           >
-            <SelectTrigger id="category-site-filter" className="w-48">
+            <SelectTrigger id="category-site-filter" className="w-48" items={{ all: categoryLabels.siteAll, ...rootFilterItems }}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{categoryLabels.siteAll}</SelectItem>
-              {sites.map((s) => (
-                <SelectItem key={s.id} value={s.id.toString()}>
-                  {s.name}
+              {rootCategories.map((c) => (
+                <SelectItem key={c.id} value={c.id.toString()}>
+                  {c.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -356,8 +343,6 @@ export default function CategoriesPage() {
         onOpenChange={setFormOpen}
         category={editTarget}
         categories={flattenTree(filteredTree)}
-        sites={sites}
-        selectedSiteId={selectedSiteId}
         onSubmit={handleSubmit}
       />
 

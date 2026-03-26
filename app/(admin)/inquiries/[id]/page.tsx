@@ -47,18 +47,11 @@ export default function InquiryDetailPage() {
     >
       <Section title={L.sectionQuestion}>
         <InfoGrid>
-          <InfoItem label={L.colType} value={data.type} />
-          <InfoItem label={L.colUser} value={data.userName} />
+          <InfoItem label={L.colType} value={data.qnaType} />
+          <InfoItem label={L.colUser} value={`#${data.userId}`} />
           <InfoItem label={L.colCreatedAt} value={new Date(data.createdAt).toLocaleDateString("ko-KR")} />
         </InfoGrid>
-        <div className="mt-4 whitespace-pre-wrap rounded-md bg-muted/50 p-4 text-sm">{data.content}</div>
-        {data.attachments.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {data.attachments.map((url, i) => (
-              <img key={i} src={url} alt={`첨부 ${i + 1}`} className="h-20 w-20 rounded border object-cover" />
-            ))}
-          </div>
-        )}
+        <div className="mt-4 whitespace-pre-wrap rounded-md bg-muted/50 p-4 text-sm">{data.question}</div>
       </Section>
 
       <Section title={L.sectionAnswer}>

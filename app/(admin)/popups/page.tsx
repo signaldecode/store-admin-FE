@@ -31,7 +31,6 @@ import {
   deletePopup,
 } from "@/services/popupService";
 import type { Popup, PopupFormData } from "@/types/popup";
-import type { PopupStatus, PopupType } from "@/lib/constants";
 import {
   popup as popupLabels,
   common,
@@ -43,13 +42,13 @@ import { useDebounce } from "@/hooks/useDebounce";
 
 const PAGE_SIZE = 10;
 
-const INITIAL_FORM: PopupFormData = {
-  title: "",
-  content: "",
-  type: "CENTER",
+const INITIAL_FORM: Omit<PopupFormData, "tenantId"> = {
+  name: "",
   status: "ACTIVE",
-  startDate: "",
-  endDate: "",
+  linkTarget: "_blank",
+  closeOption: "TODAY",
+  popupType: "CENTER",
+  sortOrder: 0,
 };
 
 export default function PopupsPage() {
@@ -60,7 +59,7 @@ export default function PopupsPage() {
   // Dialog CRUD
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Popup | null>(null);
-  const [formData, setFormData] = useState<PopupFormData>(INITIAL_FORM);
+  const [formData, setFormData] = useState<Omit<PopupFormData, "tenantId">>(INITIAL_FORM);
   const [formLoading, setFormLoading] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState<Popup | null>(null);
@@ -74,7 +73,7 @@ export default function PopupsPage() {
   const debouncedKeyword = useDebounce(keyword, 300);
 
   // Filter
-  type StatusFilter = "all" | PopupStatus;
+  type StatusFilter = "all" | string;
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   // Pagination
@@ -91,12 +90,13 @@ export default function PopupsPage() {
     try {
       const status = statusFilter === "all" ? undefined : statusFilter;
       const res = await getPopups({
+        tenantId: siteId ?? undefined,
         status,
         page,
         size: PAGE_SIZE,
       });
-      setPopups(res.data.content);
-      setTotalElements(res.data.total_elements);
+      setPopups(res.data?.content ?? []);
+      setTotalElements(res.data?.total_elements ?? 0);
     } catch {
       // api.ts handles common errors
     } finally {
@@ -131,24 +131,29 @@ export default function PopupsPage() {
   const handleEdit = (item: Popup) => {
     setEditTarget(item);
     setFormData({
-      title: item.title,
-      content: item.content,
-      type: item.type,
+      name: item.name,
       status: item.status,
-      startDate: item.startDate.slice(0, 16),
-      endDate: item.endDate.slice(0, 16),
+      linkTarget: item.linkTarget,
+      closeOption: item.closeOption,
+      popupType: item.popupType,
+      sortOrder: item.sortOrder,
+      image: item.image ?? undefined,
+      linkUrl: item.linkUrl ?? undefined,
+      startedAt: item.startedAt?.slice(0, 16),
+      endedAt: item.endedAt?.slice(0, 16),
     });
     setFormOpen(true);
   };
 
   const handleFormSubmit = async () => {
-    if (!formData.title.trim()) return;
+    if (!formData.name.trim()) return;
     setFormLoading(true);
     try {
+      const payload: PopupFormData = { ...formData, tenantId: siteId ?? 0 };
       if (editTarget) {
-        await updatePopup(editTarget.id, formData);
+        await updatePopup(editTarget.id, payload);
       } else {
-        await createPopup(formData);
+        await createPopup(payload);
       }
       setFormOpen(false);
       await fetchPopups();
@@ -173,46 +178,30 @@ export default function PopupsPage() {
     }
   };
 
-  const formatPeriod = (item: Popup) => {
-    const start = new Date(item.startDate).toLocaleDateString("ko-KR");
-    const end = new Date(item.endDate).toLocaleDateString("ko-KR");
-    return `${start} ~ ${end}`;
-  };
-
-  const statusVariant = (status: PopupStatus) => {
-    switch (status) {
-      case "ACTIVE":
-        return "default";
-      case "INACTIVE":
-        return "secondary";
-    }
+  const statusVariant = (status: string) => {
+    return status === "ACTIVE" ? "default" as const : "secondary" as const;
   };
 
   const columns: Column<Popup>[] = [
     {
-      key: "title",
+      key: "name",
       label: popupLabels.colTitle,
       sortable: true,
-      render: (item) => item.title,
+      render: (item) => item.name,
     },
     {
-      key: "type",
+      key: "popupType",
       label: popupLabels.colType,
-      render: (item) => POPUP_TYPE_LABEL[item.type],
+      render: (item) => POPUP_TYPE_LABEL[item.popupType as keyof typeof POPUP_TYPE_LABEL] ?? item.popupType,
     },
     {
       key: "status",
       label: popupLabels.colStatus,
       render: (item) => (
         <Badge variant={statusVariant(item.status)}>
-          {POPUP_STATUS_LABEL[item.status]}
+          {POPUP_STATUS_LABEL[item.status as keyof typeof POPUP_STATUS_LABEL] ?? item.status}
         </Badge>
       ),
-    },
-    {
-      key: "period",
-      label: popupLabels.colPeriod,
-      render: (item) => formatPeriod(item),
     },
     {
       key: "createdAt",
@@ -272,7 +261,7 @@ export default function PopupsPage() {
           value={statusFilter}
           onValueChange={(v) => { if (v !== null) setStatusFilter(v as StatusFilter); }}
         >
-          <SelectTrigger className="h-9 w-36" aria-label={popupLabels.filterStatus}>
+          <SelectTrigger className="h-9 w-36" aria-label={popupLabels.filterStatus} items={{ all: common.all, ...POPUP_STATUS_LABEL }}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -326,33 +315,22 @@ export default function PopupsPage() {
               </Label>
               <Input
                 id="popup-title"
-                value={formData.title}
-                onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                value={formData.name}
+                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                 placeholder={popupLabels.titlePlaceholder}
                 aria-required="true"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="popup-content">{popupLabels.contentLabel}</Label>
-              <Textarea
-                id="popup-content"
-                value={formData.content}
-                onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
-                placeholder={popupLabels.contentPlaceholder}
-                rows={5}
-              />
-            </div>
-
-            <div className="space-y-1.5">
               <Label htmlFor="popup-type">{popupLabels.typeLabel}</Label>
               <Select
-                value={formData.type}
+                value={formData.popupType}
                 onValueChange={(v) => {
-                  if (v !== null) setFormData((prev) => ({ ...prev, type: v as PopupType }));
+                  if (v !== null) setFormData((prev) => ({ ...prev, popupType: v }));
                 }}
               >
-                <SelectTrigger id="popup-type" className="w-full">
+                <SelectTrigger id="popup-type" className="w-full" items={POPUP_TYPE_LABEL}>
                   <SelectValue placeholder={popupLabels.typePlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
@@ -370,10 +348,10 @@ export default function PopupsPage() {
               <Select
                 value={formData.status}
                 onValueChange={(v) => {
-                  if (v !== null) setFormData((prev) => ({ ...prev, status: v as PopupStatus }));
+                  if (v !== null) setFormData((prev) => ({ ...prev, status: v }));
                 }}
               >
-                <SelectTrigger id="popup-status" className="w-full">
+                <SelectTrigger id="popup-status" className="w-full" items={POPUP_STATUS_LABEL}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -387,27 +365,44 @@ export default function PopupsPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="popup-startDate">{popupLabels.startDateLabel}</Label>
+              <Label htmlFor="popup-image">이미지 URL</Label>
               <Input
-                id="popup-startDate"
-                type="datetime-local"
-                value={formData.startDate}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, startDate: e.target.value }))
-                }
+                id="popup-image"
+                value={formData.image ?? ""}
+                onChange={(e) => setFormData((prev) => ({ ...prev, image: e.target.value || undefined }))}
+                placeholder="이미지 URL"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="popup-endDate">{popupLabels.endDateLabel}</Label>
+              <Label htmlFor="popup-linkUrl">링크 URL</Label>
               <Input
-                id="popup-endDate"
-                type="datetime-local"
-                value={formData.endDate}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, endDate: e.target.value }))
-                }
+                id="popup-linkUrl"
+                value={formData.linkUrl ?? ""}
+                onChange={(e) => setFormData((prev) => ({ ...prev, linkUrl: e.target.value || undefined }))}
+                placeholder="클릭 시 이동할 URL"
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="popup-startedAt">시작일</Label>
+                <Input
+                  id="popup-startedAt"
+                  type="datetime-local"
+                  value={formData.startedAt ?? ""}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, startedAt: e.target.value || undefined }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="popup-endedAt">종료일</Label>
+                <Input
+                  id="popup-endedAt"
+                  type="datetime-local"
+                  value={formData.endedAt ?? ""}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, endedAt: e.target.value || undefined }))}
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -432,7 +427,7 @@ export default function PopupsPage() {
           if (!open) setDeleteTarget(null);
         }}
         title={popupLabels.deleteTitle}
-        description={deleteTarget ? popupLabels.deleteDescription(deleteTarget.title) : ""}
+        description={deleteTarget ? popupLabels.deleteDescription(deleteTarget.name) : ""}
         confirmLabel={common.delete}
         onConfirm={handleDelete}
         loading={deleteLoading}

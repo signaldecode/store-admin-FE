@@ -22,6 +22,7 @@ import { PRODUCT_STATUS_LABEL } from "@/data/labels";
 import type { Product } from "@/types/product";
 import type { ProductStatus } from "@/lib/constants";
 import { product as productLabels, productOption, common, imageUploader } from "@/data/labels";
+import { fmtNum } from "@/lib/utils";
 
 const statusVariant: Record<ProductStatus, "success" | "warning" | "destructive" | "default"> = {
   ON_SALE: "success",
@@ -137,17 +138,17 @@ export default function ProductDetailPage() {
 
       {/* 상세 정보 */}
       <div className="space-y-4 rounded-md border p-4">
-        <InfoRow label={productLabels.infoPrice} value={`${product.price.toLocaleString("ko-KR")}${common.currency}`} />
+        <InfoRow label={productLabels.infoPrice} value={`${fmtNum(product.price)}${common.currency}`} />
         {product.discountPrice != null && (
-          <InfoRow label={productLabels.infoDiscountPrice} value={`${product.discountPrice.toLocaleString("ko-KR")}${common.currency}`} />
+          <InfoRow label={productLabels.infoDiscountPrice} value={`${fmtNum(product.discountPrice)}${common.currency}`} />
         )}
-        <InfoRow label={productLabels.infoStock} value={product.stock.toLocaleString("ko-KR")} />
+        <InfoRow label={productLabels.infoStock} value={fmtNum(product.stock)} />
         {product.sku && <InfoRow label="SKU" value={product.sku} />}
         {product.marginPrice1 != null && (
-          <InfoRow label={productLabels.infoMarginPrice1} value={`${product.marginPrice1.toLocaleString("ko-KR")}${common.currency}`} />
+          <InfoRow label={productLabels.infoMarginPrice1} value={`${fmtNum(product.marginPrice1)}${common.currency}`} />
         )}
         {product.marginPrice2 != null && (
-          <InfoRow label={productLabels.infoMarginPrice2} value={`${product.marginPrice2.toLocaleString("ko-KR")}${common.currency}`} />
+          <InfoRow label={productLabels.infoMarginPrice2} value={`${fmtNum(product.marginPrice2)}${common.currency}`} />
         )}
         <InfoRow label={productLabels.infoCategory} value={product.categoryName || "-"} />
         <InfoRow label={productLabels.infoBrand} value={product.brandName || "-"} />
@@ -178,7 +179,7 @@ export default function ProductDetailPage() {
                     {opt.values.map((v) => (
                       <Badge key={v.id} variant="secondary">
                         {v.value}
-                        {v.extraPrice > 0 && ` +${v.extraPrice.toLocaleString("ko-KR")}${common.currency}`}
+                        {v.extraPrice > 0 && ` +${fmtNum(v.extraPrice)}${common.currency}`}
                       </Badge>
                     ))}
                   </div>

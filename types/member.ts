@@ -1,29 +1,44 @@
 import type { PaginationParams } from "./api";
 import type { MemberStatus } from "@/lib/constants";
 
-export interface Member {
-  id: number;
-  email: string;
-  name: string;
-  phone: string;
-  status: MemberStatus;
-  grade: string;
-  totalOrderAmount: number;
-  pointBalance: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
+/** 백엔드 UserResponse 기준 */
 export interface MemberSummary {
   id: number;
+  tenantId: number;
   email: string;
   name: string;
-  phone: string;
-  status: MemberStatus;
-  grade: string;
+  phone: string | null;
+  gender: string | null;
+  userType: string | null;
+  status: string;
+  provider: string | null;
+  lastLoginAt: string | null;
   createdAt: string;
 }
 
+/** 백엔드 UserDetailResponse 기준 */
+export interface Member {
+  user: MemberSummary;
+  addresses: MemberAddress[];
+  point: MemberPoint | null;
+}
+
+export interface MemberAddress {
+  id: number;
+  label: string | null;
+  recipientName: string;
+  phone: string;
+  zipCode: string;
+  address: string;
+  addressDetail: string | null;
+  isDefault: boolean;
+}
+
+export interface MemberPoint {
+  currentPoints: number;
+}
+
+/** 백엔드에 등급 API 없음 — 프론트 전용 */
 export interface Grade {
   id: number;
   name: string;
@@ -40,17 +55,8 @@ export interface PointHistory {
   createdAt: string;
 }
 
-export interface CsMemo {
-  id: number;
-  content: string;
-  adminName: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface MemberListParams extends PaginationParams {
   status?: MemberStatus;
-  grade?: string;
   keyword?: string;
 }
 

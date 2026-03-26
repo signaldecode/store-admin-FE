@@ -13,6 +13,7 @@ import { PRODUCT_STATUS_LABEL } from "@/data/labels";
 import type { ProductSummary } from "@/types/product";
 import type { ProductStatus } from "@/lib/constants";
 import { product as productLabels, common } from "@/data/labels";
+import { fmtNum } from "@/lib/utils";
 
 interface ProductListItemProps {
   product: ProductSummary;
@@ -57,12 +58,12 @@ export default function ProductListItem({
           {product.discountPrice != null ? (
             <>
               <span className="text-muted-foreground/60 line-through">
-                {product.price.toLocaleString("ko-KR")}{common.currency}
+                {fmtNum(product.price)}{common.currency}
               </span>
-              <span>{product.discountPrice.toLocaleString("ko-KR")}{common.currency}</span>
+              <span>{fmtNum(product.discountPrice)}{common.currency}</span>
             </>
           ) : (
-            <span>{product.price.toLocaleString("ko-KR")}{common.currency}</span>
+            <span>{fmtNum(product.price)}{common.currency}</span>
           )}
           {product.categoryName && <span>{product.categoryName}</span>}
           {product.brandName && <span>{product.brandName}</span>}

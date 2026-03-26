@@ -1,32 +1,43 @@
 import type { PaginationParams } from "./api";
 import type { QnaStatus } from "@/lib/constants";
 
+/** 백엔드 QnaResponse 기준 */
 export interface Qna {
   id: number;
-  productId: number;
-  productName: string;
+  tenantId: number;
+  userId: number;
+  qnaType: string;
+  productId: number | null;
+  orderId: number | null;
+  category: string | null;
   title: string;
-  content: string;
+  question: string;
+  contactEmail: string | null;
+  contactPhone: string | null;
   isSecret: boolean;
-  status: QnaStatus;
+  isAnswered: boolean;
   answer: string | null;
+  answeredBy: number | null;
   answeredAt: string | null;
-  userName: string;
+  status: QnaStatus;
+  isVisible: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
+/** 백엔드 QnaListResponse 기준 */
 export interface QnaSummary {
   id: number;
-  productName: string;
+  tenantId: number;
+  qnaType: string;
   title: string;
-  userName: string;
   isSecret: boolean;
+  isAnswered: boolean;
   status: QnaStatus;
   createdAt: string;
 }
 
 export interface QnaListParams extends PaginationParams {
-  productId?: number;
+  tenantId?: number;
   status?: QnaStatus;
-  keyword?: string;
 }

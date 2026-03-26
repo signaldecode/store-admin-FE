@@ -40,7 +40,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 
 const PAGE_SIZE = 10;
 
-const INITIAL_FAQ_FORM: FaqFormData = {
+const INITIAL_FAQ_FORM: Omit<FaqFormData, "tenantId"> = {
   categoryId: 0,
   question: "",
   answer: "",
@@ -66,7 +66,7 @@ export default function FaqsPage() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Faq | null>(null);
-  const [formData, setFormData] = useState<FaqFormData>(INITIAL_FAQ_FORM);
+  const [formData, setFormData] = useState<Omit<FaqFormData, "tenantId">>(INITIAL_FAQ_FORM);
   const [formLoading, setFormLoading] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState<Faq | null>(null);
@@ -90,7 +90,7 @@ export default function FaqsPage() {
   const fetchCategories = useCallback(async () => {
     setCategoryLoading(true);
     try {
-      const res = await getFaqCategories();
+      const res = await getFaqCategories(siteId ?? 0);
       setCategories(res.data);
     } catch {
       // api.ts handles common errors
@@ -109,13 +109,14 @@ export default function FaqsPage() {
     try {
       const categoryId = categoryFilter === "all" ? undefined : Number(categoryFilter);
       const res = await getFaqs({
+        tenantId: siteId ?? undefined,
         keyword: debouncedKeyword || undefined,
         categoryId,
         page,
         size: PAGE_SIZE,
       });
-      setFaqs(res.data.content);
-      setTotalElements(res.data.total_elements);
+      setFaqs(res.data?.content ?? []);
+      setTotalElements(res.data?.total_elements ?? 0);
     } catch {
       // api.ts handles common errors
     } finally {
@@ -157,9 +158,9 @@ export default function FaqsPage() {
     setCategoryFormLoading(true);
     try {
       if (editCategory) {
-        await updateFaqCategory(editCategory.id, categoryName.trim());
+        await updateFaqCategory(editCategory.id, { name: categoryName.trim() });
       } else {
-        await createFaqCategory(categoryName.trim());
+        await createFaqCategory({ name: categoryName.trim(), tenantId: siteId ?? 0 });
       }
       setCategoryFormOpen(false);
       await fetchCategories();
@@ -199,7 +200,7 @@ export default function FaqsPage() {
       categoryId: faqItem.categoryId,
       question: faqItem.question,
       answer: faqItem.answer,
-    });
+    } as Omit<FaqFormData, "tenantId">);
     setFormOpen(true);
   };
 
@@ -207,10 +208,11 @@ export default function FaqsPage() {
     if (!formData.question.trim() || !formData.answer.trim() || !formData.categoryId) return;
     setFormLoading(true);
     try {
+      const payload = { ...formData, tenantId: siteId ?? 0 };
       if (editTarget) {
-        await updateFaq(editTarget.id, formData);
+        await updateFaq(editTarget.id, payload);
       } else {
-        await createFaq(formData);
+        await createFaq(payload);
       }
       setFormOpen(false);
       await fetchFaqs();
@@ -237,9 +239,9 @@ export default function FaqsPage() {
 
   const columns: Column<Faq>[] = [
     {
-      key: "categoryName",
+      key: "categoryId",
       label: faqLabels.colCategory,
-      render: (item) => item.categoryName,
+      render: (item) => categories.find((c) => c.id === item.categoryId)?.name ?? "-",
     },
     {
       key: "question",
@@ -372,7 +374,7 @@ export default function FaqsPage() {
             value={categoryFilter}
             onValueChange={(v) => { if (v !== null) setCategoryFilter(v); }}
           >
-            <SelectTrigger className="h-9 w-36" aria-label={faqLabels.filterCategory}>
+            <SelectTrigger className="h-9 w-36" aria-label={faqLabels.filterCategory} items={{ all: common.all, ...Object.fromEntries(categories.map((cat) => [String(cat.id), cat.name])) }}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -489,7 +491,7 @@ export default function FaqsPage() {
                   if (v !== null) setFormData((prev) => ({ ...prev, categoryId: Number(v) }));
                 }}
               >
-                <SelectTrigger id="faq-category" className="w-full" aria-required="true">
+                <SelectTrigger id="faq-category" className="w-full" aria-required="true" items={Object.fromEntries(categories.map((cat) => [String(cat.id), cat.name]))}>
                   <SelectValue placeholder={faqLabels.categoryPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>

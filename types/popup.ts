@@ -1,27 +1,39 @@
 import type { PaginationParams } from "./api";
-import type { PopupType, PopupStatus } from "@/lib/constants";
 
+/** 백엔드 PopupResponse 기준 */
 export interface Popup {
   id: number;
-  title: string;
-  content: string;
-  type: PopupType;
-  status: PopupStatus;
-  startDate: string;
-  endDate: string;
+  tenantId: number;
+  name: string;
+  status: string;
+  image: string | null;
+  linkUrl: string | null;
+  linkTarget: string;
+  closeOption: string;
+  popupType: string;
+  sortOrder: number;
+  startedAt: string | null;
+  endedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
+/** 백엔드 PopupCreateRequest 기준 */
 export interface PopupFormData {
-  title: string;
-  content: string;
-  type: PopupType;
-  status: PopupStatus;
-  startDate: string;
-  endDate: string;
+  tenantId: number;
+  name: string;
+  status: string;
+  linkTarget: string;
+  closeOption: string;
+  popupType: string;
+  sortOrder: number;
+  image?: string;
+  linkUrl?: string;
+  startedAt?: string;
+  endedAt?: string;
 }
 
 export interface PopupListParams extends PaginationParams {
-  status?: PopupStatus;
+  tenantId?: number;
+  status?: string;
 }

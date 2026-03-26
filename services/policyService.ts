@@ -1,33 +1,96 @@
-import type { ApiResponse } from "@/types/api";
+import { api } from "@/lib/api";
+import type { ApiResponse, PaginatedResponse } from "@/types/api";
 
 // ─── Types ───
 
+/** 백엔드 PolicyResponse 기준 */
 export interface Policy {
-  order: string;
-  delivery: string;
-  product: string;
-  returns: string;
+  id: number;
+  tenantId: number;
+  policyType: string;
+  title: string;
+  content: string;
+  version: string;
+  isRequired: boolean;
+  isActive: boolean;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// ─── Mock data ───
+export interface PolicyFormData {
+  tenantId: number;
+  policyType: string;
+  title: string;
+  content: string;
+  version: string;
+  isRequired: boolean;
+  isActive: boolean;
+  publishedAt?: string;
+}
 
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+export interface PolicyListParams {
+  tenantId?: number;
+  page?: number;
+  size?: number;
+}
 
-const mockPolicy: Policy = {
-  order: "주문 후 결제 확인까지 최대 1영업일이 소요됩니다.",
-  delivery: "배송은 결제 확인 후 1~3 영업일 이내 출고됩니다.",
-  product: "상품 이미지는 실제와 다를 수 있습니다.",
-  returns: "수령 후 7일 이내 반품/교환 가능합니다.",
-};
+export interface PolicyAgreement {
+  id: number;
+  userId: number;
+  userName: string;
+  agreedAt: string;
+}
+
+export interface PolicyAgreementParams {
+  page?: number;
+  size?: number;
+}
 
 // ─── Service functions ───
 
-export async function getPolicy(): Promise<ApiResponse<Policy>> {
-  await delay(300);
-  return { success: true, data: structuredClone(mockPolicy) };
+export function getPolicies(params?: PolicyListParams) {
+  const query = params
+    ? "?" + new URLSearchParams(
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined && v !== "")
+          .map(([k, v]) => [k, String(v)])
+      ).toString()
+    : "";
+  return api<PaginatedResponse<Policy>>(`/admin/policies${query}`);
 }
 
-export async function updatePolicy(data: Policy): Promise<void> {
-  await delay(300);
-  Object.assign(mockPolicy, data);
+export function getPolicy(id: number) {
+  return api<ApiResponse<Policy>>(`/admin/policies/${id}`);
+}
+
+export function createPolicy(data: PolicyFormData) {
+  return api<ApiResponse<Policy>>("/admin/policies", {
+    method: "POST",
+    body: data,
+  });
+}
+
+export function updatePolicy(id: number, data: PolicyFormData) {
+  return api<void>(`/admin/policies/${id}`, {
+    method: "PUT",
+    body: data,
+  });
+}
+
+export function deletePolicy(id: number) {
+  return api<void>(`/admin/policies/${id}`, { method: "DELETE" });
+}
+
+export function getPolicyAgreements(id: number, params?: PolicyAgreementParams) {
+  const query = params
+    ? "?" + new URLSearchParams(
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined && v !== "")
+          .map(([k, v]) => [k, String(v)])
+      ).toString()
+    : "";
+  return api<PaginatedResponse<PolicyAgreement>>(
+    `/admin/policies/${id}/agreements${query}`
+  );
 }

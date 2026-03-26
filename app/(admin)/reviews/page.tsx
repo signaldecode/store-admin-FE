@@ -34,13 +34,12 @@ export default function ReviewsPage() {
     setLoading(true);
     try {
       const res = await getReviews({
-        keyword: debouncedKeyword || undefined,
+        tenantId: siteId ?? undefined,
         page,
         size: PAGE_SIZE,
-        sort: sort ? `${sort},${order}` : undefined,
       });
-      setReviews(res.data.content);
-      setTotalElements(res.data.total_elements);
+      setReviews(res.data?.content ?? []);
+      setTotalElements(res.data?.total_elements ?? 0);
     } catch {
       // api.ts에서 공통 에러 처리
     } finally {
@@ -72,7 +71,7 @@ export default function ReviewsPage() {
       prev.map((r) => (r.id === reviewItem.id ? { ...r, isVisible: !prevVisible } : r))
     );
     try {
-      await toggleReviewVisibility([reviewItem.id]);
+      await toggleReviewVisibility(reviewItem.id);
     } catch {
       // 실패 시 롤백
       setReviews((prev) =>
@@ -87,15 +86,14 @@ export default function ReviewsPage() {
 
   const columns: Column<Review>[] = [
     {
-      key: "productName",
+      key: "productId",
       label: reviewLabels.colProduct,
-      sortable: true,
-      render: (item) => item.productName,
+      render: (item) => `#${item.productId}`,
     },
     {
-      key: "userName",
+      key: "userId",
       label: reviewLabels.colUser,
-      render: (item) => item.userName,
+      render: (item) => `#${item.userId}`,
     },
     {
       key: "rating",
@@ -104,12 +102,12 @@ export default function ReviewsPage() {
       render: (item) => renderRating(item.rating),
     },
     {
-      key: "content",
+      key: "title",
       label: reviewLabels.colContent,
-      render: (item) =>
-        item.content.length > MAX_CONTENT_LENGTH
-          ? `${item.content.slice(0, MAX_CONTENT_LENGTH)}...`
-          : item.content,
+      render: (item) => {
+        const text = item.title || item.content || "";
+        return text.length > MAX_CONTENT_LENGTH ? `${text.slice(0, MAX_CONTENT_LENGTH)}...` : text;
+      },
     },
     {
       key: "isVisible",

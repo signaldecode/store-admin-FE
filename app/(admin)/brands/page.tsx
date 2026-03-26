@@ -95,8 +95,8 @@ export default function BrandsPage() {
         size: PAGE_SIZE,
         sort: sort ? `${sort},${order}` : undefined,
       });
-      setBrands(res.data.content);
-      setTotalElements(res.data.total_elements);
+      setBrands(res.data?.content ?? []);
+      setTotalElements(res.data?.total_elements ?? 0);
     } catch {
       // api.ts에서 공통 에러 처리
     } finally {
@@ -267,13 +267,12 @@ export default function BrandsPage() {
         <Select
           value={statusFilter}
           onValueChange={(v) => setStatusFilter(v as StatusFilter)}
-          items={{
+        >
+          <SelectTrigger className="h-9 w-36" aria-label={brandLabels.filterLabel} items={{
             all: brandLabels.filterAll,
             active: brandLabels.statusActive,
             inactive: brandLabels.statusInactive,
-          }}
-        >
-          <SelectTrigger className="h-9 w-36" aria-label={brandLabels.filterLabel}>
+          }}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -285,9 +284,8 @@ export default function BrandsPage() {
         <Select
           value={sortValue}
           onValueChange={handleSortSelect}
-          items={Object.fromEntries(sortOptions.map((o) => [o.value, o.label]))}
         >
-          <SelectTrigger className="h-9 w-32" aria-label={brandLabels.sortLabel}>
+          <SelectTrigger className="h-9 w-32" aria-label={brandLabels.sortLabel} items={Object.fromEntries(sortOptions.map((o) => [o.value, o.label]))}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

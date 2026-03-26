@@ -8,6 +8,8 @@ import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
 const Select = SelectPrimitive.Root
 
+const SelectItemsContext = React.createContext<Record<string, string> | undefined>(undefined)
+
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (
     <SelectPrimitive.Group
@@ -18,25 +20,52 @@ function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   )
 }
 
-function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
+function SelectValue({
+  className,
+  placeholder,
+  ...props
+}: SelectPrimitive.Value.Props) {
+  const items = React.useContext(SelectItemsContext)
+
+  if (!items) {
+    return (
+      <SelectPrimitive.Value
+        data-slot="select-value"
+        className={cn("flex flex-1 text-left", className)}
+        placeholder={placeholder}
+        {...props}
+      />
+    )
+  }
+
   return (
     <SelectPrimitive.Value
       data-slot="select-value"
       className={cn("flex flex-1 text-left", className)}
+      placeholder={placeholder}
       {...props}
-    />
+    >
+      {(value) => {
+        if (value == null) return placeholder
+        const label = items[String(value)]
+        return label ?? placeholder
+      }}
+    </SelectPrimitive.Value>
   )
 }
 
 function SelectTrigger({
   className,
   size = "default",
+  items,
   children,
   ...props
 }: SelectPrimitive.Trigger.Props & {
   size?: "sm" | "default"
+  /** value→label 맵. SelectValue가 이 맵으로 라벨을 해석합니다. */
+  items?: Record<string, string>
 }) {
-  return (
+  const trigger = (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       data-size={size}
@@ -54,6 +83,11 @@ function SelectTrigger({
       />
     </SelectPrimitive.Trigger>
   )
+
+  if (items) {
+    return <SelectItemsContext.Provider value={items}>{trigger}</SelectItemsContext.Provider>
+  }
+  return trigger
 }
 
 function SelectContent({

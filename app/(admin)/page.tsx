@@ -137,14 +137,14 @@ export default function DashboardPage() {
                 <div className="rounded-lg bg-primary/5 p-5 text-center">
                   <p className="text-sm text-muted-foreground">{L.todaySales}</p>
                   <p className="mt-1 text-3xl font-bold text-primary">
-                    {data!.sales.todaySales.toLocaleString("ko-KR")}
+                    {(data!.sales.todaySales ?? 0).toLocaleString("ko-KR")}
                     <span className="ml-1 text-base font-normal">{common.currency}</span>
                   </p>
                 </div>
                 <div className="rounded-lg border p-5 text-center">
                   <p className="text-sm text-muted-foreground">{L.monthlySales}</p>
                   <p className="mt-1 text-3xl font-bold">
-                    {data!.sales.monthlySales.toLocaleString("ko-KR")}
+                    {(data!.sales.monthlySales ?? 0).toLocaleString("ko-KR")}
                     <span className="ml-1 text-base font-normal">{common.currency}</span>
                   </p>
                 </div>
@@ -194,7 +194,7 @@ export default function DashboardPage() {
                           </span>
                         </td>
                         <td className="py-2.5 text-right font-medium">
-                          {o.totalAmount.toLocaleString("ko-KR")}{common.currency}
+                          {(o.totalAmount ?? 0).toLocaleString("ko-KR")}{common.currency}
                         </td>
                       </tr>
                     ))}

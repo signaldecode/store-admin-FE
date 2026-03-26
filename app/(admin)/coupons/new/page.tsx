@@ -18,10 +18,12 @@ import { Switch } from "@/components/ui/switch";
 import { createCoupon } from "@/services/couponService";
 import { coupon as couponLabels, common, COUPON_DISCOUNT_TYPE_LABEL, COUPON_TYPE_LABEL, COUPON_VALIDITY_TYPE_LABEL } from "@/data/labels";
 import type { CouponDiscountType, CouponType, CouponValidityType } from "@/lib/constants";
+import SiteSelect from "@/components/common/SiteSelect";
 
 export default function CouponNewPage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [siteId, setSiteId] = useState<number | null>(null);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -43,6 +45,7 @@ export default function CouponNewPage() {
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
+    if (!siteId) newErrors.siteId = "사이트를 선택해주세요.";
     if (!name.trim()) newErrors.name = couponLabels.nameRequired;
     if (!discountValue || Number(discountValue) <= 0) newErrors.discountValue = couponLabels.discountValuePlaceholder;
     if (!minOrderAmount || Number(minOrderAmount) < 0) newErrors.minOrderAmount = couponLabels.minOrderPlaceholder;
@@ -60,18 +63,20 @@ export default function CouponNewPage() {
     setSaving(true);
     try {
       await createCoupon({
+        tenantId: siteId!,
         name: name.trim(),
         description: description.trim(),
-        couponType,
         discountType,
         discountValue: Number(discountValue),
-        maxDiscountAmount: maxDiscountAmount ? Number(maxDiscountAmount) : undefined,
+        maxDiscount: maxDiscountAmount ? Number(maxDiscountAmount) : undefined,
         minOrderAmount: Number(minOrderAmount),
         totalQuantity: Number(totalQuantity),
+        isActive: true,
+        startAt: new Date(validFrom).toISOString(),
+        endAt: new Date(validTo).toISOString(),
+        couponType,
         validityType,
         validityDays: validityDays ? Number(validityDays) : undefined,
-        validFrom: new Date(validFrom).toISOString(),
-        validTo: new Date(validTo).toISOString(),
         allowPromotionOverlap,
         allowDuplicateUse,
         notice: notice.trim(),
@@ -96,6 +101,12 @@ export default function CouponNewPage() {
 
       <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
         <div className="space-y-2">
+          <Label>사이트 <span className="text-destructive">*</span></Label>
+          <SiteSelect value={siteId} onChange={setSiteId} required />
+          {errors.siteId && <p className="text-sm text-destructive">{errors.siteId}</p>}
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="coupon-name">
             {couponLabels.nameLabel} <span className="text-destructive">*</span>
           </Label>
@@ -115,7 +126,7 @@ export default function CouponNewPage() {
         <div className="space-y-2">
           <Label htmlFor="coupon-type">쿠폰 유형</Label>
           <Select value={couponType} onValueChange={(v) => { if (v) setCouponType(v as CouponType); }}>
-            <SelectTrigger id="coupon-type"><SelectValue /></SelectTrigger>
+            <SelectTrigger id="coupon-type" items={COUPON_TYPE_LABEL}><SelectValue /></SelectTrigger>
             <SelectContent>
               {(Object.entries(COUPON_TYPE_LABEL) as [CouponType, string][]).map(([value, label]) => (
                 <SelectItem key={value} value={value}>{label}</SelectItem>
@@ -137,7 +148,7 @@ export default function CouponNewPage() {
         <div className="space-y-2">
           <Label htmlFor="coupon-discount-type">{couponLabels.discountTypeLabel}</Label>
           <Select value={discountType} onValueChange={(v) => setDiscountType(v as CouponDiscountType)}>
-            <SelectTrigger id="coupon-discount-type">
+            <SelectTrigger id="coupon-discount-type" items={COUPON_DISCOUNT_TYPE_LABEL}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -218,7 +229,7 @@ export default function CouponNewPage() {
         <div className="space-y-2">
           <Label htmlFor="coupon-validity-type">유효기간 유형</Label>
           <Select value={validityType} onValueChange={(v) => { if (v) setValidityType(v as CouponValidityType); }}>
-            <SelectTrigger id="coupon-validity-type"><SelectValue /></SelectTrigger>
+            <SelectTrigger id="coupon-validity-type" items={COUPON_VALIDITY_TYPE_LABEL}><SelectValue /></SelectTrigger>
             <SelectContent>
               {(Object.entries(COUPON_VALIDITY_TYPE_LABEL) as [CouponValidityType, string][]).map(([value, label]) => (
                 <SelectItem key={value} value={value}>{label}</SelectItem>

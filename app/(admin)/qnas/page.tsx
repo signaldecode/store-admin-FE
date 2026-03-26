@@ -57,13 +57,13 @@ export default function QnasPage() {
     try {
       const status = statusFilter === "all" ? undefined : statusFilter;
       const res = await getQnas({
-        keyword: debouncedKeyword || undefined,
+        tenantId: siteId ?? undefined,
         status,
         page,
         size: PAGE_SIZE,
       });
-      setQnas(res.data.content);
-      setTotalElements(res.data.total_elements);
+      setQnas(res.data?.content ?? []);
+      setTotalElements(res.data?.total_elements ?? 0);
     } catch {
       // api.ts handles common errors
     } finally {
@@ -90,9 +90,9 @@ export default function QnasPage() {
 
   const columns: Column<QnaSummary>[] = [
     {
-      key: "productName",
+      key: "qnaType",
       label: qnaLabels.colProduct,
-      render: (item) => item.productName,
+      render: (item) => item.qnaType,
     },
     {
       key: "title",
@@ -108,9 +108,9 @@ export default function QnasPage() {
       ),
     },
     {
-      key: "userName",
+      key: "isAnswered",
       label: qnaLabels.colUser,
-      render: (item) => item.userName,
+      render: (item) => item.isAnswered ? "답변완료" : "미답변",
     },
     {
       key: "isSecret",
@@ -156,7 +156,7 @@ export default function QnasPage() {
           value={statusFilter}
           onValueChange={(v) => { if (v !== null) setStatusFilter(v as StatusFilter); }}
         >
-          <SelectTrigger className="h-9 w-36" aria-label={qnaLabels.filterStatus}>
+          <SelectTrigger className="h-9 w-36" aria-label={qnaLabels.filterStatus} items={{ all: common.all, ...QNA_STATUS_LABEL }}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

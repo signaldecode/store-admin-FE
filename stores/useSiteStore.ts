@@ -1,19 +1,25 @@
 "use client";
 
 import { create } from "zustand";
-import type { ActiveSite } from "@/types/site";
+
+/** 테넌트(사이트) — 백엔드 TenantSimpleResponse 기준 */
+export interface SiteItem {
+  id: number;
+  name: string;
+  code?: string;
+}
 
 interface SiteState {
-  /** 전체 사이트 목록 (로드 후 캐시) */
-  sites: ActiveSite[];
-  /** 현재 선택된 사이트 ID (null = 전체) */
+  /** 활성 테넌트 목록 (로드 후 캐시) */
+  sites: SiteItem[];
+  /** 현재 선택된 테넌트 ID (null = 전체) */
   selectedSiteId: number | null;
 
-  setSites: (sites: ActiveSite[]) => void;
+  setSites: (sites: SiteItem[]) => void;
   selectSite: (siteId: number | null) => void;
 
-  /** 현재 선택된 사이트 객체 */
-  selectedSite: () => ActiveSite | null;
+  /** 현재 선택된 테넌트 객체 */
+  selectedSite: () => SiteItem | null;
 }
 
 export const useSiteStore = create<SiteState>((set, get) => ({

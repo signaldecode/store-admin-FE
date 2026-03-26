@@ -18,24 +18,17 @@ import Pagination from "@/components/common/Pagination";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 import { getCoupons, deleteCoupon } from "@/services/couponService";
 import type { Coupon } from "@/types/coupon";
-import type { CouponStatus } from "@/lib/constants";
 import {
   coupon as couponLabels,
   common,
-  COUPON_STATUS_LABEL,
   COUPON_DISCOUNT_TYPE_LABEL,
 } from "@/data/labels";
 import { useDebounce } from "@/hooks/useDebounce";
+import SiteSelect from "@/components/common/SiteSelect";
 
 const PAGE_SIZE = 10;
 
-const STATUS_VARIANT: Record<CouponStatus, "default" | "secondary" | "destructive"> = {
-  REGISTERED: "secondary",
-  ACTIVE: "default",
-  STOPPED: "destructive",
-  ENDED: "secondary",
-  RECALLED: "destructive",
-};
+type ActiveFilter = "all" | "active" | "inactive";
 
 export default function CouponsPage() {
   const router = useRouter();
@@ -43,11 +36,12 @@ export default function CouponsPage() {
   const [loading, setLoading] = useState(true);
   const [total_elements, setTotalElements] = useState(0);
 
+  const [siteId, setSiteId] = useState<number | null>(null);
+
   const [keyword, setKeyword] = useState("");
   const debouncedKeyword = useDebounce(keyword, 300);
 
-  type StatusFilter = "all" | CouponStatus;
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [activeFilter, setActiveFilter] = useState<ActiveFilter>("all");
 
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState("createdAt");
@@ -61,26 +55,26 @@ export default function CouponsPage() {
   const fetchCoupons = useCallback(async () => {
     setLoading(true);
     try {
-      const status = statusFilter === "all" ? undefined : statusFilter;
+      const isActive = activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined;
       const res = await getCoupons({
+        tenantId: siteId ?? undefined,
         keyword: debouncedKeyword || undefined,
-        status,
+        isActive,
         page,
         size: PAGE_SIZE,
-        sort: sort ? `${sort},${order}` : undefined,
       });
-      setCoupons(res.data.content);
-      setTotalElements(res.data.total_elements);
+      setCoupons(res.data?.content ?? []);
+      setTotalElements(res.data?.total_elements ?? 0);
     } catch {
       // api.ts에서 공통 에러 처리
     } finally {
       setLoading(false);
     }
-  }, [debouncedKeyword, statusFilter, page, sort, order]);
+  }, [siteId, debouncedKeyword, activeFilter, page, sort, order]);
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedKeyword, statusFilter]);
+  }, [siteId, debouncedKeyword, activeFilter]);
 
   useEffect(() => {
     fetchCoupons();
@@ -134,20 +128,20 @@ export default function CouponsPage() {
       render: (item) =>
         item.discountType === "RATE"
           ? `${item.discountValue}%`
-          : `${item.discountValue.toLocaleString("ko-KR")}${common.currency}`,
+          : `${(item.discountValue ?? 0).toLocaleString("ko-KR")}${common.currency}`,
     },
     {
       key: "minOrderAmount",
       label: couponLabels.colMinOrder,
-      render: (item) => `${item.minOrderAmount.toLocaleString("ko-KR")}${common.currency}`,
+      render: (item) => item.minOrderAmount ? `${(item.minOrderAmount ?? 0).toLocaleString("ko-KR")}${common.currency}` : "-",
     },
     {
-      key: "status",
+      key: "isActive",
       label: couponLabels.colStatus,
       className: "w-20",
       render: (item) => (
-        <Badge variant={STATUS_VARIANT[item.status]}>
-          {COUPON_STATUS_LABEL[item.status]}
+        <Badge variant={item.isActive ? "default" : "secondary"}>
+          {item.isActive ? "활성" : "비활성"}
         </Badge>
       ),
     },
@@ -155,8 +149,8 @@ export default function CouponsPage() {
       key: "period",
       label: couponLabels.colPeriod,
       render: (item) => {
-        const from = new Date(item.validFrom).toLocaleDateString("ko-KR");
-        const to = new Date(item.validTo).toLocaleDateString("ko-KR");
+        const from = new Date(item.startAt).toLocaleDateString("ko-KR");
+        const to = new Date(item.endAt).toLocaleDateString("ko-KR");
         return `${from} ~ ${to}`;
       },
     },
@@ -194,6 +188,7 @@ export default function CouponsPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        <SiteSelect value={siteId} onChange={setSiteId} />
         <div className="relative flex-1 min-w-48">
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -205,19 +200,16 @@ export default function CouponsPage() {
           />
         </div>
         <Select
-          value={statusFilter}
-          onValueChange={(v) => setStatusFilter(v as StatusFilter)}
+          value={activeFilter}
+          onValueChange={(v) => setActiveFilter(v as ActiveFilter)}
         >
-          <SelectTrigger className="h-9 w-36" aria-label={couponLabels.filterStatus}>
+          <SelectTrigger className="h-9 w-36" aria-label={couponLabels.filterStatus} items={{ all: common.all, active: "활성", inactive: "비활성" }}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{common.all}</SelectItem>
-            {(Object.entries(COUPON_STATUS_LABEL) as [CouponStatus, string][]).map(
-              ([value, label]) => (
-                <SelectItem key={value} value={value}>{label}</SelectItem>
-              )
-            )}
+            <SelectItem value="active">활성</SelectItem>
+            <SelectItem value="inactive">비활성</SelectItem>
           </SelectContent>
         </Select>
       </div>

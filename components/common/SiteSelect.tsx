@@ -27,10 +27,16 @@ export default function SiteSelect({ value, onChange, required, className }: Sit
   useEffect(() => {
     if (sites.length === 0) {
       getActiveSites()
-        .then((res) => setSites(res.data))
+        .then((res) => {
+          setSites(res.data.map((t) => ({ id: t.id, name: t.name, code: t.code })));
+        })
         .catch(() => {});
     }
   }, [sites.length, setSites]);
+
+  const selectedName = value !== null
+    ? sites.find((s) => s.id === value)?.name ?? ""
+    : "전체 사이트";
 
   return (
     <Select
@@ -39,7 +45,7 @@ export default function SiteSelect({ value, onChange, required, className }: Sit
     >
       <SelectTrigger className={className ?? "h-9 w-44"} aria-label="사이트 선택">
         <Globe className="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-        <SelectValue placeholder="전체 사이트" />
+        <span className="truncate">{selectedName}</span>
       </SelectTrigger>
       <SelectContent>
         {!required && <SelectItem value="all">전체 사이트</SelectItem>}

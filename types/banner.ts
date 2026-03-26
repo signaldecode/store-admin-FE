@@ -3,6 +3,7 @@ import type { BannerPosition, BannerStatus } from "@/lib/constants";
 
 export interface Banner {
   id: number;
+  tenantId: number;
   title: string;
   position: BannerPosition;
   imageUrl: string;
@@ -16,10 +17,12 @@ export interface Banner {
 }
 
 export interface BannerFormData {
+  tenantId: number;
   title: string;
   position: BannerPosition;
+  imageUrl: string;
   linkUrl?: string;
-  sortOrder?: number;
+  sortOrder: number;
   status: BannerStatus;
   startedAt: string;
   endedAt?: string;
@@ -27,6 +30,7 @@ export interface BannerFormData {
 }
 
 export interface BannerListParams extends PaginationParams {
+  tenantId?: number;
   status?: BannerStatus;
   keyword?: string;
 }

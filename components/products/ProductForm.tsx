@@ -36,7 +36,6 @@ import type { Product, ProductFormData, ProductOptionInput, ProductSkuInput } fr
 import type { ProductStatus } from "@/lib/constants";
 import type { Category } from "@/types/category";
 import type { ActiveBrand } from "@/types/brand";
-import type { ActiveSite } from "@/types/site";
 import type { ApiError } from "@/types/api";
 import { product as productLabels, common, PRODUCT_STATUS_LABEL } from "@/data/labels";
 import NumberInput from "@/components/common/NumberInput";
@@ -49,7 +48,6 @@ interface ImageFile {
 
 interface ProductFormProps {
   product?: Product | null;
-  sites: ActiveSite[];
   categories: Category[];
   brands: ActiveBrand[];
   onSubmit: (data: ProductFormData, thumbnail?: File) => Promise<void>;
@@ -59,7 +57,6 @@ const EMPTY = "";
 
 export default function ProductForm({
   product,
-  sites,
   categories,
   brands,
   onSubmit,
@@ -77,22 +74,17 @@ export default function ProductForm({
   const [marginPrice2, setMarginPrice2] = useState("");
   const [status, setStatus] = useState<ProductStatus>(PRODUCT_STATUS.ON_SALE);
   const [isVisible, setIsVisible] = useState(true);
-  const [siteId, setSiteId] = useState(EMPTY);
   const [mainCategoryId, setMainCategoryId] = useState(EMPTY);
   const [midCategoryId, setMidCategoryId] = useState(EMPTY);
   const [detailCategoryId, setDetailCategoryId] = useState(EMPTY);
   const [brandId, setBrandId] = useState(EMPTY);
   const [brandName, setBrandName] = useState("");
 
-  // 사이트 선택 → 대분류 필터
-  const siteItems = useMemo(
-    () => Object.fromEntries(sites.map((s) => [s.id.toString(), s.name])),
-    [sites]
+  // 대분류 = 사이트 (depth 0)
+  const mainCategories = useMemo(
+    () => categories.filter((c) => c.depth === 0),
+    [categories]
   );
-  const mainCategories = useMemo(() => {
-    if (!siteId) return [];
-    return categories.filter((c) => c.tenantId?.toString() === siteId);
-  }, [categories, siteId]);
   const mainCategoryItems = useMemo(
     () => Object.fromEntries(mainCategories.map((c) => [c.id.toString(), c.name])),
     [mainCategories]
@@ -145,7 +137,7 @@ export default function ProductForm({
     (o) => o.type === OPTION_TYPE.FIXED && o.values.length > 0 && o.name.trim()
   );
 
-  const siteSelected = !!siteId;
+  const categorySelected = !!mainCategoryId;
 
   // 수정 모드: 기존 데이터 채우기
   useEffect(() => {
@@ -166,27 +158,21 @@ export default function ProductForm({
       const thumbImg = product.images.find((img) => img.isThumbnail);
       if (thumbImg) setThumbnail([{ url: thumbImg.url }]);
 
-      // 카테고리: 트리에서 해당 categoryId 찾기 (사이트 → 대분류 → 중분류 → 소분류)
+      // 카테고리: 트리에서 해당 categoryId 찾기 (대분류 → 중분류 → 소분류)
       if (product.categoryId) {
         for (const main of categories) {
-          // 대분류 자체가 선택된 경우
           if (main.id === product.categoryId) {
-            if (main.tenantId) setSiteId(main.tenantId.toString());
             setMainCategoryId(main.id.toString());
             break;
           }
-          // 중분류에서 찾기
           for (const mid of main.children ?? []) {
             if (mid.id === product.categoryId) {
-              if (main.tenantId) setSiteId(main.tenantId.toString());
               setMainCategoryId(main.id.toString());
               setMidCategoryId(mid.id.toString());
               break;
             }
-            // 소분류에서 찾기
             const detail = mid.children?.find((d) => d.id === product.categoryId);
             if (detail) {
-              if (main.tenantId) setSiteId(main.tenantId.toString());
               setMainCategoryId(main.id.toString());
               setMidCategoryId(mid.id.toString());
               setDetailCategoryId(detail.id.toString());
@@ -229,7 +215,6 @@ export default function ProductForm({
     const newErrors: Record<string, string> = {};
 
     if (!name.trim()) newErrors.name = productLabels.nameRequired;
-    if (!siteId) newErrors.siteId = productLabels.siteRequired;
     if (!mainCategoryId) newErrors.mainCategoryId = productLabels.mainCategoryRequired;
     if (!price || Number(price) < 0) newErrors.price = productLabels.priceRequired;
 
@@ -250,7 +235,11 @@ export default function ProductForm({
           ? Number(midCategoryId)
           : Number(mainCategoryId);
 
+      // 대분류 카테고리의 tenantId
+      const mainCat = mainCategories.find((c) => c.id.toString() === mainCategoryId);
+
       const formData: ProductFormData = {
+        tenantId: mainCat?.tenantId ?? 0,
         categoryId,
         name: name.trim(),
         price: Number(price),
@@ -305,62 +294,8 @@ export default function ProductForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* ── 섹션 0: 사이트 선택 ── */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{productLabels.sectionSite} <span className="text-destructive">*</span></CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <Select
-              value={siteId || null}
-              onValueChange={(v) => {
-                setSiteId(v ?? EMPTY);
-                setMainCategoryId(EMPTY);
-                setMidCategoryId(EMPTY);
-                setDetailCategoryId(EMPTY);
-              }}
-              disabled={loading}
-              items={siteItems}
-            >
-              <SelectTrigger
-                id="product-site"
-                aria-required="true"
-                aria-invalid={!!errors.siteId}
-                aria-describedby={
-                  errors.siteId
-                    ? "product-site-error"
-                    : !siteSelected
-                      ? "product-site-hint"
-                      : undefined
-                }
-              >
-                <SelectValue placeholder={productLabels.sitePlaceholder} />
-              </SelectTrigger>
-              <SelectContent>
-                {sites.map((s) => (
-                  <SelectItem key={s.id} value={s.id.toString()}>
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.siteId && (
-              <p id="product-site-error" className="text-sm text-destructive">
-                {errors.siteId}
-              </p>
-            )}
-            {!siteSelected && !errors.siteId && (
-              <p id="product-site-hint" className="text-sm text-muted-foreground">
-                {productLabels.sectionSiteHint}
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* ── 섹션 1: 기본 정보 ── */}
-      <Card className={!siteSelected ? "pointer-events-none opacity-50" : undefined}>
+      <Card>
         <CardHeader>
           <CardTitle>{productLabels.sectionBasic}</CardTitle>
         </CardHeader>
@@ -389,7 +324,7 @@ export default function ProductForm({
               placeholder={productLabels.namePlaceholder}
               aria-required="true"
               aria-describedby={errors.name ? "product-name-error" : undefined}
-              disabled={loading || !siteSelected}
+              disabled={loading}
             />
             {errors.name && (
               <p id="product-name-error" className="text-sm text-destructive">
@@ -406,11 +341,11 @@ export default function ProductForm({
               value={sku}
               onChange={(e) => setSku(e.target.value)}
               placeholder="SKU-001"
-              disabled={loading || !siteSelected}
+              disabled={loading}
             />
           </div>
 
-          {/* 대분류 */}
+          {/* 대분류 (= 사이트) */}
           <div className="space-y-2">
             <Label htmlFor="product-main-category">
               {productLabels.mainCategoryLabel} <span className="text-destructive">*</span>
@@ -422,16 +357,16 @@ export default function ProductForm({
                 setMidCategoryId(EMPTY);
                 setDetailCategoryId(EMPTY);
               }}
-              disabled={loading || !siteSelected}
-              items={mainCategoryItems}
+              disabled={loading}
             >
               <SelectTrigger
                 id="product-main-category"
                 aria-required="true"
                 aria-invalid={!!errors.mainCategoryId}
                 aria-describedby={errors.mainCategoryId ? "product-main-category-error" : undefined}
+                items={mainCategoryItems}
               >
-                <SelectValue placeholder={!siteSelected ? productLabels.sectionSiteHint : productLabels.mainCategoryPlaceholder} />
+                <SelectValue placeholder={productLabels.mainCategoryPlaceholder} />
               </SelectTrigger>
               <SelectContent>
                 {mainCategories.map((c) => (
@@ -461,9 +396,8 @@ export default function ProductForm({
                   setDetailCategoryId(EMPTY);
                 }}
                 disabled={loading || !mainCategoryId}
-                items={midCategoryItems}
               >
-                <SelectTrigger id="product-mid-category">
+                <SelectTrigger id="product-mid-category" items={midCategoryItems}>
                   <SelectValue placeholder={productLabels.subCategoryPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
@@ -487,9 +421,8 @@ export default function ProductForm({
                 value={detailCategoryId || null}
                 onValueChange={(v) => setDetailCategoryId(v ?? EMPTY)}
                 disabled={loading || !midCategoryId}
-                items={detailCategoryItems}
               >
-                <SelectTrigger id="product-detail-category">
+                <SelectTrigger id="product-detail-category" items={detailCategoryItems}>
                   <SelectValue placeholder={productLabels.detailCategoryPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
@@ -579,7 +512,7 @@ export default function ProductForm({
       </Card>
 
       {/* ── 섹션 2: 추가 정보 ── */}
-      <Card className={!siteSelected ? "pointer-events-none opacity-50" : undefined}>
+      <Card className={!categorySelected ? "pointer-events-none opacity-50" : undefined}>
         <CardHeader>
           <CardTitle>{productLabels.sectionAdditional}</CardTitle>
         </CardHeader>
@@ -667,9 +600,8 @@ export default function ProductForm({
                 value={status}
                 onValueChange={(v) => { if (v) setStatus(v as ProductStatus); }}
                 disabled={loading}
-                items={statusItems}
               >
-                <SelectTrigger id="product-status">
+                <SelectTrigger id="product-status" items={statusItems}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -711,7 +643,7 @@ export default function ProductForm({
       </Card>
 
       {/* ── 섹션 3: 옵션 ── */}
-      <Card className={!siteSelected ? "pointer-events-none opacity-50" : undefined}>
+      <Card className={!categorySelected ? "pointer-events-none opacity-50" : undefined}>
         <CardHeader>
           <CardTitle>{productLabels.sectionOptions}</CardTitle>
         </CardHeader>

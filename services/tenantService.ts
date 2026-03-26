@@ -50,10 +50,10 @@ export interface HeaderMenuItem {
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const mockTenant: Tenant = {
-  shopName: "MIREP 아카이빙",
+  shopName: "MIREP 통합어드민",
   domain: "https://mirep.co.kr",
   seo: {
-    title: "MIREP 아카이빙",
+    title: "MIREP 통합어드민",
     description: "공식 온라인 스토어",
     keywords: "패션,의류",
   },

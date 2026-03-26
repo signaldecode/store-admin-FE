@@ -154,7 +154,7 @@ export const common = {
   goToDashboard: "대시보드로 이동",
   currency: "원",
   perPage: "페이지당",
-  totalCount: (count: number) => `/ 총 ${count.toLocaleString("ko-KR")}건`,
+  totalCount: (count: number) => `/ 총 ${(count ?? 0).toLocaleString("ko-KR")}건`,
   itemUnit: (size: number) => `${size}개`,
   errorOccurred: "오류가 발생했습니다",
   errorFallback: "페이지를 불러오는 중 문제가 발생했습니다.",
@@ -165,7 +165,7 @@ export const common = {
 
 // ─── 레이아웃 ───
 export const layout = {
-  appName: "MIREP 아카이빙",
+  appName: "MIREP 통합어드민",
   appNameShort: "MIREP",
   mainMenu: "메인 메뉴",
   mobileMenu: "모바일 메뉴",
@@ -482,6 +482,8 @@ export const category = {
   sitePlaceholder: "사이트 선택",
   siteRequired: "사이트를 선택해주세요.",
   siteAll: "전체 사이트",
+  siteUrlLabel: "사이트 URL",
+  siteUrlPlaceholder: "https://example.mirep.com",
 };
 
 // ─── 브랜드 ───
@@ -546,11 +548,9 @@ export const site = {
     `"${name}" 사이트를 삭제하시겠습니까? 해당 사이트에 연결된 상품이 있을 수 있습니다.`,
 
   // 테이블 컬럼
-  colCode: "대분류",
   colName: "사이트명",
-  colDomain: "도메인",
-  colStatus: "상태",
-  colCreatedAt: "등록일",
+  colSiteUrl: "사이트 URL",
+  colSubCount: "하위 카테고리",
 
   // 폼
   codeLabel: "대분류",
@@ -559,10 +559,8 @@ export const site = {
   nameLabel: "사이트명",
   namePlaceholder: "사이트명을 입력하세요",
   nameRequired: "사이트명을 입력해주세요.",
-  domainLabel: "도메인",
-  domainPlaceholder: "예: https://example.co.kr/",
-  descriptionLabel: "설명",
-  descriptionPlaceholder: "사이트에 대한 설명을 입력하세요",
+  nameEnLabel: "영문명",
+  nameEnPlaceholder: "영문 사이트명을 입력하세요",
 
   // 상태
   statusActive: "활성",
@@ -580,6 +578,76 @@ export const site = {
   sortOldest: "오래된순",
   sortNameAsc: "이름순",
   sortNameDesc: "이름 역순",
+
+  // 설정 페이지
+  settingsTitle: (name: string) => `${name} 사이트 설정`,
+  settingsButton: "설정",
+
+  // 탭
+  tabBasic: "기본 정보",
+  tabBusiness: "사업자 정보",
+  tabCs: "고객센터",
+  tabSeo: "SEO",
+
+  // 기본 정보 탭
+  siteUrlLabel: "사이트 URL",
+  siteUrlPlaceholder: "https://example.mirep.com",
+  logoLabel: "로고",
+  logoHint: "권장: 200x60px, PNG/SVG",
+  logoUpload: "로고 업로드",
+  faviconLabel: "파비콘",
+  faviconHint: "권장: 32x32px, ICO/PNG",
+  faviconUpload: "파비콘 업로드",
+  copyrightLabel: "카피라이트",
+  copyrightPlaceholder: "© 2026 Company. All rights reserved.",
+
+  // 사업자 정보 탭
+  businessNumberLabel: "사업자등록번호",
+  businessNumberPlaceholder: "123-45-67890",
+  businessNameLabel: "상호명",
+  businessNamePlaceholder: "주식회사 OO",
+  businessTypeLabel: "업태",
+  businessTypePlaceholder: "소매업",
+  businessCategoryLabel: "업종",
+  businessCategoryPlaceholder: "전자상거래",
+  ecommerceLicenseLabel: "통신판매업 신고번호",
+  ecommerceLicensePlaceholder: "2026-서울강남-0000",
+  ceoNameLabel: "대표자명",
+  ceoNamePlaceholder: "홍길동",
+  emailLabel: "이메일",
+  emailPlaceholder: "info@example.com",
+  phoneLabel: "전화번호",
+  phonePlaceholder: "02-1234-5678",
+  addressLabel: "주소",
+  addressPlaceholder: "서울시 강남구 테헤란로 123",
+  addressDetailLabel: "상세주소",
+  addressDetailPlaceholder: "OO빌딩 5층",
+  zipCodeLabel: "우편번호",
+  zipCodePlaceholder: "06234",
+  privacyOfficerLabel: "개인정보 보호책임자",
+  privacyOfficerPlaceholder: "홍길동",
+  privacyEmailLabel: "개인정보 보호 이메일",
+  privacyEmailPlaceholder: "privacy@example.com",
+
+  // 고객센터 탭
+  csPhoneLabel: "CS 전화번호",
+  csPhonePlaceholder: "1588-0000",
+  csFaxLabel: "CS 팩스",
+  csFaxPlaceholder: "02-1234-5679",
+  csEmailLabel: "CS 이메일",
+  csEmailPlaceholder: "cs@example.com",
+  csHoursLabel: "운영시간",
+  csHoursPlaceholder: "평일 09:00~18:00 (주말/공휴일 휴무)",
+
+  // SEO 탭
+  metaTitleLabel: "메타 타이틀",
+  metaTitlePlaceholder: "사이트 제목",
+  metaTitleHint: (count: number) => `${count}/60자 (권장 60자 이내)`,
+  metaDescriptionLabel: "메타 설명",
+  metaDescriptionPlaceholder: "사이트에 대한 간단한 설명",
+  metaDescriptionHint: (count: number) => `${count}/160자 (권장 160자 이내)`,
+  metaKeywordsLabel: "메타 키워드",
+  metaKeywordsPlaceholder: "키워드1, 키워드2, 키워드3",
 };
 
 // ─── 관리자 ───
@@ -1158,6 +1226,6 @@ export const searchFilter = {
 
 // ─── 메타 ───
 export const meta = {
-  title: "MIREP 아카이빙",
-  description: "MIREP 아카이빙 관리자 페이지",
+  title: "MIREP 통합어드민",
+  description: "MIREP 통합어드민 페이지",
 };

@@ -1,59 +1,72 @@
 import type { PaginationParams } from "./api";
 import type { OrderStatus } from "@/lib/constants";
 
-export interface OrderItem {
-  id: number;
-  productId: number;
-  productName: string;
-  thumbnailUrl: string | null;
-  optionSummary: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-}
-
-export interface ShippingAddress {
-  recipientName: string;
-  phone: string;
-  zipCode: string;
-  address: string;
-  addressDetail: string;
-  memo: string;
-}
-
-export interface Payment {
-  method: string;
-  amount: number;
-  paidAt: string | null;
-}
-
-export interface Order {
-  id: number;
-  orderNumber: string;
-  status: OrderStatus;
-  customerName: string;
-  customerEmail: string;
-  items: OrderItem[];
-  shippingAddress: ShippingAddress;
-  payment: Payment;
-  totalAmount: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
+/** 백엔드 OrderListResponse 기준 */
 export interface OrderSummary {
   id: number;
   orderNumber: string;
-  status: OrderStatus;
-  customerName: string;
-  itemSummary: string;
-  itemCount: number;
-  totalAmount: number;
+  tenantId: number;
+  userId: number;
+  status: string;
+  paymentStatus: string;
+  grandTotal: number;
+  createdAt: string;
+}
+
+/** 백엔드 OrderResponse 기준 */
+export interface Order {
+  id: number;
+  tenantId: number;
+  orderNumber: string;
+  userId: number;
+  guestEmail: string | null;
+  guestPhone: string | null;
+  subtotal: number;
+  discountTotal: number;
+  shippingTotal: number;
+  taxTotal: number;
+  grandTotal: number;
+  currency: string;
+  status: string;
+  paymentStatus: string;
+  shippingStatus: string | null;
+  billingAddress: string | null;
+  shippingAddress: string | null;
+  depositorName: string | null;
+  customerNote: string | null;
+  adminNote: string | null;
+  orderChannel: string | null;
+  paidAt: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+  cancelledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  items: OrderItemResponse[];
+  statusHistory: OrderStatusHistory[];
+}
+
+export interface OrderItemResponse {
+  id: number;
+  productId: number;
+  productName: string;
+  skuCode: string | null;
+  optionSummary: string | null;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  thumbnailUrl: string | null;
+}
+
+export interface OrderStatusHistory {
+  id: number;
+  status: string;
+  reason: string | null;
   createdAt: string;
 }
 
 export interface OrderListParams extends PaginationParams {
+  tenantId?: number;
   status?: OrderStatus;
-  keyword?: string;
-  searchType?: "orderNumber" | "customerName";
+  orderNumber?: string;
 }

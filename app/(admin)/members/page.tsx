@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -17,7 +16,7 @@ import SearchFilter from "@/components/common/SearchFilter";
 import Pagination from "@/components/common/Pagination";
 import StatusBadge from "@/components/common/StatusBadge";
 import SiteSelect from "@/components/common/SiteSelect";
-import { getMembers, getGrades, bulkChangeGrade } from "@/services/memberService";
+import { getMembers } from "@/services/memberService";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePagination } from "@/hooks/usePagination";
 import { member, common, MEMBER_STATUS_LABEL } from "@/data/labels";
@@ -34,7 +33,6 @@ export default function MembersPage() {
   const router = useRouter();
 
   const [members, setMembers] = useState<MemberSummary[]>([]);
-  const [grades, setGrades] = useState<Grade[]>([]);
   const [loading, setLoading] = useState(true);
 
   // 사이트
@@ -55,22 +53,23 @@ export default function MembersPage() {
   // 체크박스 선택
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
-  // 등급 일괄 변경
+  // 등급 일괄 변경 (TODO: 백엔드 미구현)
   const [bulkGradeId, setBulkGradeId] = useState<string>("");
-  const [bulkLoading, setBulkLoading] = useState(false);
+  const bulkLoading = false;
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
     try {
-      const params: MemberListParams = {
+      const params: MemberListParams & { tenantId?: number } = {
+        tenantId: siteId ?? undefined,
         page: pagination.page,
         size: pagination.size,
         keyword: debouncedKeyword || undefined,
         status: statusFilter ? (statusFilter as MemberStatus) : undefined,
       };
       const res = await getMembers(params);
-      setMembers(res.data.content);
-      pagination.setTotalCount(res.data.total_elements);
+      setMembers(res.data?.content ?? []);
+      pagination.setTotalCount(res.data?.total_elements ?? 0);
     } catch {
       // 공통 에러 처리
     } finally {
@@ -82,9 +81,8 @@ export default function MembersPage() {
     fetchMembers();
   }, [fetchMembers]);
 
-  useEffect(() => {
-    getGrades().then((res) => setGrades(res.data)).catch(() => {});
-  }, []);
+  // TODO: 백엔드에 등급 API 없음 — 등급 기능 비활성화
+  const grades: Grade[] = [];
 
   useEffect(() => {
     pagination.resetPage();
@@ -122,19 +120,10 @@ export default function MembersPage() {
     });
   };
 
+  // TODO: 백엔드에 등급 일괄 변경 API 없음
   const handleBulkGradeChange = async () => {
     if (!bulkGradeId || selectedIds.size === 0) return;
-    setBulkLoading(true);
-    try {
-      await bulkChangeGrade([...selectedIds], Number(bulkGradeId));
-      setSelectedIds(new Set());
-      setBulkGradeId("");
-      await fetchMembers();
-    } catch {
-      // 공통 에러 처리
-    } finally {
-      setBulkLoading(false);
-    }
+    // bulkChangeGrade 미구현
   };
 
   const columns: Column<MemberSummary>[] = [
@@ -168,17 +157,12 @@ export default function MembersPage() {
       render: (m) => <span className="text-sm">{m.phone}</span>,
     },
     {
-      key: "grade",
-      label: member.colGrade,
-      render: (m) => <Badge variant="outline">{m.grade}</Badge>,
-    },
-    {
       key: "status",
       label: member.colStatus,
       render: (m) => (
         <StatusBadge
-          label={MEMBER_STATUS_LABEL[m.status]}
-          variant={statusVariant[m.status]}
+          label={MEMBER_STATUS_LABEL[m.status as MemberStatus] ?? m.status}
+          variant={statusVariant[m.status as MemberStatus] ?? "default"}
         />
       ),
     },
@@ -208,12 +192,11 @@ export default function MembersPage() {
         <Select
           value={statusFilter || "__none__"}
           onValueChange={(v) => { if (v !== null) setStatusFilter(v === "__none__" ? "" : v); }}
-          items={Object.fromEntries([
+        >
+          <SelectTrigger className="h-9 w-28" aria-label={member.filterStatus} items={Object.fromEntries([
             ["__none__", common.all],
             ...Object.entries(MEMBER_STATUS_LABEL).map(([value, label]) => [value, label]),
-          ])}
-        >
-          <SelectTrigger className="h-9 w-28" aria-label={member.filterStatus}>
+          ])}>
             <SelectValue placeholder={common.all} />
           </SelectTrigger>
           <SelectContent>
@@ -231,7 +214,7 @@ export default function MembersPage() {
           <Checkbox checked={allSelected} onCheckedChange={toggleAll} aria-label="전체 선택" />
           <span className="text-sm font-medium">{selectedIds.size}명 선택</span>
           <Select value={bulkGradeId} onValueChange={(v) => { if (v !== null) setBulkGradeId(v); }}>
-            <SelectTrigger className="h-8 w-32" aria-label="등급 선택">
+            <SelectTrigger className="h-8 w-32" aria-label="등급 선택" items={Object.fromEntries(grades.map((g) => [String(g.id), g.name]))}>
               <SelectValue placeholder="등급 선택" />
             </SelectTrigger>
             <SelectContent>

@@ -17,10 +17,12 @@ import {
 import { createPromotion } from "@/services/promotionService";
 import { promotion as promotionLabels, common, COUPON_DISCOUNT_TYPE_LABEL } from "@/data/labels";
 import type { CouponDiscountType } from "@/lib/constants";
+import SiteSelect from "@/components/common/SiteSelect";
 
 export default function PromotionNewPage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [siteId, setSiteId] = useState<number | null>(null);
 
   const [name, setName] = useState("");
   const [discountType, setDiscountType] = useState<CouponDiscountType>("RATE");
@@ -33,6 +35,7 @@ export default function PromotionNewPage() {
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
+    if (!siteId) newErrors.siteId = "사이트를 선택해주세요.";
     if (!name.trim()) newErrors.name = promotionLabels.nameRequired;
     if (!discountValue || Number(discountValue) <= 0) newErrors.discountValue = promotionLabels.discountValuePlaceholder;
     if (!startedAt) newErrors.startedAt = "시작일을 선택해주세요.";
@@ -48,13 +51,14 @@ export default function PromotionNewPage() {
     setSaving(true);
     try {
       await createPromotion({
+        tenantId: siteId!,
         name: name.trim(),
         discountType,
         discountValue: Number(discountValue),
+        roundingType: "ROUND",
         startedAt: new Date(startedAt).toISOString(),
         endedAt: new Date(endedAt).toISOString(),
         isActive,
-        applicableCategories: [],
       });
       router.push("/promotions");
     } catch {
@@ -76,6 +80,12 @@ export default function PromotionNewPage() {
 
       <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
         <div className="space-y-2">
+          <Label>사이트 <span className="text-destructive">*</span></Label>
+          <SiteSelect value={siteId} onChange={setSiteId} required />
+          {errors.siteId && <p className="text-sm text-destructive">{errors.siteId}</p>}
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="promo-name">
             {promotionLabels.nameLabel} <span className="text-destructive">*</span>
           </Label>
@@ -95,7 +105,7 @@ export default function PromotionNewPage() {
         <div className="space-y-2">
           <Label htmlFor="promo-discount-type">{promotionLabels.discountTypeLabel}</Label>
           <Select value={discountType} onValueChange={(v) => setDiscountType(v as CouponDiscountType)}>
-            <SelectTrigger id="promo-discount-type">
+            <SelectTrigger id="promo-discount-type" items={COUPON_DISCOUNT_TYPE_LABEL}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

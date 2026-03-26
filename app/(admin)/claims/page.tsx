@@ -92,8 +92,8 @@ export default function ClaimsPage() {
         size: PAGE_SIZE,
         sort: sort ? `${sort},${order}` : undefined,
       });
-      setClaims(res.data.content);
-      setTotalElements(res.data.total_elements);
+      setClaims(res.data?.content ?? []);
+      setTotalElements(res.data?.total_elements ?? 0);
     } catch {
       // api.ts에서 공통 에러 처리
     } finally {
@@ -151,7 +151,7 @@ export default function ClaimsPage() {
     {
       key: "estimatedRefundAmount",
       label: claimLabels.colAmount,
-      render: (item) => `${item.estimatedRefundAmount.toLocaleString("ko-KR")}${common.currency}`,
+      render: (item) => `${(item.estimatedRefundAmount ?? 0).toLocaleString("ko-KR")}${common.currency}`,
     },
     {
       key: "createdAt",
@@ -182,12 +182,11 @@ export default function ClaimsPage() {
         <Select
           value={typeFilter}
           onValueChange={(v) => setTypeFilter(v as TypeFilter)}
-          items={{
+        >
+          <SelectTrigger className="h-9 w-32" aria-label={claimLabels.filterType} items={{
             all: common.all,
             ...CLAIM_TYPE_LABEL,
-          }}
-        >
-          <SelectTrigger className="h-9 w-32" aria-label={claimLabels.filterType}>
+          }}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -202,12 +201,11 @@ export default function ClaimsPage() {
         <Select
           value={statusFilter}
           onValueChange={(v) => setStatusFilter(v as StatusFilter)}
-          items={{
+        >
+          <SelectTrigger className="h-9 w-32" aria-label={claimLabels.filterStatus} items={{
             all: common.all,
             ...CLAIM_STATUS_LABEL,
-          }}
-        >
-          <SelectTrigger className="h-9 w-32" aria-label={claimLabels.filterStatus}>
+          }}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -222,9 +220,8 @@ export default function ClaimsPage() {
         <Select
           value={sortValue}
           onValueChange={handleSortSelect}
-          items={Object.fromEntries(sortOptions.map((o) => [o.value, o.label]))}
         >
-          <SelectTrigger className="h-9 w-32" aria-label={claimLabels.sortLabel}>
+          <SelectTrigger className="h-9 w-32" aria-label={claimLabels.sortLabel} items={Object.fromEntries(sortOptions.map((o) => [o.value, o.label]))}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

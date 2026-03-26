@@ -14,8 +14,8 @@ import {
 } from "@/components/ui/select";
 import DataTable, { type Column } from "@/components/common/DataTable";
 import Pagination from "@/components/common/Pagination";
-import { getInquiries, getInquiryTypes } from "@/services/inquiryService";
-import type { InquirySummary, InquiryType } from "@/types/inquiry";
+import { getInquiries } from "@/services/inquiryService";
+import type { InquirySummary } from "@/types/inquiry";
 import type { InquiryStatus } from "@/lib/constants";
 import { inquiry as inquiryLabels, common, INQUIRY_STATUS_LABEL } from "@/data/labels";
 import SiteSelect from "@/components/common/SiteSelect";
@@ -32,7 +32,6 @@ export default function InquiriesPage() {
   const router = useRouter();
   const [siteId, setSiteId] = useState<number | null>(null);
   const [inquiries, setInquiries] = useState<InquirySummary[]>([]);
-  const [inquiryTypes, setInquiryTypes] = useState<InquiryType[]>([]);
   const [loading, setLoading] = useState(true);
   const [total_elements, setTotalElements] = useState(0);
 
@@ -49,17 +48,7 @@ export default function InquiriesPage() {
 
   const totalPages = Math.ceil(total_elements / PAGE_SIZE);
 
-  useEffect(() => {
-    const loadTypes = async () => {
-      try {
-        const res = await getInquiryTypes();
-        setInquiryTypes(res.data);
-      } catch {
-        // api.ts에서 공통 에러 처리
-      }
-    };
-    loadTypes();
-  }, []);
+  // TODO: 백엔드에 /admin/qnas/types 엔드포인트 없음
 
   const fetchInquiries = useCallback(async () => {
     setLoading(true);
@@ -67,15 +56,13 @@ export default function InquiriesPage() {
       const status = statusFilter === "all" ? undefined : statusFilter;
       const type = typeFilter === "all" ? undefined : typeFilter;
       const res = await getInquiries({
-        keyword: debouncedKeyword || undefined,
+        tenantId: siteId ?? undefined,
         status,
-        type,
         page,
         size: PAGE_SIZE,
-        sort: sort ? `${sort},${order}` : undefined,
       });
-      setInquiries(res.data.content);
-      setTotalElements(res.data.total_elements);
+      setInquiries(res.data?.content ?? []);
+      setTotalElements(res.data?.total_elements ?? 0);
     } catch {
       // api.ts에서 공통 에러 처리
     } finally {
@@ -115,14 +102,14 @@ export default function InquiriesPage() {
       ),
     },
     {
-      key: "type",
+      key: "qnaType",
       label: inquiryLabels.colType,
-      render: (item) => item.type,
+      render: (item) => item.qnaType,
     },
     {
-      key: "userName",
-      label: inquiryLabels.colUser,
-      render: (item) => item.userName,
+      key: "isAnswered",
+      label: "답변여부",
+      render: (item) => item.isAnswered ? "답변완료" : "미답변",
     },
     {
       key: "status",
@@ -162,7 +149,7 @@ export default function InquiriesPage() {
           value={statusFilter}
           onValueChange={(v) => setStatusFilter(v as StatusFilter)}
         >
-          <SelectTrigger className="h-9 w-36" aria-label={inquiryLabels.filterStatus}>
+          <SelectTrigger className="h-9 w-36" aria-label={inquiryLabels.filterStatus} items={{ all: common.all, ...INQUIRY_STATUS_LABEL }}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -174,20 +161,7 @@ export default function InquiriesPage() {
             )}
           </SelectContent>
         </Select>
-        <Select
-          value={typeFilter}
-          onValueChange={(v) => { if (v !== null) setTypeFilter(v); }}
-        >
-          <SelectTrigger className="h-9 w-36" aria-label={inquiryLabels.filterType}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{common.all}</SelectItem>
-            {inquiryTypes.map((t) => (
-              <SelectItem key={t.id} value={t.name}>{t.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* TODO: 백엔드에 문의 유형 API 없음 — 유형 필터 비활성화 */}
       </div>
 
       {loading ? (

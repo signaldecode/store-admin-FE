@@ -77,14 +77,14 @@ export default function OrdersPage() {
     try {
       const status = statusFilter === "all" ? undefined : statusFilter;
       const res = await getOrders({
-        keyword: debouncedKeyword || undefined,
+        tenantId: siteId ?? undefined,
+        orderNumber: debouncedKeyword || undefined,
         status,
         page,
         size: PAGE_SIZE,
-        sort: sort ? `${sort},${order}` : undefined,
       });
-      setOrders(res.data.content);
-      setTotalElements(res.data.total_elements);
+      setOrders(res.data?.content ?? []);
+      setTotalElements(res.data?.total_elements ?? 0);
     } catch {
       // api.ts에서 공통 에러 처리
     } finally {
@@ -115,26 +115,21 @@ export default function OrdersPage() {
       ),
     },
     {
-      key: "customerName",
+      key: "userId",
       label: orderLabels.colCustomer,
-      render: (item) => item.customerName,
+      render: (item) => `#${item.userId}`,
     },
     {
-      key: "itemSummary",
-      label: orderLabels.colItems,
-      render: (item) => item.itemSummary,
-    },
-    {
-      key: "totalAmount",
+      key: "grandTotal",
       label: orderLabels.colTotalAmount,
-      render: (item) => `${item.totalAmount.toLocaleString("ko-KR")}${common.currency}`,
+      render: (item) => `${(item.grandTotal ?? 0).toLocaleString("ko-KR")}${common.currency}`,
     },
     {
       key: "status",
       label: orderLabels.colStatus,
       render: (item) => (
         <Badge variant="secondary">
-          {ORDER_STATUS_LABEL[item.status]}
+          {ORDER_STATUS_LABEL[item.status as OrderStatus] ?? item.status}
         </Badge>
       ),
     },
@@ -167,12 +162,11 @@ export default function OrdersPage() {
         <Select
           value={statusFilter}
           onValueChange={(v) => setStatusFilter(v as StatusFilter)}
-          items={{
+        >
+          <SelectTrigger className="h-9 w-36" aria-label={orderLabels.filterStatus} items={{
             all: common.all,
             ...ORDER_STATUS_LABEL,
-          }}
-        >
-          <SelectTrigger className="h-9 w-36" aria-label={orderLabels.filterStatus}>
+          }}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -187,9 +181,8 @@ export default function OrdersPage() {
         <Select
           value={sortValue}
           onValueChange={handleSortSelect}
-          items={Object.fromEntries(sortOptions.map((o) => [o.value, o.label]))}
         >
-          <SelectTrigger className="h-9 w-32" aria-label={orderLabels.sortLabel}>
+          <SelectTrigger className="h-9 w-32" aria-label={orderLabels.sortLabel} items={Object.fromEntries(sortOptions.map((o) => [o.value, o.label]))}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

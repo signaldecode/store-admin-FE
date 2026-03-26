@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import type { Site, SiteFormData } from "@/types/site";
 import type { ApiError } from "@/types/api";
@@ -33,8 +32,7 @@ export default function SiteFormDialog({
 
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
-  const [domain, setDomain] = useState("");
-  const [description, setDescription] = useState("");
+  const [nameEn, setNameEn] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -42,8 +40,7 @@ export default function SiteFormDialog({
     if (open) {
       setCode(site?.code || "");
       setName(site?.name || "");
-      setDomain(site?.domain || "");
-      setDescription(site?.description || "");
+      setNameEn(site?.nameEn || "");
       setError("");
     }
   }, [open, site]);
@@ -65,8 +62,7 @@ export default function SiteFormDialog({
       await onSubmit({
         code: code.trim(),
         name: name.trim(),
-        domain: domain.trim(),
-        description: description.trim(),
+        nameEn: nameEn.trim() || undefined,
       });
       onOpenChange(false);
     } catch (err) {
@@ -119,27 +115,14 @@ export default function SiteFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="site-domain">{siteLabels.domainLabel}</Label>
+            <Label htmlFor="site-nameEn">{siteLabels.nameEnLabel}</Label>
             <Input
-              id="site-domain"
+              id="site-nameEn"
               type="text"
-              value={domain}
-              onChange={(e) => setDomain(e.target.value)}
-              placeholder={siteLabels.domainPlaceholder}
+              value={nameEn}
+              onChange={(e) => setNameEn(e.target.value)}
+              placeholder={siteLabels.nameEnPlaceholder}
               disabled={loading}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="site-description">{siteLabels.descriptionLabel}</Label>
-            <Textarea
-              id="site-description"
-              className="resize-none"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={siteLabels.descriptionPlaceholder}
-              disabled={loading}
-              rows={3}
             />
           </div>
 

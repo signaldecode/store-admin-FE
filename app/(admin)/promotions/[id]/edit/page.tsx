@@ -17,6 +17,7 @@ import {
 import { getPromotion, updatePromotion } from "@/services/promotionService";
 import { promotion as promotionLabels, common, COUPON_DISCOUNT_TYPE_LABEL } from "@/data/labels";
 import type { CouponDiscountType } from "@/lib/constants";
+import SiteSelect from "@/components/common/SiteSelect";
 
 export default function PromotionEditPage() {
   const router = useRouter();
@@ -25,6 +26,7 @@ export default function PromotionEditPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [siteId, setSiteId] = useState<number | null>(null);
 
   const [name, setName] = useState("");
   const [discountType, setDiscountType] = useState<CouponDiscountType>("RATE");
@@ -32,7 +34,6 @@ export default function PromotionEditPage() {
   const [startedAt, setStartedAt] = useState("");
   const [endedAt, setEndedAt] = useState("");
   const [isActive, setIsActive] = useState(true);
-  const [applicableCategories, setApplicableCategories] = useState<number[]>([]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -44,10 +45,10 @@ export default function PromotionEditPage() {
         setName(p.name);
         setDiscountType(p.discountType);
         setDiscountValue(String(p.discountValue));
+        setSiteId(p.tenantId ?? null);
         setStartedAt(p.startedAt.slice(0, 16));
-        setEndedAt(p.endedAt.slice(0, 16));
+        setEndedAt(p.endedAt ? p.endedAt.slice(0, 16) : "");
         setIsActive(p.isActive);
-        setApplicableCategories(p.applicableCategories);
       } catch {
         // api.ts에서 공통 에러 처리
       } finally {
@@ -74,13 +75,14 @@ export default function PromotionEditPage() {
     setSaving(true);
     try {
       await updatePromotion(id, {
+        tenantId: siteId!,
         name: name.trim(),
         discountType,
         discountValue: Number(discountValue),
+        roundingType: "ROUND",
         startedAt: new Date(startedAt).toISOString(),
-        endedAt: new Date(endedAt).toISOString(),
+        endedAt: endedAt ? new Date(endedAt).toISOString() : undefined,
         isActive,
-        applicableCategories,
       });
       router.push("/promotions");
     } catch {
@@ -129,7 +131,7 @@ export default function PromotionEditPage() {
         <div className="space-y-2">
           <Label htmlFor="promo-discount-type">{promotionLabels.discountTypeLabel}</Label>
           <Select value={discountType} onValueChange={(v) => setDiscountType(v as CouponDiscountType)}>
-            <SelectTrigger id="promo-discount-type">
+            <SelectTrigger id="promo-discount-type" items={COUPON_DISCOUNT_TYPE_LABEL}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

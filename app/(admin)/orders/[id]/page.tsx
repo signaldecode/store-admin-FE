@@ -7,6 +7,7 @@ import { createShipment, refreshOrderTracking } from "@/services/deliveryService
 import { createRefund } from "@/services/refundService";
 import type { Order } from "@/types/order";
 import { order as L, common, ORDER_STATUS_LABEL } from "@/data/labels";
+import { fmtNum } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,7 +37,7 @@ export default function OrderDetailPage() {
   }, [id]);
 
   useEffect(() => {
-    if (data) setRefundAmount(String(data.totalAmount));
+    if (data) setRefundAmount(String(data.grandTotal));
   }, [data]);
 
   const handleCreateShipment = async () => {
@@ -93,9 +94,11 @@ export default function OrderDetailPage() {
       <Section title={L.sectionOrderInfo}>
         <InfoGrid>
           <InfoItem label={L.colOrderNumber} value={data.orderNumber} />
-          <InfoItem label={L.colStatus} badge={{ text: ORDER_STATUS_LABEL[data.status] }} />
-          <InfoItem label={L.colCustomer} value={data.customerName} />
+          <InfoItem label={L.colStatus} badge={{ text: ORDER_STATUS_LABEL[data.status as keyof typeof ORDER_STATUS_LABEL] ?? data.status }} />
+          <InfoItem label="결제상태" value={data.paymentStatus} />
+          <InfoItem label={L.colTotalAmount} value={`${fmtNum(data.grandTotal)}${common.currency}`} />
           <InfoItem label={L.colCreatedAt} value={new Date(data.createdAt).toLocaleDateString("ko-KR")} />
+          {data.adminNote && <InfoItem label="관리자 메모" value={data.adminNote} full />}
         </InfoGrid>
       </Section>
 
@@ -105,28 +108,36 @@ export default function OrderDetailPage() {
           keyExtractor={(i) => i.id}
           columns={[
             { label: "상품명", render: (i) => i.productName },
-            { label: "옵션", render: (i) => <span className="text-muted-foreground">{i.optionSummary}</span> },
+            { label: "옵션", render: (i) => <span className="text-muted-foreground">{i.optionSummary ?? "-"}</span> },
             { label: "수량", align: "right", render: (i) => i.quantity },
-            { label: "단가", align: "right", render: (i) => `${i.unitPrice.toLocaleString("ko-KR")}${common.currency}` },
-            { label: "합계", align: "right", render: (i) => <span className="font-medium">{i.totalPrice.toLocaleString("ko-KR")}{common.currency}</span> },
+            { label: "단가", align: "right", render: (i) => `${fmtNum(i.unitPrice)}${common.currency}` },
+            { label: "합계", align: "right", render: (i) => <span className="font-medium">{fmtNum(i.totalPrice)}{common.currency}</span> },
           ]}
         />
       </Section>
 
-      <Section title={L.sectionShipping}>
-        <InfoGrid>
-          <InfoItem label={L.recipientName} value={data.shippingAddress.recipientName} />
-          <InfoItem label={L.recipientPhone} value={data.shippingAddress.phone} />
-          <InfoItem label={L.address} value={`(${data.shippingAddress.zipCode}) ${data.shippingAddress.address} ${data.shippingAddress.addressDetail}`} full />
-          {data.shippingAddress.memo && <InfoItem label={L.shippingMemo} value={data.shippingAddress.memo} full />}
-        </InfoGrid>
-      </Section>
+      {data.shippingAddress && (() => {
+        let addr: { address1?: string; address2?: string; postalCode?: string; recipientName?: string; recipientPhone?: string } | null = null;
+        try { addr = JSON.parse(data.shippingAddress); } catch { /* plain string fallback */ }
+        return (
+          <Section title={L.sectionShipping}>
+            {addr ? (
+              <InfoGrid>
+                <InfoItem label={L.recipientName} value={addr.recipientName ?? "-"} />
+                <InfoItem label={L.recipientPhone} value={addr.recipientPhone ?? "-"} />
+                <InfoItem label={L.address} value={`${addr.postalCode ? `(${addr.postalCode}) ` : ""}${addr.address1 ?? ""}${addr.address2 ? ` ${addr.address2}` : ""}`} full />
+              </InfoGrid>
+            ) : (
+              <div className="whitespace-pre-wrap rounded-md bg-muted/50 p-4 text-sm">{data.shippingAddress}</div>
+            )}
+          </Section>
+        );
+      })()}
 
       <Section title={L.sectionPayment}>
         <InfoGrid>
-          <InfoItem label={L.paymentMethod} value={data.payment.method} />
-          <InfoItem label={L.colTotalAmount} value={`${data.payment.amount.toLocaleString("ko-KR")}${common.currency}`} />
-          <InfoItem label={L.paidAt} value={data.payment.paidAt ? new Date(data.payment.paidAt).toLocaleDateString("ko-KR") : "-"} />
+          <InfoItem label={L.colTotalAmount} value={`${fmtNum(data.grandTotal)}${common.currency}`} />
+          <InfoItem label={L.paidAt} value={data.paidAt ? new Date(data.paidAt).toLocaleDateString("ko-KR") : "-"} />
         </InfoGrid>
       </Section>
 

@@ -53,11 +53,11 @@ export default function QnaDetailPage() {
     >
       <Section title={L.sectionQuestion}>
         <InfoGrid>
-          <InfoItem label={L.colProduct} value={data.productName} />
-          <InfoItem label={L.colUser} value={data.userName} />
+          <InfoItem label={L.colProduct} value={data.qnaType} />
+          <InfoItem label={L.colUser} value={`#${data.userId}`} />
           <InfoItem label={L.colCreatedAt} value={new Date(data.createdAt).toLocaleDateString("ko-KR")} />
         </InfoGrid>
-        <div className="mt-4 whitespace-pre-wrap rounded-md bg-muted/50 p-4 text-sm">{data.content}</div>
+        <div className="mt-4 whitespace-pre-wrap rounded-md bg-muted/50 p-4 text-sm">{data.question}</div>
       </Section>
 
       <Section title={L.sectionAnswer}>

@@ -61,6 +61,7 @@ export interface ProductSku {
 
 /** 상품 등록/수정 API 요청 JSON (multipart의 data 필드) */
 export interface ProductFormData {
+  tenantId: number;
   categoryId: number;
   brandId?: number;
   name: string;
@@ -111,7 +112,6 @@ export interface ProductSummary {
 
 export interface ProductListParams extends PaginationParams {
   keyword?: string;
-  siteId?: number;
   categoryId?: number;
   brandId?: number;
   status?: ProductStatus;

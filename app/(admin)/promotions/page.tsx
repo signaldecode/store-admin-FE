@@ -19,6 +19,7 @@ import { getPromotions } from "@/services/promotionService";
 import type { Promotion } from "@/types/promotion";
 import { promotion as promotionLabels, common, COUPON_DISCOUNT_TYPE_LABEL } from "@/data/labels";
 import { useDebounce } from "@/hooks/useDebounce";
+import SiteSelect from "@/components/common/SiteSelect";
 
 const PAGE_SIZE = 10;
 
@@ -27,6 +28,8 @@ export default function PromotionsPage() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [total_elements, setTotalElements] = useState(0);
+
+  const [siteId, setSiteId] = useState<number | null>(null);
 
   const [keyword, setKeyword] = useState("");
   const debouncedKeyword = useDebounce(keyword, 300);
@@ -46,24 +49,24 @@ export default function PromotionsPage() {
       const isActive =
         activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined;
       const res = await getPromotions({
+        tenantId: siteId ?? undefined,
         keyword: debouncedKeyword || undefined,
         isActive,
         page,
         size: PAGE_SIZE,
-        sort: sort ? `${sort},${order}` : undefined,
       });
-      setPromotions(res.data.content);
-      setTotalElements(res.data.total_elements);
+      setPromotions(res.data?.content ?? []);
+      setTotalElements(res.data?.total_elements ?? 0);
     } catch {
       // api.ts에서 공통 에러 처리
     } finally {
       setLoading(false);
     }
-  }, [debouncedKeyword, activeFilter, page, sort, order]);
+  }, [siteId, debouncedKeyword, activeFilter, page, sort, order]);
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedKeyword, activeFilter]);
+  }, [siteId, debouncedKeyword, activeFilter]);
 
   useEffect(() => {
     fetchPromotions();
@@ -103,14 +106,14 @@ export default function PromotionsPage() {
       render: (item) =>
         item.discountType === "RATE"
           ? `${item.discountValue}%`
-          : `${item.discountValue.toLocaleString("ko-KR")}${common.currency}`,
+          : `${(item.discountValue ?? 0).toLocaleString("ko-KR")}${common.currency}`,
     },
     {
       key: "period",
       label: promotionLabels.colPeriod,
       render: (item) => {
         const start = new Date(item.startedAt).toLocaleDateString("ko-KR");
-        const end = new Date(item.endedAt).toLocaleDateString("ko-KR");
+        const end = item.endedAt ? new Date(item.endedAt).toLocaleDateString("ko-KR") : "-";
         return `${start} ~ ${end}`;
       },
     },
@@ -143,6 +146,7 @@ export default function PromotionsPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        <SiteSelect value={siteId} onChange={setSiteId} />
         <div className="relative flex-1 min-w-48">
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -157,7 +161,7 @@ export default function PromotionsPage() {
           value={activeFilter}
           onValueChange={(v) => setActiveFilter(v as ActiveFilter)}
         >
-          <SelectTrigger className="h-9 w-36" aria-label={promotionLabels.filterActive}>
+          <SelectTrigger className="h-9 w-36" aria-label={promotionLabels.filterActive} items={{ all: common.all, active: "활성", inactive: "비활성" }}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

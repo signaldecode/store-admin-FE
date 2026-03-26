@@ -24,8 +24,9 @@ import {
   NOTICE_TYPE_LABEL,
   NOTICE_STATUS_LABEL,
 } from "@/data/labels";
+import SiteSelect from "@/components/common/SiteSelect";
 
-const INITIAL_FORM: NoticeFormData = {
+const INITIAL_FORM: Omit<NoticeFormData, "tenantId"> = {
   title: "",
   type: "NOTICE",
   content: "",
@@ -35,7 +36,8 @@ const INITIAL_FORM: NoticeFormData = {
 
 export default function NoticeNewPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState<NoticeFormData>(INITIAL_FORM);
+  const [siteId, setSiteId] = useState<number | null>(null);
+  const [formData, setFormData] = useState<Omit<NoticeFormData, "tenantId">>(INITIAL_FORM);
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,7 +45,7 @@ export default function NoticeNewPage() {
     if (!formData.title.trim() || !formData.content.trim()) return;
     setSaving(true);
     try {
-      await createNotice(formData);
+      await createNotice({ ...formData, tenantId: siteId ?? 0 });
       router.push("/notices");
     } catch {
       // api.ts handles common errors
@@ -64,6 +66,11 @@ export default function NoticeNewPage() {
 
       <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
         <div className="space-y-1.5">
+          <Label>{"사이트"} <span className="text-destructive">*</span></Label>
+          <SiteSelect value={siteId} onChange={setSiteId} />
+        </div>
+
+        <div className="space-y-1.5">
           <Label htmlFor="notice-title">
             {noticeLabels.titleLabel} <span className="text-destructive">*</span>
           </Label>
@@ -83,11 +90,10 @@ export default function NoticeNewPage() {
             onValueChange={(v) =>
               setFormData((prev) => ({ ...prev, type: v as NoticeType }))
             }
-            items={Object.fromEntries(
-              Object.entries(NOTICE_TYPE_LABEL).map(([k, v]) => [k, v])
-            )}
           >
-            <SelectTrigger id="notice-type" className="w-full">
+            <SelectTrigger id="notice-type" className="w-full" items={Object.fromEntries(
+              Object.entries(NOTICE_TYPE_LABEL).map(([k, v]) => [k, v])
+            )}>
               <SelectValue placeholder={noticeLabels.typePlaceholder} />
             </SelectTrigger>
             <SelectContent>
@@ -132,11 +138,10 @@ export default function NoticeNewPage() {
             onValueChange={(v) =>
               setFormData((prev) => ({ ...prev, status: v as NoticeStatus }))
             }
-            items={Object.fromEntries(
-              Object.entries(NOTICE_STATUS_LABEL).map(([k, v]) => [k, v])
-            )}
           >
-            <SelectTrigger id="notice-status" className="w-full">
+            <SelectTrigger id="notice-status" className="w-full" items={Object.fromEntries(
+              Object.entries(NOTICE_STATUS_LABEL).map(([k, v]) => [k, v])
+            )}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

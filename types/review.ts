@@ -1,18 +1,25 @@
 import type { PaginationParams } from "./api";
 
+/** 백엔드 ReviewResponse 기준 */
 export interface Review {
   id: number;
-  rating: number;
-  content: string;
-  images: string[];
-  isVisible: boolean;
-  userName: string;
+  tenantId: number;
   productId: number;
-  productName: string;
+  userId: number;
+  rating: number;
+  title: string | null;
+  content: string | null;
+  images: string | null;
+  isVerifiedPurchase: boolean;
+  isVisible: boolean;
+  isBest: boolean;
+  helpfulCount: number;
+  adminReply: string | null;
+  adminRepliedAt: string | null;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface ReviewListParams extends PaginationParams {
-  keyword?: string;
-  isVisible?: boolean;
+  tenantId?: number;
 }

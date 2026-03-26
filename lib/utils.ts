@@ -5,6 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/** 숫자를 안전하게 한국어 로케일 포맷 — null/undefined → "0" */
+export function fmtNum(value: number | null | undefined): string {
+  return (value ?? 0).toLocaleString("ko-KR");
+}
+
 /**
  * 숫자를 한글 단위 문자열로 변환 + 원
  * 예: 169000 → "16만 9천"

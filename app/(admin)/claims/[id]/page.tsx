@@ -138,14 +138,14 @@ export default function ClaimDetailPage() {
             { label: "상품명", render: (i) => i.productName },
             { label: "옵션", render: (i) => <span className="text-muted-foreground">{i.optionSummary}</span> },
             { label: "수량", align: "right", render: (i) => i.quantity },
-            { label: "단가", align: "right", render: (i) => `${i.unitPrice.toLocaleString("ko-KR")}${common.currency}` },
+            { label: "단가", align: "right", render: (i) => `${(i.unitPrice ?? 0).toLocaleString("ko-KR")}${common.currency}` },
           ]}
         />
       </Section>
 
       <Section title="환불 정보">
         <InfoGrid>
-          <InfoItem label={L.refundAmount} value={`${data.estimatedRefundAmount.toLocaleString("ko-KR")}${common.currency}`} />
+          <InfoItem label={L.refundAmount} value={`${(data.estimatedRefundAmount ?? 0).toLocaleString("ko-KR")}${common.currency}`} />
           <InfoItem label={L.refundMethod} value={data.refundMethod} />
         </InfoGrid>
       </Section>
