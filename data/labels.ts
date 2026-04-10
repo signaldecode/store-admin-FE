@@ -799,6 +799,8 @@ export const banner = {
   colCreatedAt: "등록일",
 
   // 폼
+  siteLabel: "사이트",
+  siteRequired: "사이트를 선택해주세요.",
   titleLabel: "제목",
   titlePlaceholder: "배너 제목을 입력하세요",
   titleRequired: "제목을 입력해주세요.",

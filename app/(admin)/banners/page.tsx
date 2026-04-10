@@ -31,7 +31,6 @@ import {
 } from "@/services/bannerService";
 import type { Banner, BannerFormData } from "@/types/banner";
 import type { BannerStatus, BannerPosition } from "@/lib/constants";
-import { BANNER_POSITION, BANNER_STATUS } from "@/lib/constants";
 import {
   banner as bannerLabels,
   common,
@@ -43,7 +42,8 @@ import { useDebounce } from "@/hooks/useDebounce";
 
 const PAGE_SIZE = 10;
 
-const INITIAL_FORM: Omit<BannerFormData, "tenantId"> = {
+const INITIAL_FORM: BannerFormData = {
+  tenantId: 0,
   title: "",
   position: "HERO",
   sortOrder: 0,
@@ -62,7 +62,7 @@ export default function BannersPage() {
   // Dialog CRUD
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Banner | null>(null);
-  const [formData, setFormData] = useState<Omit<BannerFormData, "tenantId">>(INITIAL_FORM);
+  const [formData, setFormData] = useState<BannerFormData>(INITIAL_FORM);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -138,6 +138,7 @@ export default function BannersPage() {
   const handleEdit = (banner: Banner) => {
     setEditTarget(banner);
     setFormData({
+      tenantId: banner.tenantId,
       title: banner.title,
       position: banner.position,
       sortOrder: banner.sortOrder,
@@ -160,11 +161,12 @@ export default function BannersPage() {
   };
 
   const handleFormSubmit = async () => {
+    if (!formData.tenantId) return; // 사이트 선택 필수
     if (!formData.title.trim()) return;
     if (!editTarget && !imageFile) return; // 등록 시 이미지 필수
     setFormLoading(true);
     try {
-      const payload: BannerFormData = { ...formData, tenantId: siteId ?? 0 };
+      const payload: BannerFormData = { ...formData };
       if (editTarget) {
         await updateBanner(payload, editTarget.id, imageFile ?? undefined);
       } else {
@@ -357,6 +359,21 @@ export default function BannersPage() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            {/* 사이트 선택 */}
+            <div className="space-y-1.5">
+              <Label htmlFor="banner-site">
+                {bannerLabels.siteLabel} <span className="text-destructive">*</span>
+              </Label>
+              <SiteSelect
+                value={formData.tenantId || null}
+                onChange={(id) =>
+                  setFormData((prev) => ({ ...prev, tenantId: id ?? 0 }))
+                }
+                required
+                className="h-9 w-full"
+              />
+            </div>
+
             {/* 이미지 업로드 */}
             <div className="space-y-1.5">
               <Label>
